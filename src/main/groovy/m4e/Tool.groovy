@@ -27,6 +27,8 @@ class Tool {
     List<CmdInfo> commands = [
         new CmdInfo( names: ['install', 'in'], impl: InstallCmd, description: '''archives...\n\t- Extract the specified archives and convert the Eclipse plug-ins inside into Maven artifacts'''),
         new CmdInfo( names: ['merge', 'me'], impl: MergeCmd, description: '''directories... destination\n\t- Merge several Maven repositories into one.\n\n\tFor safety reasons, destination must not exist.'''),
+        new CmdInfo( names: ['attach-sources', 'as', 'attach', 'sources'], impl: AttachSourcesCmd, 
+            description: '''directories...\n\t- Source for source JARs and move them in the right place for Maven 2'''),
         new CmdInfo( names: ['clean'], description: '\n\t- Clean the work directory', impl: CleanCmd),
     ]
     
@@ -99,7 +101,18 @@ class Tool {
             return result
         }
         
-        String.metaClass.endsWidthOneOf = { String... patterns ->
+        String.metaClass.substringBeforeLast = { String pattern ->
+            String result = delegate
+            
+            int pos = result.lastIndexOf( pattern )
+            if( pos >= 0 ) {
+                return result[0..<pos]
+            }
+
+            return result
+        }
+        
+        String.metaClass.endsWithOneOf = { String... patterns ->
             for( String pattern : patterns ) {
                 if( delegate.endsWith( pattern ) ) {
                     return true
@@ -252,11 +265,7 @@ class CmdInfo {
     Class impl
 }
 
-class CleanCmd {
-    
-    static final Logger log = LoggerFactory.getLogger( CleanCmd )
-    
-    File workDir
+class CleanCmd extends AbstractCommand {
     
     void run( String... args ) {
         assert workDir != null

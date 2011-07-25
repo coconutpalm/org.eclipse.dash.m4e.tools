@@ -16,11 +16,7 @@ import org.codehaus.groovy.runtime.ProcessGroovyMethods;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-class InstallCmd {
-
-    static final Logger log = LoggerFactory.getLogger( InstallCmd )
-
-    File workDir
+class InstallCmd extends AbstractCommand {
 
     static final String MVN_VERSION = '3.0.3'
     def m3archive = "apache-maven-${MVN_VERSION}-bin.zip"
@@ -199,7 +195,7 @@ class InstallCmd {
 
         if( archive.name.endsWith( '.zip' ) ) {
             archive.unzip( path )
-        } else if( archive.name.endsWidthOneOf( '.tar', '.tar.gz', '.tar.bz2' ) ) {
+        } else if( archive.name.endsWithOneOf( '.tar', '.tar.gz', '.tar.bz2' ) ) {
             File log = new File( path.absolutePath + '.log' ) 
         
             archive.untar( path, log )
