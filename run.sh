@@ -15,9 +15,9 @@
 
 java -Dfile.encoding=UTF-8 \
 -classpath \
-/home/adigulla/workspace/mt4e/target/classes:\
-/home/adigulla/.m2/repository/org/slf4j/slf4j-api/1.6.1/slf4j-api-1.6.1.jar:\
-/home/adigulla/.m2/repository/ch/qos/logback/logback-core/0.9.29/logback-core-0.9.29.jar:\
-/home/adigulla/.m2/repository/ch/qos/logback/logback-classic/0.9.29/logback-classic-0.9.29.jar:\
-/home/adigulla/.m2/repository/org/codehaus/groovy/groovy-all/1.8.0/groovy-all-1.8.0.jar \
+$PWD/target/classes:\
+$HOME/.m2/repository/org/slf4j/slf4j-api/1.6.1/slf4j-api-1.6.1.jar:\
+$HOME/.m2/repository/ch/qos/logback/logback-core/0.9.29/logback-core-0.9.29.jar:\
+$HOME/.m2/repository/ch/qos/logback/logback-classic/0.9.29/logback-classic-0.9.29.jar:\
+$HOME/.m2/repository/org/codehaus/groovy/groovy-all/1.8.0/groovy-all-1.8.0.jar \
 m4e.Tool "$@"
