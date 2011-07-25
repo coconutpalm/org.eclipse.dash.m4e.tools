@@ -1,0 +1,29 @@
+<configuration>
+
+	<!-- Default log level on the console -->
+	<property name="LOG_LEVEL" value="INFO" />
+	
+	<timestamp key="bySecond" datePattern="yyyyMMdd-HHmmss" />
+
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+	    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      		<level>${LOG_LEVEL}</level>
+    	</filter>
+		<encoder>
+			<pattern>%date{HH:mm:ss} [%-5level] %msg%n
+			</pattern>
+		</encoder>
+	</appender>
+  
+	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
+		<file>tmp/m4e-${bySecond}.txt</file>
+		<encoder>
+			<pattern>%date{ISO8601} [%-5level] %logger{36} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<root level="DEBUG">
+		<appender-ref ref="STDOUT" />
+		<appender-ref ref="FILE" />
+	</root>
+</configuration>
