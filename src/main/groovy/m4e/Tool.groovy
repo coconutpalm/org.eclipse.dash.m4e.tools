@@ -90,11 +90,11 @@ class Tool {
         mopFile()
     }
     
-    void mopString() {
+    static void mopString() {
         String.metaClass.removeEnd = { String pattern ->
             String result = delegate
             
-            if( result.endsWith( pattern ) ) {
+            if( pattern && result.endsWith( pattern ) ) {
                 result = result.substring( 0, result.size() - pattern.size() )
             }
             
@@ -104,11 +104,13 @@ class Tool {
         String.metaClass.substringBeforeLast = { String pattern ->
             String result = delegate
             
-            int pos = result.lastIndexOf( pattern )
-            if( pos >= 0 ) {
-                return result[0..<pos]
+            if( pattern ) {
+                int pos = result.lastIndexOf( pattern )
+                if( pos >= 0 ) {
+                    return result[0..<pos]
+                }
             }
-
+            
             return result
         }
         
@@ -123,7 +125,7 @@ class Tool {
         }
     }
     
-    void mopFile() {
+    static void mopFile() {
         File.metaClass.makedirs() {
             if( delegate.exists() ) {
                 if( delegate.isDirectory() ) {

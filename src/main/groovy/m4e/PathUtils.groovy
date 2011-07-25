@@ -13,12 +13,16 @@ package m4e
 
 class PathUtils {
     
-    static String basename( def path ) {
+    static String normalize( def path ) {
         if( path instanceof File ) {
-            return path.name
+            path = path.toString()
         }
+
+        return path.replace( '\\', '/' )
+    }
     
-        String result = path.toString()
+    static String basename( def path ) {
+        String result = normalize( path )
         int pos = result.lastIndexOf( '/' )
         if( pos >= 0 ) {
             path = result.substring( pos + 1 )
@@ -28,11 +32,7 @@ class PathUtils {
     }
     
     static String dirname( def path ) {
-        if( path instanceof File ) {
-            return path.parentPath
-        }
-        
-        String result = path.toString()
+        String result = normalize( path )
         int pos = result.lastIndexOf( '/' )
         if( pos >= 0 ) {
             path = result.substring( 0, pos )
