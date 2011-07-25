@@ -132,7 +132,7 @@ class InstallCmd {
             return
         }
 
-        log.info( 'Downloading necessary plug-ins for Maven 3' )
+        log.info( 'Caching necessary plug-ins for Maven 3' )
 
         File archive = downloadArchive( primingArchive.absolutePath )
         File path = unpackArchive( archive )
@@ -445,7 +445,7 @@ class ImportTool {
             tmpHome.deleteDir()
         }
 
-        tmpHome.mkdirs()
+        tmpHome.makedirs()
 
         if( templateRepo.exists() ) {
             log.info('Copying template...')

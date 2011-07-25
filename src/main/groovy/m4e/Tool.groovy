@@ -20,12 +20,13 @@ class Tool {
     
     static final Logger log = LoggerFactory.getLogger( Tool )
     
-    static String VERSION = "0.1 (05.07.2011)"
+    static String VERSION = "0.2 (25.07.2011)"
     
     File workDir = new File( "tmp" ).absoluteFile
     
     List<CmdInfo> commands = [
         new CmdInfo( names: ['install', 'in'], impl: InstallCmd, description: '''archives...\n\t- Extract the specified archives and convert the Eclipse plug-ins inside into Maven artifacts'''),
+        new CmdInfo( names: ['merge', 'me'], impl: MergeCmd, description: '''directories... destination\n\t- Merge several Maven repositories into one.\n\n\tFor safety reasons, destination must not exist.'''),
         new CmdInfo( names: ['clean'], description: '\n\t- Clean the work directory', impl: CleanCmd),
     ]
     
@@ -55,7 +56,7 @@ class Tool {
             throw new UserError( "Unknown command ${args[0]}\n${help()}" )
         }
         
-        workDir.mkdirs()
+        workDir.makedirs()
         
         cmd.workDir = workDir
         cmd.run( args )
@@ -84,6 +85,7 @@ class Tool {
         mopCopy()
         
         mopString()
+        mopFile()
     }
     
     void mopString() {
@@ -108,17 +110,33 @@ class Tool {
         }
     }
     
+    void mopFile() {
+        File.metaClass.makedirs() {
+            if( delegate.exists() ) {
+                if( delegate.isDirectory() ) {
+                    return
+                } else {
+                    throw new IOException( "File ${delegate.absolutePath} exists but it's not a directory" )
+                }
+            }
+            
+            if( !delegate.mkdirs() ) {
+                throw new IOException( "Error creating directory ${delegate.absolutePath}" )
+            }
+        }
+    }
+    
     void mopCopy() {
         File.metaClass.copy = { File target ->
             if( delegate.isDirectory() ) {
-                target.mkdirs()
+                target.makedirs()
                 
                 delegate.eachFile() { src ->
                     String name = src.name
                     File dest = new File( target, name )
                     
                     if( src.isDirectory() ) {
-                        dest.mkdirs()
+                        dest.makedirs()
                     }
                     
                     src.copy( dest )
@@ -128,7 +146,7 @@ class Tool {
                     target.delete()
                 }
                 
-                target.parentFile?.mkdirs()
+                target.parentFile?.makedirs()
                 
                 delegate.withInputStream() { it ->
                     target << it
@@ -150,9 +168,9 @@ class Tool {
                     // TODO Security: path must be a child of destDir
                     
                     if( entry.isDirectory() ) {
-                        path.mkdirs()
+                        path.makedirs()
                     } else {
-                        path.parentFile?.mkdirs()
+                        path.parentFile?.makedirs()
                         
                         def output = new FileOutputStream( path )
                         
@@ -171,7 +189,7 @@ class Tool {
     
     void mopUntar() {
         File.metaClass.untar = { File destDir, File log ->
-            destDir.mkdirs()
+            destDir.makedirs()
             
             String uncompress = ''
             if( delegate.name.endsWith( '.gz' ) ) {
