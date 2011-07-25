@@ -24,6 +24,11 @@ class Tool {
     
     File workDir = new File( "tmp" ).absoluteFile
     
+    List<CmdInfo> commands = [
+        new CmdInfo( names: ['install', 'in'], impl: InstallCmd, description: '''archives...\n\t- Extract the specified archives and convert the Eclipse plug-ins inside into Maven artifacts'''),
+        new CmdInfo( names: ['clean'], description: '\n\t- Clean the work directory', impl: CleanCmd),
+    ]
+    
     void run( String... args ) {
         log.debug( "mt4e ${VERSION}" )
         log.debug( "workDir={}", workDir )
@@ -32,26 +37,22 @@ class Tool {
         setup()
         
         if( args.size() == 0 ) {
-            // TODO print list of commands
-            throw new UserError( 'Missing command' )
+            throw new UserError( "Missing command. Valid commands are:\n${help()}" )
         }
         
         def cmd;
         
-        switch( args[0] ) {
-        case 'im':
-        case 'import':
-            cmd = new InstallCmd()
-            break;
-        
-        case 'clean':
-            cmd = new CleanCmd()
-            break;
+        outer: for( def ci in commands ) {
+            for( name in ci.names ) {
+                if( name == args[0] ) {
+                    cmd = ci.impl.newInstance();
+                    break outer;
+                }
+            }
         }
         
         if( cmd == null ) {
-            // TODO print list of commands
-            throw new UserError( "Unknown command ${args[0]}" )
+            throw new UserError( "Unknown command ${args[0]}\n${help()}" )
         }
         
         workDir.mkdirs()
@@ -60,6 +61,21 @@ class Tool {
         cmd.run( args )
         
         log.debug( 'Done.' )
+    }
+    
+    String help() {
+        def list = []
+        for( def ci in commands ) {
+            String name
+            if( ci.names.size() == 1 ) {
+                name = "${ci.names[0]}"
+            } else {
+                name = "[ ${ci.names.join( ' | ' )} ]"
+            }
+            
+            list << "${name} ${ci.description}"
+        }
+        return list.join( '\n' )
     }
     
     void setup() {
@@ -210,6 +226,12 @@ class Tool {
             t.printStackTrace()
         }
     }
+}
+
+class CmdInfo {
+    List<String> names
+    String description
+    Class impl
 }
 
 class CleanCmd {
