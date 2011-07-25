@@ -170,17 +170,34 @@ class Tool {
         }
     }
     
-    void mopUnzip() {
+    static void mopUnzip() {
+        File.metaClass.isChildOf { File parent ->
+            File child = delegate.canonicalFile
+            parent = parent.canonicalFile
+            
+            while( child ) {
+                if( child.equals( parent ) ) {
+                    return true
+                }
+                
+                child = child.parentFile
+            }
+        }
+        
         // Code based on an example from http://grooveek.blogspot.com/2009/09/adding-zipping-and-unzipping.html
         File.metaClass.unzip = { File destDir ->
-            def result = new ZipInputStream( new FileInputStream( delegate ) )
+            destDir = destDir.absoluteFile
             
-            result.withStream {
+            def archive = new ZipInputStream( new FileInputStream( delegate ) )
+            
+            archive.withStream {
                 def entry
-                while( entry = result.nextEntry ) {
+                while( entry = archive.nextEntry ) {
                     
                     def path = new File( destDir, entry.name )
-                    // TODO Security: path must be a child of destDir
+                    if( !path.isChildOf( destDir ) ) {
+                        throw new RuntimeException( "ZIP archive contains odd entry '${entry.name}' which would create the file ${path}" )
+                    }
                     
                     if( entry.isDirectory() ) {
                         path.makedirs()
@@ -192,7 +209,7 @@ class Tool {
                         output.withStream{
                             int len = 0;
                             byte[] buffer = new byte[10240]
-                            while ((len = result.read(buffer)) > 0){
+                            while ((len = archive.read(buffer)) > 0){
                                 output.write(buffer, 0, len);
                             }
                         }
