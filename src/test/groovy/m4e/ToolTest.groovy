@@ -34,6 +34,10 @@ Missing command. Valid commands are:
 \tFor safety reasons, destination must not exist.
 [ attach-sources | as | attach | sources ] directories...
 \t- Source for source JARs and move them in the right place for Maven 2
+convert groupId:artifactId:version
+\t- Convert everything in the directory "downloads" into one big Maven repository
+
+\tThe argument is used to create a POM file with a dependencyManagement element.
 clean 
 \t- Clean the work directory'''
                  , e.message )
