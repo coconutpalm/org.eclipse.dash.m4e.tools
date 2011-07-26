@@ -4,7 +4,7 @@
 
 	<groupId>org.eclipse.dash</groupId>
 	<artifactId>org.eclipse.dash.mt4e</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.3.0-SNAPSHOT</version>
 	<name>Maven Tools for Eclipse</name>
 	
 	<licenses>
@@ -107,11 +107,22 @@
 						<configuration>
 							<sources>
 								<source>src/main/groovy</source>
-								<source>src/test/groovy</source>
 							</sources>
 						</configuration>
 					</execution>
-				</executions>
+					<execution>
+						<id>add-test-source</id>
+						<phase>generate-test-sources</phase>
+						<goals>
+							<goal>add-test-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>src/test/groovy</source>
+							</sources>
+						</configuration>
+					</execution>    
+    			</executions>
 			</plugin>
 		</plugins>
 		
@@ -138,6 +149,7 @@
 										</versionRange>
 										<goals>
 											<goal>add-source</goal>
+											<goal>add-test-source</goal>
 										</goals>
 									</pluginExecutionFilter>
 									<action>
