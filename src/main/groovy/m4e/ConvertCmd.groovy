@@ -12,12 +12,12 @@ class ConvertCmd extends AbstractCommand {
             throw new UserError( "Expected one argument: The groupId:artifactId:version of a POM in which to write the dependencyManagement element" )
         }
         
-        log.info( "Converting everything in ${downloads}" )
+        targetRepo = new File( workDir, 'm2repo' )
+        
+        log.info( "Converting everything in ${downloads} into ${targetRepo}" )
 
         checkDependencyManagementInfo( args[1] )
                 
-        targetRepo = new File( workDir, 'm2repo' )
-        
         importArchives( downloads )
         
         mergeRepos()
@@ -42,9 +42,9 @@ class ConvertCmd extends AbstractCommand {
             throw new UserError( "Expected argument format 'groupId:artifactId:version' but was '${info}'" )
         }
         
-        groupId = info[0]
-        artifactId = info[1]
-        version = info[2]
+        groupId = parts[0]
+        artifactId = parts[1]
+        version = parts[2]
         
         dmPath = new File( targetRepo, groupId.replace( '.', '/' ) )
         dmPath = new File( dmPath, artifactId )
