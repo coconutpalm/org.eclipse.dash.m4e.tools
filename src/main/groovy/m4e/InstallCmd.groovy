@@ -46,6 +46,8 @@ class InstallCmd extends AbstractCommand {
         loadNecessaryPlugins()
     }
     
+    List<File> m2repos = []
+    
     void importArchive( String url ) {
         
         File archive = downloadArchive( url )
@@ -60,6 +62,8 @@ class InstallCmd extends AbstractCommand {
         log.info( 'OK' )
         
         deleteMavenFiles( m2repo )
+        
+        m2repos << m2repo
     }
     
     boolean deleteCommonFiles( File path1, File path2 ) {

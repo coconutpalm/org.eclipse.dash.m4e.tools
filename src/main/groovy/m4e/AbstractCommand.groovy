@@ -21,5 +21,9 @@ abstract class AbstractCommand {
     
     File workDir
     
+    void run( List<String> args ) {
+        run( args as String[] )
+    }
+    
     abstract void run( String... args );
 }

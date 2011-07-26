@@ -29,6 +29,7 @@ class Tool {
         new CmdInfo( names: ['merge', 'me'], impl: MergeCmd, description: '''directories... destination\n\t- Merge several Maven repositories into one.\n\n\tFor safety reasons, destination must not exist.'''),
         new CmdInfo( names: ['attach-sources', 'as', 'attach', 'sources'], impl: AttachSourcesCmd, 
             description: '''directories...\n\t- Source for source JARs and move them in the right place for Maven 2'''),
+        new CmdInfo( names: ['convert'], description: 'groupId:artifactId:version\n\t- Convert everything in the directory "downloads" into one big Maven repository\n\n\tThe argument is used to create a POM file with a dependencyManagement element.', impl: ConvertCmd),
         new CmdInfo( names: ['clean'], description: '\n\t- Clean the work directory', impl: CleanCmd),
     ]
     
