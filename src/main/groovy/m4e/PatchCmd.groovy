@@ -50,7 +50,7 @@ class PatchSet extends Patch {
 class RemoveNonOptional extends Patch {
 	void apply( Pom pom ) {
 		for( Dependency d in pom.dependencies ) {
-			Element optional = d.xml_optional
+			Element optional = d.xml( Dependency.OPTIONAL )
 			if( !optional ) {
 				continue;
 			}

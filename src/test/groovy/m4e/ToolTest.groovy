@@ -14,9 +14,15 @@ package m4e;
 import static org.junit.Assert.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 class ToolTest {
+    
+    @BeforeClass
+    static void mopSetup() {
+        MopSetup.setup();
+    }
 
     @Test
     public void testNoArguments() throws Exception {
@@ -48,7 +54,6 @@ clean
     
     @Test
     public void testClean() throws Exception {
-        Tool.mopFile()
         
         tmpDir = new File( tmpDir, "testClean" )
         assert tmpDir.deleteDir(), "Can't delete ${tmpDir}"
@@ -71,8 +76,6 @@ clean
     
     @Test
     public void testRemoveEnd() throws Exception {
-        Tool.mopString()
-        
         assert 'aaab' == 'aaabx'.removeEnd( 'x' )
         assert 'aaabx' == 'aaabx'.removeEnd( 'xx' )
         assert 'aaaby' == 'aaaby'.removeEnd( 'x' )
@@ -82,8 +85,6 @@ clean
     
     @Test
     public void testSubstringBeforeLast() throws Exception {
-        Tool.mopString()
-        
         assert 'aaa' == 'aaabx'.substringBeforeLast( 'b' )
         assert 'abaa' == 'abaabx'.substringBeforeLast( 'b' )
         assert 'aaabx' == 'aaabx'.substringBeforeLast( 'xx' )
@@ -96,9 +97,6 @@ clean
     
     @Test
     public void testUnzip() throws Exception {
-        Tool.mopUnzip()
-        Tool.mopFile()
-        
         File workDir = new File( tmpDir, "testUnzip" )
         assert workDir.deleteDir(), "Can't delete ${workDir}"
         workDir.makedirs()
@@ -111,9 +109,6 @@ clean
     
     @Test
     public void testUnzipIllegalPaths() throws Exception {
-        Tool.mopUnzip()
-        Tool.mopFile()
-        
         File workDir = new File( tmpDir, "testUnzipIllegalPaths" )
         assert workDir.deleteDir(), "Can't delete ${workDir}"
         workDir.makedirs()

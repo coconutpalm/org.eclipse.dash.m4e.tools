@@ -53,10 +53,47 @@ class Pom {
 	}
 }
 
-class Dependency {
-	Element xml
-	
-	Element getXml_optional() {
-		return xml.getChild( 'optional' )
-	}
+class TextNode {
+    String name
+    String defaultValue
+}
+
+class PomElement {
+    Element xml
+    List children
+    
+    String value( TextNode node ) {
+        Element e = xml( node )
+        return e == null ? null : e.trimmedText
+    }
+    
+    Element xml( TextNode node ) {
+        return xml.getChild( node.name )
+    }
+}
+
+class Dependency extends PomElement {
+    final static TextNode GROUP_ID = new TextNode( name: 'groupId' )
+    final static TextNode ARTIFACT_ID = new TextNode( name: 'artifactId' )
+    final static TextNode VERSION = new TextNode( name: 'version' )
+    final static TextNode CLASSIFIER = new TextNode( name: 'classifier' )
+    final static TextNode TYPE = new TextNode( name: 'type', defaultValue: 'jar' )
+    final static TextNode SCOPE = new TextNode( name: 'scope', defaultValue: 'compile' )
+    final static TextNode OPTIONAL = new TextNode( name: 'optional', defaultValue: 'false' )
+    
+    Dependency() {
+        children = [
+            GROUP_ID, ARTIFACT_ID, VERSION, CLASSIFIER, TYPE, SCOPE, OPTIONAL
+            // TODO Support exclusions
+        ]
+    }
+    
+    @Override
+    public String toString() {
+        return "Dependency( ${key()} )";
+    }
+    
+    String key() {
+        return "${value( GROUP_ID )}:${value( ARTIFACT_ID )}:${value( VERSION )}";
+    }
 }
