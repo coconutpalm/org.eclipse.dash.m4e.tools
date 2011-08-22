@@ -49,7 +49,7 @@ class PatchSet extends Patch {
 /** Remove <code>&lt;optional&gt;false&lt;optional&gt;</code> elements from the POM */
 class RemoveNonOptional extends Patch {
 	void apply( Pom pom ) {
-		for( Dependency d in pom.dependencies ) {
+		for( def d in pom.list( Pom.DEPENDENCIES ) ) {
 			Element optional = d.xml( Dependency.OPTIONAL )
 			if( !optional ) {
 				continue;
@@ -59,15 +59,31 @@ class RemoveNonOptional extends Patch {
 				continue;
 			}
 			
-			int index = optional.parentElement.nodeIndexOf( optional )
-			if( index > 0 ) {
-				index --
-				Node previous = optional.parentElement.getNode( index )
-				if( XMLUtils.isText( previous ) ) {
-					optional.parentElement.removeNode( index )
-				}
-			}
-			optional.remove()
+            PomUtils.removeWithIndent( optional )
 		}
 	}
+}
+
+class DeleteDependency extends Patch {
+    String key
+    
+    void apply( Pom pom ) {
+        
+        def toDelete = []
+        
+        pom.dependencies.each {
+            if( key == it.key() ) {
+                toDelete << it
+            }
+        }
+        
+        for( Dependency d in toDelete ) {
+            d.remove()
+        }
+        
+        if( pom.dependencies.isEmpty() ) {
+            Element e = pom.xml( Pom.DEPENDENCIES )
+            PomUtils.removeWithIndent( e )
+        }
+    }
 }
