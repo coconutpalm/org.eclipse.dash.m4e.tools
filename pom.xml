@@ -16,6 +16,7 @@
 	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<target.dir>target</target.dir>
 	</properties>
 
 	<dependencies>
@@ -52,7 +53,21 @@
 		
 	</dependencies>
 
+    <profiles>
+        <!-- Fix for Eclipse maven plugin which insists to mix its output with Eclipse's -->
+        <profile>
+            <id>eclipse-folders</id>
+            <properties>
+                <target.dir>target-eclipse</target.dir>
+            </properties>
+        </profile>
+	</profiles>
+	
 	<build>
+        <directory>${basedir}/${target.dir}</directory>
+        <outputDirectory>${basedir}/${target.dir}/classes</outputDirectory>
+        <testOutputDirectory>${basedir}/${target.dir}/test-classes</testOutputDirectory>
+
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
