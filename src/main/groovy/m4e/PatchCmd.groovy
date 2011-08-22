@@ -54,6 +54,7 @@ class PatchCmd extends AbstractCommand {
 class PatchLoader {
     
     File file
+    String text
     
     PatchLoader( File file ) {
         if( !file.exists() ) {
@@ -62,6 +63,12 @@ class PatchLoader {
         
         this.file = file
     }
+
+    PatchLoader( String text ) {
+        this.text = text
+    }
+        
+    ScriptedPatchSet set
     
     PatchSet load() {
         def config = new CompilerConfiguration()
@@ -69,12 +76,35 @@ class PatchLoader {
     
         def shell = new GroovyShell(this.class.classLoader, new Binding(), config)
         
-        def text = file.getText( 'utf-8' ) + "\n\nthis"
+        def text = this.text ? this.text : file.getText( 'utf-8' )
+        text += "\n\nthis"
         def inst = shell.evaluate( text, "PatchScript" )
         
-        inst.set.source = file.absolutePath
+        set = inst.set
+        set.source = file ? file.absolutePath : 'JUnit test'
         
-        return inst.set
+        check()
+        
+        return set
+    }
+    
+    void check() {
+        findDuplicateReplacements()
+    }
+    
+    void findDuplicateReplacements() {
+        
+        Set<String> keys = []
+        
+        set.patches.each {
+            if( it instanceof ReplaceDependency ) {
+                def key = it.pattern.key
+                
+                if( !keys.add( key ) ) {
+                    throw new UserError( "Found duplicate replace ${key} in patch '{set.source}'" )
+                }
+            }
+        }
     }
 }
 
