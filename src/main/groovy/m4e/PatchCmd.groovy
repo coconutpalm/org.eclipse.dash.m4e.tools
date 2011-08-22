@@ -10,6 +10,8 @@
  *******************************************************************************/
 package m4e
 
+import groovy.transform.ToString;
+import org.codehaus.groovy.control.CompilerConfiguration;
 import de.pdark.decentxml.Element;
 import de.pdark.decentxml.Node;
 import de.pdark.decentxml.XMLUtils;
@@ -33,13 +35,78 @@ class PatchCmd extends AbstractCommand {
 		def set = loadPatches( patches )
     }
 
-	PatchSet loadPatches() {
+	PatchSet loadPatches( String... patches ) {
 		def set = new PatchSet()
 		
 		set.patches << new RemoveNonOptional()
+        
+        for( String patchName : patches ) {
+            def loader = new PatchLoader( new File( patchName ).getAbsoluteFile() )
+            def patch = loader.load()
+            
+            set.patches << patch
+        }
 		
 		return set
 	}
+}
+
+class PatchLoader {
+    
+    File file
+    
+    PatchLoader( File file ) {
+        if( !file.exists() ) {
+            throw new UserError( "Can't find patch ${file}" )
+        }
+        
+        this.file = file
+    }
+    
+    PatchSet load() {
+        def config = new CompilerConfiguration()
+        config.setScriptBaseClass("m4e.PatchScript")
+    
+        def shell = new GroovyShell(this.class.classLoader, new Binding(), config)
+        
+        def text = file.getText( 'utf-8' ) + "\n\nthis"
+        def inst = shell.evaluate( text, "PatchScript" )
+        
+        inst.set.source = file.absolutePath
+        
+        return inst.set
+    }
+}
+
+class ScriptedPatchSet extends PatchSet {
+    String source
+}
+
+abstract class PatchScript extends Script {
+    ScriptedPatchSet set = new ScriptedPatchSet()
+    
+    String defaultProfile
+    String profile
+    
+    void defaultProfile( String name ) {
+        this.defaultProfile = name
+    }
+    
+    void profile( String name ) {
+        this.profile = name
+    }
+    
+    void replace( String _pattern, String with ) {
+        PatchDependency pattern = new PatchDependency( key: _pattern )
+        PatchDependency replacement = new PatchDependency( key: with )
+        
+        def patch = new ReplaceDependency( defaultProfile: defaultProfile, profile: profile, pattern: pattern, replacement: replacement )
+        set.patches << patch
+    }
+    
+    void delete( String pattern ) {
+        set.patches << new DeleteDependency( key: pattern )
+    }
 }
 
 abstract class Patch {
@@ -95,5 +162,32 @@ class DeleteDependency extends Patch {
             Element e = pom.xml( Pom.DEPENDENCIES )
             PomUtils.removeWithIndent( e )
         }
+    }
+    
+    String toString() {
+        return "DeleteDependency( ${key} )"
+    }
+}
+
+class PatchDependency {
+    String key
+    
+    String toString() {
+        return "PatchDependency( ${key} )"
+    }
+}
+
+class ReplaceDependency extends Patch {
+    String defaultProfile
+    String profile
+    PatchDependency pattern
+    PatchDependency replacement
+    
+    void apply( Pom pom ) {
+        // TODO
+    }
+    
+    String toString() {
+        return "ReplaceDependency( ${pattern} -> ${replacement} )"
     }
 }
