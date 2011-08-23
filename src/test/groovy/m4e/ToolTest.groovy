@@ -24,30 +24,57 @@ class ToolTest {
         MopSetup.setup();
     }
 
+    final static String HELP_OUTPUT = '''\
+convert groupId:artifactId:version
+    - Convert everything in the directory "downloads" into one big Maven
+    repository
+
+    The argument is used to create a POM file with a dependencyManagement
+    element.
+[ install | in ] archives...
+    - Extract the specified archives and convert the Eclipse plug-ins inside
+    into Maven artifacts
+[ merge | me ] directories... destination
+    - Merge several Maven repositories into one.
+
+    For safety reasons, destination must not exist.
+[ attach-sources | as | attach | sources ] directories...
+    - Source for source JARs and move them in the right place for Maven 2
+[ apply-patches | patch | ap ] target patches... - Apply the patches to the
+    target repository. Patches can be scripts or directories with scripts.
+clean
+    - Clean the work directory''' 
+    
     @Test
     public void testNoArguments() throws Exception {
         try {
             new Tool().run()
         } catch( UserError e ) {
-            assertEquals (
-                 '''\
-Missing command. Valid commands are:
-[ install | in ] archives...
-\t- Extract the specified archives and convert the Eclipse plug-ins inside into Maven artifacts
-[ merge | me ] directories... destination
-\t- Merge several Maven repositories into one.
-
-\tFor safety reasons, destination must not exist.
-[ attach-sources | as | attach | sources ] directories...
-\t- Source for source JARs and move them in the right place for Maven 2
-convert groupId:artifactId:version
-\t- Convert everything in the directory "downloads" into one big Maven repository
-
-\tThe argument is used to create a POM file with a dependencyManagement element.
-clean 
-\t- Clean the work directory'''
-                 , e.message )
+            assertEquals ( 'Missing command. Valid commands are:\n' + HELP_OUTPUT, e.message )
         }
+    }
+    
+    @Test
+    public void testHelp() throws Exception {
+        boolean called = false
+        
+        Tool tool = new Tool() {
+            void print( String text ) {
+                assertEquals( HELP_OUTPUT, text )
+                called = true
+            }
+        }
+        
+        tool.run( 'help' )
+        assertTrue( "Help wasn't printed", called )
+        
+        called = false
+        tool.run( '--help' )
+        assertTrue( "Help wasn't printed", called )
+        
+        called = false
+        tool.run( '-h' )
+        assertTrue( "Help wasn't printed", called )
     }
     
     File tmpDir = new File( 'tmp-test' )

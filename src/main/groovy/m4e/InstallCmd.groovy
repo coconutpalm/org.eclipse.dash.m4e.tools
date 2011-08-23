@@ -378,18 +378,7 @@ class ImportTool {
         def min
         def max = null
         
-        int consoleWidth = 0;
-        String columns = System.getenv( 'COLUMNS' )
-        if( columns ) {
-            try {
-                consoleWidth = Integer.parseInt( columns )
-            } catch( Exception e ) {
-                log.warn( 'Unable to parse COLUMNS [{}]', columns )
-            }
-        }
-        if( consoleWidth <= 0 ) {
-            consoleWidth = 80;
-        }
+        int consoleWidth = ConsoleUtils.consoleWidth();
         String spaces = ' ' * consoleWidth
         int prefixLength = m2repo.toString().size() + 1
         

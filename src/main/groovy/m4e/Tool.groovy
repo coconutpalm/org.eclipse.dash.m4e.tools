@@ -25,12 +25,13 @@ class Tool {
     File workDir = new File( "tmp" ).absoluteFile
     
     List<CmdInfo> commands = [
-        new CmdInfo( names: ['install', 'in'], impl: InstallCmd, description: '''archives...\n\t- Extract the specified archives and convert the Eclipse plug-ins inside into Maven artifacts'''),
-        new CmdInfo( names: ['merge', 'me'], impl: MergeCmd, description: '''directories... destination\n\t- Merge several Maven repositories into one.\n\n\tFor safety reasons, destination must not exist.'''),
+        new CmdInfo( names: ['convert'], description: 'groupId:artifactId:version\n- Convert everything in the directory "downloads" into one big Maven repository\n\nThe argument is used to create a POM file with a dependencyManagement element.', impl: ConvertCmd),
+        new CmdInfo( names: ['install', 'in'], impl: InstallCmd, description: '''archives...\n- Extract the specified archives and convert the Eclipse plug-ins inside into Maven artifacts'''),
+        new CmdInfo( names: ['merge', 'me'], impl: MergeCmd, description: '''directories... destination\n- Merge several Maven repositories into one.\n\nFor safety reasons, destination must not exist.'''),
         new CmdInfo( names: ['attach-sources', 'as', 'attach', 'sources'], impl: AttachSourcesCmd, 
-            description: '''directories...\n\t- Source for source JARs and move them in the right place for Maven 2'''),
-        new CmdInfo( names: ['convert'], description: 'groupId:artifactId:version\n\t- Convert everything in the directory "downloads" into one big Maven repository\n\n\tThe argument is used to create a POM file with a dependencyManagement element.', impl: ConvertCmd),
-        new CmdInfo( names: ['clean'], description: '\n\t- Clean the work directory', impl: CleanCmd),
+            description: '''directories...\n- Source for source JARs and move them in the right place for Maven 2'''),
+        new CmdInfo( names: ['apply-patches', 'patch', 'ap'], impl: PatchCmd, description: PatchCmd.DESCRIPTION ),
+        new CmdInfo( names: ['clean'], description: '\n- Clean the work directory', impl: CleanCmd),
     ]
     
     void run( String... args ) {
@@ -40,6 +41,11 @@ class Tool {
         
         if( args.size() == 0 ) {
             throw new UserError( "Missing command. Valid commands are:\n${help()}" )
+        }
+        
+        if( args[0] in ['help', '--help', '-h', '?', '/?', '-help', '-?']) {
+            print( help() )
+            return
         }
         
         def cmd;
@@ -65,6 +71,10 @@ class Tool {
         log.debug( 'Done.' )
     }
     
+    void print( String text ) {
+        println text
+    }
+    
     String help() {
         def list = []
         for( def ci in commands ) {
@@ -75,10 +85,12 @@ class Tool {
                 name = "[ ${ci.names.join( ' | ' )} ]"
             }
             
-            list << "${name} ${ci.description}"
+            String output = ConsoleUtils.wrapText( "${name} ${ci.description}" )
+            list << output
         }
         return list.join( '\n' )
     }
+    
     static void main( String[] args ) {
         try {
             MopSetup.setup();
