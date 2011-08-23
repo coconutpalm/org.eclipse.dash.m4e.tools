@@ -67,7 +67,7 @@ class MopSetup {
     }
     
     static void mopFile() {
-        File.metaClass.makedirs() {
+        File.metaClass.makedirs = {
             if( delegate.exists() ) {
                 if( delegate.isDirectory() ) {
                     return
@@ -78,6 +78,26 @@ class MopSetup {
             
             if( !delegate.mkdirs() ) {
                 throw new IOException( "Error creating directory ${delegate.absolutePath}" )
+            }
+        }
+        
+        File.metaClass.usefulDelete = {
+            if( !delegate.exists() ) {
+                return
+            }
+            
+            if( !delegate.delete() ) {
+                if( delegate.isDirectory() ) {
+                    throw new IOException( "Error deleting ${delegate.absolutePath}; expected file but was a directory" )
+                }
+                
+                throw new IOException( "Unknown error deleting file ${delegate.absolutePath}" )
+            }
+        }
+        
+        File.metaClass.usefulRename = { to ->
+            if( !delegate.renameTo( to ) ) {
+                throw new IOException( "Unknown error while renaming file ${delegate.absolutePath} to ${to}" )
             }
         }
     }
@@ -112,7 +132,7 @@ class MopSetup {
     }
     
     static void mopUnzip() {
-        File.metaClass.isChildOf { File parent ->
+        File.metaClass.isChildOf = { File parent ->
             File child = delegate.canonicalFile
             parent = parent.canonicalFile
             
