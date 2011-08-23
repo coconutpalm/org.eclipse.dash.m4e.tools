@@ -98,7 +98,7 @@ class PatchLoader {
         
         set.patches.each {
             if( it instanceof ReplaceDependency ) {
-                def key = it.pattern.key
+                def key = it.pattern.key()
                 
                 if( !keys.add( key ) ) {
                     throw new UserError( "Found duplicate replace ${key} in patch '{set.source}'" )
@@ -127,8 +127,8 @@ abstract class PatchScript extends Script {
     }
     
     void replace( String _pattern, String with ) {
-        PatchDependency pattern = new PatchDependency( key: _pattern )
-        PatchDependency replacement = new PatchDependency( key: with )
+        PatchDependency pattern = PatchDependency.fromString( _pattern )
+        PatchDependency replacement = PatchDependency.fromString( with )
         
         def patch = new ReplaceDependency( defaultProfile: defaultProfile, profile: profile, pattern: pattern, replacement: replacement )
         set.patches << patch
