@@ -47,12 +47,14 @@ class PomElement {
         return result ?: []
     }
     
-    Element xml( TextNode node ) {
+    Element xml( def node ) {
         return xml.getChild( node.name )
     }
     
-    Element xml( ListNode node ) {
-        return xml.getChild( node.name )
+    PomElement element( node ) {
+        Element child = xml.getChild( node.name )
+        
+        return child ? new PomElement( xml: child, pom: pom ) : null
     }
     
     void remove() {
@@ -72,9 +74,40 @@ class ListNode {
 
 class Pom extends PomElement {
     
-    String source
+    final static TextNode GROUP_ID = new TextNode( name: 'groupId' )
+    final static TextNode ARTIFACT_ID = new TextNode( name: 'artifactId' )
+    final static TextNode VERSION = new TextNode( name: 'version' )
+    final static TextNode PARENT = new TextNode( name: 'parent' )
 
-	public static load( def input ) {
+    String source
+    
+    String key() {
+        return "${groupId()}:${value( ARTIFACT_ID )}:${version()}";
+    }
+    
+    String shortKey() {
+        return "${groupId()}:${value( ARTIFACT_ID )}";
+    }
+    
+    String groupId() {
+        String groupId = value( GROUP_ID )
+        if( null == groupId ) {
+            PomElement parent = element( PARENT )
+            groupId = parent.value( GROUP_ID )
+        }
+        return groupId
+    }
+    
+    String version() {
+        String version = value( VERSION )
+            if( null == version ) {
+                PomElement parent = element( PARENT )
+                    version = parent.value( VERSION )
+            }
+        return version
+    }
+
+	public static Pom load( def input ) {
         String source
 		if( input instanceof String ) {
             source = "<String>"
@@ -100,6 +133,34 @@ class Pom extends PomElement {
         this.xml = doc.getRootElement()
         
         assert 'project' == this.xml.name
+    }
+    
+    List<String> files() {
+        File dir = new File( source ).parentFile
+        
+        String prefix = "${value( ARTIFACT_ID )}-${version()}"
+        
+        List<String> files = []
+        dir.eachFile() { File item ->
+            String name = item.name
+            
+            if( !name.startsWith( prefix ) || name.endsWith( '.bak' ) ) {
+                return
+            }
+            
+            name = name.substring( prefix.size() )
+            
+            if( name.startsWith( '.' ) || name.startsWith( '-' ) ) {
+                name = name.substring( 1 )
+            }
+            name = name.removeEnd( '.jar' )
+            
+            files << name
+        }
+        
+        files.sort()
+        
+        return files
     }
     
 	void save( File file ) {
@@ -211,9 +272,9 @@ class PomUtils {
 }
 
 class Dependency extends PomElement {
-    final static TextNode GROUP_ID = new TextNode( name: 'groupId' )
-    final static TextNode ARTIFACT_ID = new TextNode( name: 'artifactId' )
-    final static TextNode VERSION = new TextNode( name: 'version' )
+    final static TextNode GROUP_ID = Pom.GROUP_ID
+    final static TextNode ARTIFACT_ID = Pom.ARTIFACT_ID
+    final static TextNode VERSION = Pom.VERSION
     final static TextNode CLASSIFIER = new TextNode( name: 'classifier' )
     final static TextNode TYPE = new TextNode( name: 'type', defaultValue: 'jar' )
     final static TextNode SCOPE = new TextNode( name: 'scope', defaultValue: 'compile' )
@@ -226,6 +287,10 @@ class Dependency extends PomElement {
     
     String key() {
         return "${value( GROUP_ID )}:${value( ARTIFACT_ID )}:${value( VERSION )}";
+    }
+    
+    String shortKey() {
+        return "${value( GROUP_ID )}:${value( ARTIFACT_ID )}";
     }
     
     static Dependency wrap( PomElement e ) {
