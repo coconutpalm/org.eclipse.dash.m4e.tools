@@ -10,6 +10,7 @@
  *******************************************************************************/
 package m4e
 
+import java.util.regex.Pattern;
 import groovy.transform.ToString;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import de.pdark.decentxml.Element;
@@ -69,6 +70,7 @@ class PatchLoader {
     }
         
     ScriptedPatchSet set
+    ReplaceDependencies replacer
     
     PatchSet load() {
         def config = new CompilerConfiguration()
@@ -78,10 +80,16 @@ class PatchLoader {
         
         def text = this.text ? this.text : file.getText( 'utf-8' )
         text += "\n\nthis"
-        def inst = shell.evaluate( text, "PatchScript" )
+        PatchScript inst = shell.evaluate( text, "PatchScript" )
         
         set = inst.set
         set.source = file ? file.absolutePath : 'JUnit test'
+        
+        replacer = inst.replacer
+        
+        if( replacer.replacements ) {
+            set.patches << replacer
+        }
         
         check()
         
@@ -96,7 +104,7 @@ class PatchLoader {
         
         Set<String> keys = []
         
-        set.patches.each {
+        replacer.replacements.each {
             if( it instanceof ReplaceDependency ) {
                 def key = it.pattern.key()
                 
@@ -114,24 +122,24 @@ class ScriptedPatchSet extends PatchSet {
 
 abstract class PatchScript extends Script {
     ScriptedPatchSet set = new ScriptedPatchSet()
-    
-    String defaultProfile
-    String profile
+
+    ReplaceDependencies replacer = new ReplaceDependencies()
     
     void defaultProfile( String name ) {
-        this.defaultProfile = name
+        replacer.defaultProfile = name
     }
     
     void profile( String name ) {
-        this.profile = name
+        replacer.profile = name
     }
     
     void replace( String _pattern, String with ) {
+        
         PatchDependency pattern = PatchDependency.fromString( _pattern )
         PatchDependency replacement = PatchDependency.fromString( with )
         
-        def patch = new ReplaceDependency( defaultProfile: defaultProfile, profile: profile, pattern: pattern, replacement: replacement )
-        set.patches << patch
+        def rd = new ReplaceDependency( pattern: pattern, replacement: replacement )
+        replacer.replacements << rd
     }
     
     void delete( String pattern ) {
@@ -206,6 +214,10 @@ class PatchDependency {
     boolean optional
     String scope
     
+    boolean matches( def other ) {
+        return key() == other.key()
+    }
+    
     String key() {
         return "${groupId}:${artifactId}:${version}"
     }
@@ -247,17 +259,74 @@ class PatchDependency {
     }
 }
 
-class ReplaceDependency extends Patch {
-    String defaultProfile
-    String profile
+class ReplaceDependency {
     PatchDependency pattern
     PatchDependency replacement
+    
+    @Override
+    public String toString() {
+        return "ReplaceDependency( ${pattern} -> ${replacement} )"
+    }
+
+}
+
+class ReplaceDependencies extends Patch {
+    String defaultProfile
+    String profile
+    List<ReplaceDependency> replacements = []
     
     void apply( Pom pom ) {
         // TODO
     }
     
     String toString() {
-        return "ReplaceDependency( ${pattern} -> ${replacement} )"
+        return "ReplaceDependencies( defaultProfile=${defaultProfile}, profile=${profile}, replacements=${replacements.size()} )"
+    }
+}
+
+/** Strip Eclipse qualifiers from versions */
+class StripQualifiers extends Patch {
+    
+    // ~/.../ isn't supported by the Eclipse Groovy editor
+    Pattern versionRangePattern = Pattern.compile( '^([\\[\\]()])([^,]*),([^,]*?)([\\[\\]()])$' );
+    
+    void apply( Pom pom ) {
+        pom.dependencies.each {
+            String version = it.value( Dependency.VERSION )
+            version = stripQualifier( version )
+            it.value( Dependency.VERSION, version )
+        }
+    }
+
+    String stripQualifier( String version ) {
+        if( !version ) {
+            return version
+        }
+        
+        def m = versionRangePattern.matcher( version )
+        if( !m.matches() ) {
+            return stripQualifier2( version )
+        }
+        
+        def prefix = m.group(1)
+        def v1 = m.group(2)
+        def v2 = m.group(3)
+        def postfix = m.group(4)
+        
+        v1 = stripQualifier2(v1)
+        v2 = stripQualifier2(v2)
+        
+        return "${prefix}${v1},${v2}${postfix}"
+    }
+    
+    String stripQualifier2( String version ) {
+        def parts = version.split('\\.', -1)
+        int end = Math.min( parts.size()-1, 2 )
+        return parts[0..end].join( '.' )
+    }
+    
+    @Override
+    public String toString() {
+        return 'StripQualifiers()';
     }
 }
