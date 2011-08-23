@@ -16,7 +16,7 @@ import org.junit.Test;
 class PatchLoaderTest {
 
     @Test
-    public void testLoadEclipse362() throws Exception {
+    void testLoadEclipse362() throws Exception {
         
         PatchLoader loader = new PatchLoader( new File( 'patches/eclipse-3.6.2.patches' ) )
         
@@ -29,7 +29,7 @@ ReplaceDependencies( defaultProfile=m4e.orbit, profile=m4e.maven-central, replac
     }
 
     @Test
-    public void testLoadEclipse370() throws Exception {
+    void testLoadEclipse370() throws Exception {
         
         PatchLoader loader = new PatchLoader( new File( 'patches/eclipse-3.7.0.patches' ) )
         
@@ -42,7 +42,7 @@ ReplaceDependencies( defaultProfile=m4e.orbit, profile=m4e.maven-central, replac
     }
     
     @Test
-    public void testDuplicateReplacements() throws Exception {
+    void testDuplicateReplacements() throws Exception {
         PatchLoader loader = new PatchLoader( '''\
 replace( 'a:b:1', 'x:y:1' )
 replace( 'a:b:1', 'x:y:2' )
@@ -55,4 +55,40 @@ replace( 'a:b:1', 'x:y:2' )
             assertEquals( "Found duplicate replace a:b:1 in patch '{set.source}'".toString(), e.message )
         }
     }
+    
+    @Test
+    void testMoxyPOM() throws Exception {
+        loadAndPatch( 'org.eclipse.persistence.moxy-2.1.2.pom' )
+    }
+    
+    @Test
+    void testBirtPOM() throws Exception {
+        loadAndPatch( 'org.eclipse.birt.core-2.6.2.pom' )
+    }
+    
+    void loadAndPatch( String fileName ) throws Exception {
+        MopSetup.setup()
+        
+        PatchCmd cmd = new PatchCmd()
+        cmd.loadPatches( 'patches/eclipse-3.6.2.patches' )
+        
+        def file = new File( 'data/input', fileName )
+        def expectedFile = new File( 'data/expected', fileName )
+        
+        def dir = new File( 'tmp' )
+        dir.makedirs()
+        
+        def copy = new File( dir, fileName )
+        file.copy( copy )
+        
+        cmd.patchPom( copy )
+        
+        assertTrue( copy.exists() )
+        
+        String actual = copy.getText( 'utf-8' )
+        String expected = expectedFile.getText( 'utf-8' )
+        
+        assertEquals( expected, actual )
+    }
+
 }

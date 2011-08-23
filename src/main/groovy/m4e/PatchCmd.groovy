@@ -21,12 +21,15 @@ import de.pdark.decentxml.XMLUtils;
 
 class PatchCmd extends AbstractCommand {
     
+    File target
+    PatchSet set
+    
     void run( String... args ) {
         if( args.size() == 1 ) {
             throw new UserError( 'Missing path to repository to patch' )
         }
 		
-		def target = new File( args[1] ).absoluteFile
+		target = new File( args[1] ).absoluteFile
 		if( !target.exists() ) {
 			throw new UserError( "Directory ${target} doesn't exist" )
 		}
@@ -35,11 +38,38 @@ class PatchCmd extends AbstractCommand {
 		log.debug( "Patches: ${patches}" )
 		log.debug( "Target: ${target}" )
 
-		def set = loadPatches( patches )
+		loadPatches( patches )
+        
+        applyPatches( target )
+    }
+    
+    void applyPatches( File dir ) {
+        dir.eachFile() {
+            if( it.isDirectory() ) {
+                applyPatches( dir )
+            } else if( it.name.endsWith( '.pom' ) ) {
+                patchPom( it )
+            }
+        }
+    }
+    
+    void patchPom( File file ) {
+        def pom = Pom.load( file )
+        def orig = pom.toString()
+        
+        set.apply( pom )
+        
+        def result = pom.toString()
+        if( result != orig ) {
+            new XmlFormatter( pom: pom ).format()
+            
+            log.debug( "Patched ${file}" )
+            pom.save( file )
+        }
     }
 
-	PatchSet loadPatches( String... patches ) {
-		def set = new PatchSet()
+	void loadPatches( String... patches ) {
+		set = new PatchSet()
 		
 		set.patches << new RemoveNonOptional()
 		set.patches << new StripQualifiers()
@@ -50,8 +80,6 @@ class PatchCmd extends AbstractCommand {
             
             set.patches << patch
         }
-		
-		return set
 	}
 }
 
