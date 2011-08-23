@@ -13,6 +13,8 @@ package m4e
 import java.util.regex.Pattern;
 import groovy.transform.ToString;
 import org.codehaus.groovy.control.CompilerConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import de.pdark.decentxml.Element;
 import de.pdark.decentxml.Node;
 import de.pdark.decentxml.XMLUtils;
@@ -40,6 +42,7 @@ class PatchCmd extends AbstractCommand {
 		def set = new PatchSet()
 		
 		set.patches << new RemoveNonOptional()
+		set.patches << new StripQualifiers()
         
         for( String patchName : patches ) {
             def loader = new PatchLoader( new File( patchName ).getAbsoluteFile() )
@@ -270,13 +273,84 @@ class ReplaceDependency {
 
 }
 
+class ProfileTool {
+    Pom pom
+    String defaultProfileName
+    String profileName
+    
+    Profile defaultProfile
+    Profile profile
+    
+    void replaceDependency( Dependency dependency, PatchDependency replacement ) {
+        if( !defaultProfile ) {
+            createProfiles()
+        }
+        
+        defaultProfile.addDependency( dependency )
+        
+        def dep = createDependency( replacement )
+        profile.addDependency( dep )
+    }
+    
+    void createProfiles() {
+        defaultProfile = pom.profile( defaultProfileName )
+        defaultProfile.activeByDefault( true )
+        
+        profile = pom.profile( profileName )
+    }
+    
+    Dependency createDependency( PatchDependency replacement ) {
+        def xml = new Element( 'dependency' )
+        
+        for( String field in ['groupId', 'artifactId', 'version', 'optional', 'scope'] ) {
+            def value = replacement.getProperty( field )
+            if( !value ) {
+                continue
+            }
+            
+            value = value.toString()
+            
+            PomUtils.getOrCreate( xml, field ).text = value
+        }
+        
+        return new Dependency( xml: xml, pom: pom )
+    }
+}
+
 class ReplaceDependencies extends Patch {
+    
+    final Logger log = LoggerFactory.getLogger( getClass() )
+    
     String defaultProfile
     String profile
     List<ReplaceDependency> replacements = []
+    Map<String, ReplaceDependency> replMap
+    
+    void init() {
+        replMap = [:]
+        replacements.each { replMap[it.pattern.key()] = it }
+        
+        println replMap.collect { it.toString() }.join('\n')
+    }
     
     void apply( Pom pom ) {
-        // TODO
+        if( !replMap ) {
+            init()
+        }
+        
+        def tool = new ProfileTool( pom: pom, defaultProfileName: defaultProfile, profileName: profile )
+        println tool.defaultProfileName
+        
+        pom.dependencies.each {
+             String key = it.key()
+             
+             def replacer = replMap[key]
+             if( replacer ) {
+                 log.debug( 'Found {} in {}', key, pom.source )
+                 
+                 tool.replaceDependency( it, replacer.replacement )
+             }
+        }
     }
     
     String toString() {

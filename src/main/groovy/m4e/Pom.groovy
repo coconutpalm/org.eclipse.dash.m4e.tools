@@ -53,19 +53,24 @@ class ListNode {
 }
 
 class Pom extends PomElement {
+    
+    String source
 
 	public static load( def input ) {
+        String source
 		if( input instanceof String ) {
+            source = "<String>"
 			input = new XMLStringSource( input )
 		}
 		if( input instanceof File ) {
+            source = input.absolutePath
 			input = new XMLInputStreamReader( input.newInputStream() )
 		}
 		
 		XMLParser parser = new XMLParser();
 		def doc = parser.parse( input )
 		
-        def pom = new Pom( doc: doc )
+        def pom = new Pom( doc: doc, source: source )
         pom.init()
 		return pom
 	}
@@ -100,11 +105,41 @@ class Pom extends PomElement {
             Dependency.wrap( it )
         }
     }
+    
+    Profile profile( String name ) {
+        def profiles = PomUtils.getOrCreate( xml, 'profiles' )
+        def profile = profiles.getChildren( 'profile' ).find {
+            def id = it.getChild( 'id' )
+            return id.text == name
+        }
+//        println "name=${name} profile=${profile}"
+        
+        if( profile ) {
+            return new Profile( xml: profile, pom: this )
+        }
+        
+        return createNewProfile( profiles, name )
+    }
+    
+    private Profile createNewProfile( Element profiles, String name ) {
+        def xml = new Element( 'profile' )
+        profiles.addNode( xml )
+        
+        def id = PomUtils.getOrCreate( xml, 'id' )
+        id.text = name
+        
+        def profile = new Profile( xml: xml, pom: this )
+        profile.activeByDefault( false )
+        
+        PomUtils.getOrCreate( xml, 'dependencies' )
+        
+        return profile
+    }
 }
 
 class PomUtils {
     static void removeWithIndent( Element e ) {
-        if( !e ) {
+        if( !e || !e.parentElement ) {
             return
         }
         
@@ -117,6 +152,28 @@ class PomUtils {
             }
         }
         e.remove()
+    }
+    
+    static int getLevel( Element e ) {
+        int level = 0
+        
+        while( e ) {
+            e = e.getParentElement()
+            level ++
+        }
+        
+        return -- level
+    }
+    
+    static Element getOrCreate( Element e, String name ) {
+        Element child = e.getChild( name )
+        
+        if( !child ) {
+            child = new Element( name )
+            e.addNode( child )
+        }
+        
+        return child
     }
 }
 
@@ -144,5 +201,145 @@ class Dependency extends PomElement {
         }
         
         return new Dependency( xml: e.xml, pom: e.pom )
+    }
+}
+
+class Profile extends PomElement {
+    static final ListNode DEPENDENCIES = Pom.DEPENDENCIES
+    
+    List<Dependency> getDependencies() {
+        return list( DEPENDENCIES ).collect() {
+            Dependency.wrap( it )
+        }
+    }
+    
+    void addDependency( Dependency d ) {
+        d.remove()
+        xml( DEPENDENCIES ).addNode( d.xml )
+    }
+    
+    void activeByDefault( boolean value ) {
+        def activation = PomUtils.getOrCreate( xml, 'activation' )
+        def activeByDefault = PomUtils.getOrCreate( activation, 'activeByDefault')
+        activeByDefault.text = Boolean.toString( value )
+    }
+    
+    void cleanUp() {
+        def activation = xml.getChild( 'activation' )
+        if( null == activation ) {
+            return
+        }
+        
+        def activeByDefault = activation.getChild( 'activeByDefault' )
+        if( null == activeByDefault || activeByDefault.text == 'true' ) {
+            return
+        }
+        
+        PomUtils.removeWithIndent( activation )
+    }
+    
+    String getId() {
+        def id = xml.getChild( 'id' )
+        return id ? id.text : null
+    }
+    
+    @Override
+    public String toString() {
+        return "Profile( ${id} )";
+    }
+}
+
+class XmlFormatter {
+    Pom pom
+    
+    void format() {
+        pom.xml.getChild( 'profiles' )?.getChildren( 'profile' ).each {
+            Profile p = new Profile( xml: it, pom: pom )
+            p.cleanUp()
+        }
+        
+        format( pom.xml )
+    }
+    
+    void format( Element e ) {
+        int level = PomUtils.getLevel( e ) + 1
+        String indent = '\n' + '  ' * level
+        
+        int N = e.nodeCount()
+//        println "level=${level} N=${N} ${e.name}"
+        
+        // Must work backwards because indentElement() adds new nodes
+        for( int i=N-1; i>=0; i-- ) {
+            Node n = e.getNode( i )
+            
+            if( XMLUtils.isElement( n ) ) {
+                indentElement( e, i, n, indent )
+            }
+        }
+        
+        N = e.nodeCount()
+        if( N > 0 ) {
+            indent = '\n' + '  ' * ( level - 1 )
+            
+            Node n = e.getNode( N - 1 )
+            if( XMLUtils.isElement( n ) ) {
+//                println "Indent closing element ${e.name}"
+                def textNode = new Text( indent )
+                e.addNode( textNode )
+            } else if( XMLUtils.isText( n ) ) {
+                String text = n.text
+                if( !text.endsWith( indent ) ) {
+                    if( n.isWhitespace() ) {
+                        n.text = indent
+                    } else {
+                        // Do nothing; this would modify text nodes like '<profile>id</profile>'
+                    }
+                }
+            }
+        }
+    }
+    
+    void indentElement( Element parent, int index, Element e, String indent ) {
+        boolean addNode = true
+        
+        if( index > 0 ) {
+            Node previous = parent.getNode( index - 1 )
+            
+            if( XMLUtils.isText( previous ) ) {
+                String text = previous.text
+//                println "indent ${e.name} text=${escape(text)} indent=${escape(indent)} ws=${previous.isWhitespace()}"
+                if( text.endsWith( indent ) ) {
+//                    println '  same'
+                    addNode = false
+                } else if( previous.isWhitespace() ) {
+//                    println '  reuse'
+                    previous.text = indent
+                    addNode = false
+                }
+            }
+        }
+        
+        if( addNode ) {
+            def textNode = new Text( indent )
+            parent.addNode( index, textNode )
+        }
+        
+        format( e )
+    }
+    
+    String escape( String text ) {
+        StringBuilder buffer = new StringBuilder()
+        for( int i=0; i<text.size(); i++ ) {
+            char c = text[i]
+            
+            switch( c ) {
+                case '\n': buffer.append( '\\n' ); break
+                case '\r': buffer.append( '\\r' ); break
+                case '\t': buffer.append( '\\t' ); break
+                default: buffer.append( c )
+            }
+        }
+        
+        return buffer.toString()
     }
 }
