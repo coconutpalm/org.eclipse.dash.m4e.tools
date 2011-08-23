@@ -21,6 +21,24 @@ class PomElement {
             return e == null ? null : e.trimmedText
     }
     
+    void value( TextNode node, String text ) {
+        Element e = xml( node )
+        if( e == null ) {
+            if( !text ) {
+                return
+            }
+            
+            e = PomUtils.getOrCreate( xml, node.name )
+            e.text = text
+        } else {
+            if( !text ) {
+                PomUtils.removeWithIndent( e )
+            } else {
+                e.text = text
+            }
+        }
+    }
+    
     List list( ListNode node ) {
         def result = xml.getChild( node.name )?.getChildren( node.child ).collect {
             new PomElement( pom: this.pom, xml: it )
@@ -64,7 +82,7 @@ class Pom extends PomElement {
 		}
 		if( input instanceof File ) {
             source = input.absolutePath
-			input = new XMLInputStreamReader( input.newInputStream() )
+			input = new XMLIOSource( input )
 		}
 		
 		XMLParser parser = new XMLParser();
@@ -86,12 +104,27 @@ class Pom extends PomElement {
     
 	void save( File file ) {
 		
-		XMLWriter writer = new XMLWriter( new OutputStreamWriter( new FileOutputStream( file ), doc.encoding ) )
+        String path = file.absolutePath
+        
+        File tmp = new File( path + '.tmp' )
+        File bak = new File( path + '.bak' )
+        
+		XMLWriter writer = new XMLWriter( new OutputStreamWriter( new FileOutputStream( tmp ), doc.encoding ?: 'utf-8' ) )
 		try {
 			doc.toXML( writer )
 		} finally {
 			writer.close()
 		}
+        
+        if( bak.exists() ) {
+            bak.usefulDelete()
+        }
+        
+        if( file.exists() ) {
+            file.usefulRename( bak )
+        }
+
+        tmp.usefulRename( file )
 	}
 	
 	String toString() {
