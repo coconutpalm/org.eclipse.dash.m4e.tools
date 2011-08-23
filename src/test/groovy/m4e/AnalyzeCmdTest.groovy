@@ -39,8 +39,8 @@ class AnalyzeCmdTest {
         Analyzer tool = new Analyzer( copy, cal )
         tool.run()
         
-        String expected = new File( 'data/expected/repo1-analysis-19700101-000000.html' ).getText( 'utf-8' )
-        String actual = tool.reportFile.getText( 'utf-8' )
+        String expected = new File( 'data/expected/repo1-analysis-19700101-000000.html' ).getText( 'utf-8' ).normalize().trim()
+        String actual = tool.reportFile.getText( 'utf-8' ).normalize().trim()
         
         assertEquals( expected, actual )
     }
