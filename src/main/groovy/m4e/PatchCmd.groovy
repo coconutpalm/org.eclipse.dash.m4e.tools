@@ -362,7 +362,7 @@ class ReplaceDependencies extends Patch {
         replMap = [:]
         replacements.each { replMap[it.pattern.key()] = it }
         
-        println replMap.collect { it.toString() }.join('\n')
+//        println replMap.collect { it.toString() }.join('\n')
     }
     
     void apply( Pom pom ) {
@@ -371,7 +371,7 @@ class ReplaceDependencies extends Patch {
         }
         
         def tool = new ProfileTool( pom: pom, defaultProfileName: defaultProfile, profileName: profile )
-        println tool.defaultProfileName
+//        println tool.defaultProfileName
         
         pom.dependencies.each {
              String key = it.key()
