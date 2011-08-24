@@ -20,7 +20,7 @@ class Tool {
     
     static final Logger log = LoggerFactory.getLogger( Tool )
     
-    static String VERSION = "0.2 (25.07.2011)"
+    static String VERSION = "0.9 (24.08.2011)"
     
     File workDir = new File( "tmp" ).absoluteFile
     
@@ -36,7 +36,7 @@ class Tool {
     ]
     
     void run( String... args ) {
-        log.debug( "mt4e ${VERSION}" )
+        log.info( "mt4e ${VERSION}" )
         log.debug( "workDir={}", workDir )
         log.debug( "args[${args.size()}]: {}", args )
         
