@@ -31,6 +31,7 @@ class Tool {
         new CmdInfo( names: ['attach-sources', 'as', 'attach', 'sources'], impl: AttachSourcesCmd, 
             description: '''directories...\n- Source for source JARs and move them in the right place for Maven 2'''),
         new CmdInfo( names: ['apply-patches', 'patch', 'ap'], impl: PatchCmd, description: PatchCmd.DESCRIPTION ),
+        new CmdInfo( names: ['analyze', 'an'], impl: AnalyzeCmd, description: AnalyzeCmd.DESCRIPTION ),
         new CmdInfo( names: ['clean'], description: '\n- Clean the work directory', impl: CleanCmd),
     ]
     

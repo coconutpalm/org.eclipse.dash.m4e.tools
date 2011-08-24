@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 class AnalyzeCmd extends AbstractCommand {
         
     static final String DESCRIPTION = '''\
-repository - Check a Maven 2 repository for problems
+repository - Check a converted Maven 2 repository for various problems
 '''
         
     void run( String... args ) {
