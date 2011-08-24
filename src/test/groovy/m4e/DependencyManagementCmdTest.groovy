@@ -20,7 +20,7 @@ class DependencyManagementCmdTest {
         DependencyManagementCmd tool = new DependencyManagementCmd()
         
         List<String> errors = []
-        def log = [ error: { errors << it } ] as Logger
+        def log = [ error: { errors << it }, info: {} ] as Logger
         tool.log = log
         
         tool.run([ 'dm', copy.path, 'org.eclipse.dash:dependency-management:3.7.0' ])

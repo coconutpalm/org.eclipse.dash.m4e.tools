@@ -22,7 +22,8 @@ import de.pdark.decentxml.XMLUtils;
 class PatchCmd extends AbstractCommand {
     
     static final String DESCRIPTION = '''\
-target patches... - Apply the patches to the target repository. Patches can be scripts or directories with scripts.
+target patches...
+- Apply the patches to the target repository. Patches can be scripts or directories with scripts.
 '''
     
     File target

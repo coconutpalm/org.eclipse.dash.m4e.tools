@@ -12,7 +12,11 @@ package m4e
 
 class ConvertCmd extends AbstractCommand {
 
-    final static String DESCRIPTION = 'groupId:artifactId:version\n- Convert everything in the directory "downloads" into one big Maven repository\n\nThe argument is used to create a POM file with a dependencyManagement element.'
+    final static String DESCRIPTION = '''\
+groupId:artifactId:version patches...
+- Convert everything in the directory "downloads" into one big Maven repository
+    
+The first argument is used to create a POM file with a dependencyManagement element.'''
     
     void run( String... args ) {
         File downloads = new File( 'downloads' ).absoluteFile
@@ -29,6 +33,8 @@ class ConvertCmd extends AbstractCommand {
         log.info( "Converting everything in ${downloads} into ${targetRepo}" )
 
         checkDependencyManagementInfo( args[1] )
+        
+        List<String> patches = args[2..<args.size()] as List
                 
         importArchives( downloads )
         
@@ -36,17 +42,16 @@ class ConvertCmd extends AbstractCommand {
         
         attachSources()
         
-        // TODO Apply patches
-        // TODO Analyze
-        // TODO Create DM
+        applyPatches( patches )
+        
+        analyze()
+        
+        createDependencyManagement()
         
         log.info( "The converted Maven repository can be found here: ${targetRepo}" )
     }
     
-    String groupId
-    String artifactId
-    String version
-    File dmPath
+    String dmInfo
     
     void checkDependencyManagementInfo( String info ) {
         String[] parts = info.split( ':' )
@@ -54,16 +59,7 @@ class ConvertCmd extends AbstractCommand {
             throw new UserError( "Expected argument format 'groupId:artifactId:version' but was '${info}'" )
         }
         
-        groupId = parts[0]
-        artifactId = parts[1]
-        version = parts[2]
-        
-        dmPath = new File( targetRepo, groupId.replace( '.', '/' ) )
-        dmPath = new File( dmPath, artifactId )
-        dmPath = new File( dmPath, version )
-        dmPath = new File( dmPath, "${artifactId}-${version}.pom" )
-        
-        log.info( "Will write dependencyManagement info to ${dmPath}" )
+        dmInfo = info
     }
     
     File targetRepo
@@ -102,5 +98,23 @@ class ConvertCmd extends AbstractCommand {
     void attachSources() {
         def cmd = new AttachSourcesCmd( workDir: workDir )
         cmd.run( 'as', targetRepo.absolutePath )
+    }
+    
+    void applyPatches( List<String> patches ) {
+        List args = [ 'ap', targetRepo.absolutePath ]
+        args << patches
+        
+        def cmd = new PatchCmd( workDir: workDir )
+        cmd.run( args as String[] )
+    }
+    
+    void analyze() {
+        def cmd = new AnalyzeCmd( workDir: workDir )
+        cmd.run( 'an', targetRepo.absolutePath )
+    }
+    
+    void createDependencyManagement() {
+        def cmd = new DependencyManagementCmd( workDir: workDir )
+        cmd.run( 'dm',  targetRepo.absolutePath, dmInfo )
     }
 }

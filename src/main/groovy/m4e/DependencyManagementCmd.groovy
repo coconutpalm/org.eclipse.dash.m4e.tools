@@ -19,7 +19,8 @@ import org.slf4j.LoggerFactory;
 class DependencyManagementCmd extends AbstractCommand {
         
     static final String DESCRIPTION = '''\
-repository groupId:artifactId:version - Create a POM with a huge dependencyManagement element that contains all the versions of all the artifacts in the repository
+repository groupId:artifactId:version
+- Create a POM with a huge dependencyManagement element that contains all the versions of all the artifacts in the repository
 '''
     
     File repo
@@ -45,6 +46,8 @@ repository groupId:artifactId:version - Create a POM with a huge dependencyManag
         String key = args[2]
         
         dmPom = MavenRepositoryTools.buildPath( repo, key, 'pom' )
+        
+        log.info( "Will write dependencyManagement info to ${dmPom}" )
         
         String[] parts = key.split( ':', -1 )
         groupId = parts[0]

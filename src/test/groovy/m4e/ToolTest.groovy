@@ -23,11 +23,11 @@ class ToolTest {
     }
 
     final static String HELP_OUTPUT = '''\
-convert groupId:artifactId:version
+convert groupId:artifactId:version patches...
     - Convert everything in the directory "downloads" into one big Maven
     repository
 
-    The argument is used to create a POM file with a dependencyManagement
+    The first argument is used to create a POM file with a dependencyManagement
     element.
 [ install | in ] archives...
     - Extract the specified archives and convert the Eclipse plug-ins inside
@@ -38,13 +38,14 @@ convert groupId:artifactId:version
     For safety reasons, destination must not exist.
 [ attach-sources | as | attach | sources ] directories...
     - Source for source JARs and move them in the right place for Maven 2
-[ apply-patches | patch | ap ] target patches... - Apply the patches to the
-    target repository. Patches can be scripts or directories with scripts.
-[ analyze | an ] repository - Check a converted Maven 2 repository for various
-    problems
-[ dependency-management | dm ] repository groupId:artifactId:version - Create a
-    POM with a huge dependencyManagement element that contains all the versions
-    of all the artifacts in the repository
+[ apply-patches | patch | ap ] target patches...
+    - Apply the patches to the target repository. Patches can be scripts or
+    directories with scripts.
+[ analyze | an ] repository
+    - Check a converted Maven 2 repository for various problems
+[ dependency-management | dm ] repository groupId:artifactId:version
+    - Create a POM with a huge dependencyManagement element that contains all
+    the versions of all the artifacts in the repository
 clean
     - Clean the work directory''' 
     
