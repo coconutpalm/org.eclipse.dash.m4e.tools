@@ -95,25 +95,28 @@ target patches...
     
     void deleteArtifacts() {
         for( String pattern in artifactsToDelete ) {
-            File path = MavenRepositoryTools.buildPath( target, pattern )
-            
-            deleteRecursively( path )
+            deleteRecursively( pattern )
         }
     }
     
-    void deleteRecursively( File path ) {
+    void deleteRecursively( String pattern ) {
+        File path = MavenRepositoryTools.buildPath( target, pattern )
+            
         if( !path.exists() ) {
             return
         }
         
-        log.info( 'Deleting {}', path )
+        log.info( 'Deleting artifact {}', pattern )
+        count ++
+        
+        log.debug( 'Deleting {}', path )
         assert path.deleteDir()
         
         // Delete empty parent folders
         File parent = path.parentFile
         while( parent && parent != target ) {
             if( parent.list().size() == 0 ) {
-                log.info( 'Deleting {} because it\' emtpy', parent )
+                log.debug( 'Deleting {} because it\' emtpy', parent )
                 assert parent.delete()
             }
             
