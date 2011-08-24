@@ -102,4 +102,4 @@ replace('org.w3c.css:org.w3c.css.sac:1.3.0', 'org.w3c.css:sac:1.3')
 //replace('org.w3c.dom:org.w3c.dom.svg:1.1.0', '')
 replace('org.w3c.sac:org.w3c.sac:1.3.0', 'org.w3c.css:sac:1.3')
 
-delete('system.bundle:system.bundle:[0,)')
+deleteDependency('system.bundle:system.bundle:[0,)')
