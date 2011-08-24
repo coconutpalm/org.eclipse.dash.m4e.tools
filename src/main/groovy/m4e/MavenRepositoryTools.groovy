@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 24.08.2011 Aaron Digulla.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Aaron Digulla - initial API and implementation and/or initial documentation
+ *******************************************************************************/
 package m4e
 
 class MavenRepositoryTools {
@@ -27,5 +37,15 @@ class MavenRepositoryTools {
         name += '.' + ext
         File file = new File( dir, name )
         return file
+    }
+    
+    static void eachPom( File repo, Closure c ) {
+        repo.eachFile() { File it ->
+            if( it.isDirectory() ) {
+                eachPom( it, c )
+            } else if( it.name.endsWith( '.pom' ) ){
+                c.call( it )
+            }
+        }
     }
 }
