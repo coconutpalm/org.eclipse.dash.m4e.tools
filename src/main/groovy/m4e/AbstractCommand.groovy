@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 abstract class AbstractCommand {
 
-    final Logger log = LoggerFactory.getLogger( getClass() )
+    Logger log = LoggerFactory.getLogger( getClass() )
     
     File workDir
     
