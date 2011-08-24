@@ -258,7 +258,7 @@ tr:hover { background-color: #D0E0FF; }
     
     void checkDifferentVersions() {
         for( def entry in versionBackRefsMap.entrySet() ) {
-            println "${entry.key} -> ${entry.value.keySet()}"
+//            println "${entry.key} -> ${entry.value.keySet()}"
             
             if( entry.value.size() <= 1 ) {
                 continue
