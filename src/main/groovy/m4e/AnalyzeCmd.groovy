@@ -107,6 +107,7 @@ class Analyzer {
 .pom { font-weight: bold; color: #7F0055; font-family: monospace; }
 .dependency { font-weight: bold; color: #55007F; font-family: monospace; }
 .version { font-weight: bold; color: #007F55; font-family: monospace; }
+.file { font-weight: bold; color: #00557F; font-family: monospace; }
 .files { font-style: italic; }
 .padLeft { padding-left: 10px; }
 tr:hover { background-color: #D0E0FF; }
