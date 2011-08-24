@@ -13,12 +13,19 @@
 
 # Helper script to run the result of "mvn install" 
 
+[[ -e "$PWD/target/classes" ]] || { echo "Missing classes; did you compile?" ; exit 1 ; }
+
+M2_REPO="$HOME/.m2/repository"
+DECENT_XML="${M2_REPO}/de/pdark/decentxml/1.4-SNAPSHOT/decentxml-1.4-SNAPSHOT.jar"
+
+[[ -e "$DECENT_XML" ]] || { echo "Missing JARs; did you compile?" ; exit 1 ; }
+
 java -Dfile.encoding=UTF-8 \
 -classpath \
 $PWD/target/classes:\
-$HOME/.m2/repository/org/slf4j/slf4j-api/1.6.1/slf4j-api-1.6.1.jar:\
-$HOME/.m2/repository/ch/qos/logback/logback-core/0.9.29/logback-core-0.9.29.jar:\
-$HOME/.m2/repository/ch/qos/logback/logback-classic/0.9.29/logback-classic-0.9.29.jar:\
-$HOME/.m2/repository/org/codehaus/groovy/groovy-all/1.8.1/groovy-all-1.8.1.jar:\
-$HOME/.m2/repository/de/pdark/decentxml/1.4-SNAPSHOT/decentxml-1.4-SNAPSHOT.jar \
+${M2_REPO}/org/slf4j/slf4j-api/1.6.1/slf4j-api-1.6.1.jar:\
+${M2_REPO}/ch/qos/logback/logback-core/0.9.29/logback-core-0.9.29.jar:\
+${M2_REPO}/ch/qos/logback/logback-classic/0.9.29/logback-classic-0.9.29.jar:\
+${M2_REPO}/org/codehaus/groovy/groovy-all/1.8.1/groovy-all-1.8.1.jar:\
+${DECENT_XML} \
 m4e.Tool "$@"
