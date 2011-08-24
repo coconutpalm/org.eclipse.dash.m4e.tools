@@ -308,11 +308,14 @@ tr:hover { background-color: #D0E0FF; }
     }
     
     void checkMissingDependencies() {
-        for( def entry in dependencyUsage.entrySet() ) {
-            def pom = pomByShortKey[entry.key]
+	List<String> keys = new ArrayList( dependencyUsage.keySet() )
+	keys.sort()
+
+        for( def key in keys ) {
+            def pom = pomByShortKey[key]
             
             if( !pom ) {
-                problems << new MissingDependency( entry.key, entry.value )
+                problems << new MissingDependency( key, dependencyUsage[key] )
             }
         }
     }
@@ -734,6 +737,10 @@ class MissingDependency extends Problem {
         
         this.key = key
         this.poms = poms
+    }
+
+    String sortKey() {
+	return key
     }
     
     @Override
