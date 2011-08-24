@@ -47,7 +47,9 @@ target patches...
 
 		loadPatches( patches )
         
-        MavenRepositoryTools.eachPom(target ) {
+        deleteArtifacts()
+        
+        MavenRepositoryTools.eachPom( target ) {
             patchPom( it )
         }
         
@@ -72,6 +74,8 @@ target patches...
             count ++
         }
     }
+    
+    List<String> artifactsToDelete = []
 
 	void loadPatches( String... patches ) {
 		set = new PatchSet()
@@ -84,14 +88,45 @@ target patches...
             def patch = loader.load()
             
             set.patches << patch
+            
+            artifactsToDelete.addAll( loader.artifactsToDelete )
         }
 	}
+    
+    void deleteArtifacts() {
+        for( String pattern in artifactsToDelete ) {
+            File path = MavenRepositoryTools.buildPath( target, pattern )
+            
+            deleteRecursively( path )
+        }
+    }
+    
+    void deleteRecursively( File path ) {
+        if( !path.exists() ) {
+            return
+        }
+        
+        log.info( 'Deleting {}', path )
+        assert path.deleteDir()
+        
+        // Delete empty parent folders
+        File parent = path.parentFile
+        while( parent && parent != target ) {
+            if( parent.list().size() == 0 ) {
+                log.info( 'Deleting {} because it\' emtpy', parent )
+                assert parent.delete()
+            }
+            
+            parent = parent.parentFile
+        }
+    }
 }
 
 class PatchLoader {
     
     File file
     String text
+    List<String> artifactsToDelete = []
     
     PatchLoader( File file ) {
         if( !file.exists() ) {
@@ -120,6 +155,7 @@ class PatchLoader {
         
         set = inst.set
         set.source = file ? file.absolutePath : 'JUnit test'
+        artifactsToDelete = inst.artifactsToDelete
         
         replacer = inst.replacer
         
@@ -161,6 +197,8 @@ abstract class PatchScript extends Script {
 
     ReplaceDependencies replacer = new ReplaceDependencies()
     
+    List<String> artifactsToDelete = []
+    
     void defaultProfile( String name ) {
         replacer.defaultProfile = name
     }
@@ -178,8 +216,12 @@ abstract class PatchScript extends Script {
         replacer.replacements << rd
     }
     
-    void delete( String pattern ) {
+    void deleteDependency( String pattern ) {
         set.patches << new DeleteDependency( key: pattern )
+    }
+    
+    void deleteArtifact( String pattern ) {
+        artifactsToDelete << pattern
     }
 }
 
