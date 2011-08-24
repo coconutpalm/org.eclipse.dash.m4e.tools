@@ -37,8 +37,8 @@ class DependencyManagementCmdTest {
         
         // the output depends on the ordering of files in the file system
         // Do some search'n'replace to always get the same order
-        actual = actual.replace( '3.5.0 and 3.6.0. Omitting 3.5.0', '3.6.0 and 3.5.0. Omitting 3.6.0' )
+        actual = actual.replace( '3.5.0 and 3.6.0.', '3.6.0 and 3.5.0.' )
         
-        assertEquals( 'The repository contains two versions of org.eclipse.core:org.eclipse.core.runtime: 3.6.0 and 3.5.0. Omitting 3.6.0', errors.join( '\n' ) )
+        assertEquals( 'The repository contains (at least) two versions of org.eclipse.core:org.eclipse.core.runtime: 3.6.0 and 3.5.0. Omitting both.', errors.join( '\n' ) )
     }
 }

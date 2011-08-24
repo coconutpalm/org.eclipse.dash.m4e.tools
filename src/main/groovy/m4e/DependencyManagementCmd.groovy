@@ -54,9 +54,46 @@ repository groupId:artifactId:version
         artifactId = parts[1]
         version = parts[2]
         
+	collectArtifacts()
         createPom()
     }
     
+    /** short key -> version */
+    Map<String, String> versions = [:]
+    Set<String> duplicates = []
+    
+    void collectArtifacts() {
+        MavenRepositoryTools.eachPom( repo ) {
+            if( dmPom != it ) {
+                def pom = Pom.load( it )
+		addPom( pom )
+
+            }
+        }
+    }
+
+    void addPom( Pom pom ) {
+	String groupId = pom.groupId()
+	String artifactId = pom.value( Pom.ARTIFACT_ID )
+	String version = pom.version()
+
+	String key = "${groupId}:${artifactId}"
+	if( key in duplicates ) {
+	    return
+	}
+
+	String old = versions.put( key, version )
+	if( null != old ) {
+	    duplicates << key
+	    versions.remove( key )
+	    twoVersionsError( pom, old )
+	}
+    }
+
+    void twoVersionsError( Pom pom, String oldVersion ) {
+        log.error( "The repository contains (at least) two versions of ${pom.shortKey()}: ${pom.version()} and ${oldVersion}. Omitting both." )
+    }
+
     void createPom() {
         dmPom.parentFile.makedirs()
         
@@ -76,7 +113,7 @@ repository groupId:artifactId:version
         <dependencies>
 """
 
-            writeDependencies( writer )            
+            writeDependencies( writer )
             
             writer << """\
         </dependencies>
@@ -93,35 +130,19 @@ repository groupId:artifactId:version
     }
     
     void writeDependencies( Writer writer ) {
-        MavenRepositoryTools.eachPom( repo ) {
-            if( dmPom != it ) {
-                def pom = Pom.load( it )
-                writeDependency( writer, pom )
-            }
-        }
-    }
-    
-    /** short key -> version */
-    Map<String, String> versions = [:]
-    
-    void writeDependency( Writer writer, Pom pom ) {
-        String version = pom.version()
-        String old = versions.put( pom.shortKey(), version )
-        if( null != old ) {
-            twoVersionsError( pom, old )
-            return
-        }
-        
-        writer << """\
+	List<String> keys = new ArrayList( versions.keySet() )
+	keys.sort()
+
+	for( String key : keys ) {
+	    String[] parts = key.split( ':', -1 )
+
+	    writer << """\
             <dependency>
-                <groupId>${pom.groupId()}</groupId>
-                <artifactId>${pom.value( Pom.ARTIFACT_ID )}</artifactId>
-                <version>${version}</version>
+                <groupId>${parts[0]}</groupId>
+                <artifactId>${parts[1]}</artifactId>
+                <version>${versions[key]}</version>
             </dependency>
 """
-    }
-    
-    void twoVersionsError( Pom pom, String oldVersion ) {
-        log.error( "The repository contains two versions of ${pom.shortKey()}: ${pom.version()} and ${oldVersion}. Omitting ${pom.version()}" )
+	}
     }
 }
