@@ -112,6 +112,7 @@ class Analyzer {
                 title titleText
                 
                 style( type: 'text/css', '''
+html, body { background: white; }
 .pom { font-weight: bold; color: #7F0055; font-family: monospace; }
 .dependency { font-weight: bold; color: #55007F; font-family: monospace; }
 .version { font-weight: bold; color: #007F55; font-family: monospace; }
@@ -121,6 +122,8 @@ class Analyzer {
 tr:hover { background-color: #D0E0FF; }
 .hidden { color: white; }
 .error { font-weight: bold; color: red; }
+.problem { border-left: 3px solid white; border-bottom: 1px solid #ccc; padding-left: 3px; }
+.problem:hover { border-left-color: #cccccc; }
 '''
                 )
                 
@@ -136,7 +139,7 @@ tr:hover { background-color: #D0E0FF; }
                 renderRepoAsHtml( builder )
                 
                 // Add some empty space below the page to make sure anchors can always scroll to the top
-                div( style: 'height: 100%;' ) {
+                div( style: 'height: 20em;' ) {
                     yield( '&nbsp;', false )
                 }
             }

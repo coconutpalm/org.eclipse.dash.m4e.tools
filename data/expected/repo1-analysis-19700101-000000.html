@@ -2,6 +2,7 @@
   <head>
     <title>Analysis of ${repo} (1970.01.01 00:00:00)</title>
     <style type='text/css'>
+html, body { background: white; }
 .pom { font-weight: bold; color: #7F0055; font-family: monospace; }
 .dependency { font-weight: bold; color: #55007F; font-family: monospace; }
 .version { font-weight: bold; color: #007F55; font-family: monospace; }
@@ -11,6 +12,8 @@
 tr:hover { background-color: #D0E0FF; }
 .hidden { color: white; }
 .error { font-weight: bold; color: red; }
+.problem { border-left: 3px solid white; border-bottom: 1px solid #ccc; padding-left: 3px; }
+.problem:hover { border-left-color: #cccccc; }
 </style>
   </head>
   <body>
@@ -369,6 +372,6 @@ tr:hover { background-color: #D0E0FF; }
         </td>
       </tr>
     </table>
-    <div style='height: 100%;'>&nbsp;</div>
+    <div style='height: 20em;'>&nbsp;</div>
   </body>
 </html>
