@@ -10,12 +10,13 @@
 .padLeft { padding-left: 10px; }
 tr:hover { background-color: #D0E0FF; }
 .hidden { color: white; }
+.error { font-weight: bold; color: red; }
 </style>
   </head>
   <body>
     <h1>Analysis of ${repo} (1970.01.01 00:00:00)</h1>
     <p>Found 6 POM files</p>
-    <p>Found 21 problems</p>
+    <p>Found 22 problems</p>
     <h2>Table of Contents</h2>
     <ul class='toc'>
       <li>
@@ -37,6 +38,9 @@ tr:hover { background-color: #D0E0FF; }
         <a href='#toc6'>Path Problems</a>
       </li>
       <li>
+        <a href='#toc7'>Missing Sources</a>
+      </li>
+      <li>
         <a href='#poms'>POMs in the repository</a>
       </li>
     </ul>
@@ -50,6 +54,11 @@ tr:hover { background-color: #D0E0FF; }
         </li>
         <li>
           <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.5.0</span>
+        </li>
+      </ul>These POMs are used in:
+      <ul>
+        <li>
+          <span class='pom'>org.eclipse.birt:org.eclipse.birt.core:2.6.1</span>
         </li>
       </ul>
     </div>
@@ -231,13 +240,13 @@ tr:hover { background-color: #D0E0FF; }
       <span class='dependency'>junit:junit</span> is used in 3 POMs:
       <ul>
         <li>
-          <span class='pom'>junit.test:snapshot-version:0.3.0-SNAPSHOT</span>
-        </li>
-        <li>
           <span class='pom'>junit.test:different-version:1.0</span>
         </li>
         <li>
           <span class='pom'>junit.test:missing-version:1.0</span>
+        </li>
+        <li>
+          <span class='pom'>junit.test:snapshot-version:0.3.0-SNAPSHOT</span>
         </li>
       </ul>
     </div>
@@ -284,6 +293,23 @@ tr:hover { background-color: #D0E0FF; }
       <span class='file'>${repo}/junit/test/different-versions/1.0/different-versions-1.0.pom</span>
     </div>
     <h2>
+      <a name='toc7'>Missing Sources</a>
+    </h2>
+    <div class='problem'>
+      <p>Missing sources for 3 artifacts</p>
+      <ul>
+        <li>
+          <span class='pom'>junit.test:missing-version:1.0</span>
+        </li>
+        <li>
+          <span class='pom'>junit.test:snapshot-version:0.3.0-SNAPSHOT</span>
+        </li>
+        <li>
+          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.5.0</span>
+        </li>
+      </ul>
+    </div>
+    <h2>
       <a name='poms'>POMs in the repository</a>
     </h2>
     <table border='0' cellspacing='0' cellpadding='0'>
@@ -299,7 +325,7 @@ tr:hover { background-color: #D0E0FF; }
           <span class='version'>1.0</span>
         </td>
         <td class='padLeft'>
-          <span class='files'> </span>
+          <span class='error'>No files found; check problems above</span>
         </td>
       </tr>
       <tr>

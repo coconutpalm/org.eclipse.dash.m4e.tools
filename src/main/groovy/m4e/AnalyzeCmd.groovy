@@ -62,6 +62,12 @@ class Analyzer {
             analyzePom( it )
         }
         
+        sortEverything()
+        
+        if( missingSource ) {
+            problems << new MissingSources( missingSource )
+        }
+        
         log.info( 'Found {} POM files. Looking for problems...', poms.size() )
         validate()
         
@@ -114,6 +120,7 @@ class Analyzer {
 .padLeft { padding-left: 10px; }
 tr:hover { background-color: #D0E0FF; }
 .hidden { color: white; }
+.error { font-weight: bold; color: red; }
 '''
                 )
                 
@@ -242,9 +249,15 @@ tr:hover { background-color: #D0E0FF; }
                     }
                     
                     td( 'class': 'padLeft' ) {
-                        span( 'class': 'files' ) {
-                            builder.yield( ' ', true )
-                            builder.yield( pom.files().join( ' ' ), true )
+                        def files = pom.files()
+                        
+                        if( files ) {
+                            span( 'class': 'files' ) {
+                                builder.yield( ' ', true )
+                                builder.yield( pom.files().join( ' ' ), true )
+                            }
+                        } else {
+                            span( 'class': 'error', 'No files found; check problems above' )
                         }
                     }
                 }
@@ -255,6 +268,28 @@ tr:hover { background-color: #D0E0FF; }
     void validate() {
         checkDifferentVersions()
         checkMissingDependencies()
+        
+        postProcessProblemSameKeyDifferentVersion()
+    }
+    
+    void postProcessProblemSameKeyDifferentVersion() {
+        for( def p in problems ) {
+            if( !(p instanceof ProblemSameKeyDifferentVersion ) ) {
+                continue
+            }
+            
+            Set<Pom> set = new HashSet<Pom>( nullToEmpty( dependencyUsage[p.pom.shortKey()] ) )
+            set.addAll( ( nullToEmpty( dependencyUsage[p.other.shortKey()] ) ) )
+            
+            List<Pom> list = new ArrayList( set )
+            list.sort() { it.key() }
+            
+            p.usedIn = list
+        }
+    }
+
+    List nullToEmpty( def list ) {
+        return null == list ? [] : list
     }
     
     void checkDifferentVersions() {
@@ -297,6 +332,27 @@ tr:hover { background-color: #D0E0FF; }
     /** short key -> versions -> poms */
     Map<String, Map<String, List<Pom>>> versionBackRefsMap = [:]
     
+    /** List of artifacts without source */
+    List<Pom> missingSource = []
+
+    void sortEverything() {
+        poms.sort() { it.key() }
+        
+        for( def item in dependencyUsage ) {
+            item.value.sort() { it.key() }
+        }
+        
+        problems.sort() { it.class.name + ':' + it.sortKey() }
+        
+        for( def backRefs in versionBackRefsMap ) {
+            for( def backRef in backRefs.value ) {
+                backRef.value.sort() { it.key() }
+            }
+        }
+        
+        missingSource.sort() { it.key() }
+    }
+    
     void analyzePom( File path ) {
         def pom = Pom.load( path )
         poms << pom
@@ -320,6 +376,11 @@ tr:hover { background-color: #D0E0FF; }
         }
         
         pomByShortKey[shortKey] = pom
+        
+        def files = pom.files()
+        if( files && !files.contains( 'sources' ) ) {
+            missingSource << pom
+        }
         
         for( def d in pom.dependencies ) {
             def depKey = d.shortKey()
@@ -376,6 +437,10 @@ class Problem {
             span( 'class': 'message',  message )
         }
     }
+    
+    String sortKey() {
+        return pom.key()
+    }
 }
 
 class ProblemVersionRange extends Problem {
@@ -400,6 +465,48 @@ class ProblemVersionRange extends Problem {
             yield( ' in POM ' )
             span( 'class': 'pom', pom.key() )
             yield( ' uses a version range' )
+        }
+    }
+}
+
+class MissingSources extends Problem {
+    
+    List<Pom> poms
+    
+    MissingSources( List<Pom> poms ) {
+        super( null, "${poms.size} artifacts are without sources" )
+        
+        this.poms = poms
+    }
+    
+    @Override
+    public String sortKey() {
+        return "MissingSources";
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder buffer = new StringBuilder()
+        buffer << message
+        buffer << ':\n'
+        
+        poms.each() {
+            buffer << "    ${it.key()}\n"
+        }
+        
+        return buffer;
+    }
+    
+    void render( MarkupBuilder builder ) {
+        builder.div( 'class': 'problem' ) {
+            p "Missing sources for ${poms.size()} artifacts"
+            ul {
+                for( def pom in poms ) {
+                    li {
+                        span( 'class': 'pom', pom.key() )
+                    }
+                }
+            }
         }
     }
 }
@@ -472,6 +579,7 @@ class ProblemSnaphotVersion extends Problem {
 class ProblemSameKeyDifferentVersion extends Problem {
     
     Pom other
+    List<Pom> usedIn = []
     
     ProblemSameKeyDifferentVersion( Pom pom, Pom other ) {
         super( pom, 'There is another POM with the same ID but a different version' )
@@ -493,6 +601,17 @@ class ProblemSameKeyDifferentVersion extends Problem {
                 }
                 li {
                     span( 'class': 'pom', other.key() )
+                }
+            }
+            
+            if( usedIn ) {
+                yield( 'These POMs are used in:', true )
+                ul {
+                    for( Pom pom in usedIn ) {
+                        li {
+                            span( 'class': 'pom', pom.key() )
+                        }
+                    }
                 }
             }
         }
@@ -538,6 +657,11 @@ class ProblemDifferentVersions extends Problem {
         this.versionBackRefs = versionBackRefs
     }
     
+    @Override
+    String sortKey() {
+        return dependency
+    }
+
     @Override
     public String toString() {
         def versions = new ArrayList( versionBackRefs.keySet() )
@@ -646,7 +770,8 @@ enum ProblemType {
     MissingDependency( 'Missing Dependencies', "The following dependencies are used in POMs in the repository but they couldn't be found in it." ),
     ProblemVersionRange( 'Dependencies With Version Ranges', 'Dependencies should not use version ranges.' ),
     ProblemSnaphotVersion( 'Snapshot Versions', 'Release Repositories should not contain SNAPSHOTs' ),
-    PathProblem( 'Path Problems', 'These POMs are not where they should be' )
+    PathProblem( 'Path Problems', 'These POMs are not where they should be' ),
+    MissingSources( 'Missing Sources', null )
     
     final String title
     final String description
