@@ -60,7 +60,7 @@ class Analyzer {
         
         analyzeDir( repo )
         
-        log.info( 'Found {} POM files. Looking for problems...', pomFiles.size() )
+        log.info( 'Found {} POM files. Looking for problems...', poms.size() )
         validate()
         
         log.info( 'Found {} problems. Generating report...', problems.size() )
@@ -73,7 +73,7 @@ class Analyzer {
     }
     
     void textReport() {
-        println "Found ${pomFiles.size()} POM files"
+        println "Found ${poms.size()} POM files"
         println "Found ${problems.size()} problems"
         
         for( def p in problems ) {
@@ -109,7 +109,7 @@ class Analyzer {
 .version { font-weight: bold; color: #007F55; font-family: monospace; }
 .files { font-style: italic; }
 .padLeft { padding-left: 10px; }
-tr:hover { background-color: #DFDEF7; }
+tr:hover { background-color: #D0E0FF; }
 .hidden { color: white; }
 '''
                 )
@@ -118,7 +118,7 @@ tr:hover { background-color: #DFDEF7; }
             body {
                 h1 titleText
                 
-                p "Found ${pomFiles.size()} POM files"
+                p "Found ${poms.size()} POM files"
                 p "Found ${problems.size()} problems"
                 
                 renderProblemsAsHtml( builder )
@@ -127,9 +127,9 @@ tr:hover { background-color: #DFDEF7; }
         }
     }
     
-    Map<String, String> renderToc( MarkupBuilder builder, List<String> keys ) {
+    Map<String, String> renderToc( MarkupBuilder builder, List<ProblemType> keys ) {
         
-        Map<String, String> problemTitle2Anchor = [:]
+        Map<ProblemType, String> problemTitle2Anchor = [:]
         
         builder.h2 'Table of Contents'
         
@@ -143,7 +143,7 @@ tr:hover { background-color: #DFDEF7; }
                 problemTitle2Anchor[key] = anchor
                 
                 li {
-                    a( href: "#${anchor}", key )
+                    a( href: "#${anchor}", key.title )
                 }
             }
             
@@ -156,14 +156,15 @@ tr:hover { background-color: #DFDEF7; }
     }
     
     void renderProblemsAsHtml( MarkupBuilder builder ) {
-        Map<String, List<Problem>> map = [:]
+        Map<ProblemType, List<Problem>> map = [:]
         
         for( def p in problems ) {
-            def list = map.get( p.htmlTitle, [] )
+            ProblemType type = ProblemType.byClass( p.class )
+            def list = map.get( type, [] )
             list << p
         }
         
-        List<String> keys = new ArrayList( map.keySet() )
+        List<ProblemType> keys = new ArrayList( map.keySet() )
         keys.sort()
         
         def problemTitle2Anchor = renderToc( builder, keys )
@@ -172,7 +173,11 @@ tr:hover { background-color: #DFDEF7; }
             def list = map[key]
             
             builder.h2 {
-                a( name: problemTitle2Anchor[key], key )
+                a( name: problemTitle2Anchor[key], key.title )
+            }
+            
+            if( key.description ) {
+                builder.p key.description
             }
             
             for( def p in list ) {
@@ -186,11 +191,17 @@ tr:hover { background-color: #DFDEF7; }
             a( name: 'poms', 'POMs in the repository' )
         }
         
-        def pomShortKeys = new ArrayList( pomByKey.keySet() )
+        def pomShortKeys = new ArrayList( pomByShortKey.keySet() )
         pomShortKeys.sort()
         
         builder.table( border: '0', cellspacing: '0', cellpadding: '0' ) {
             String currentLabel = ''
+            
+            tr {
+                th 'Group ID'
+                th 'Artifact ID + Version'
+                th 'Files'
+            }
             
             for( def shortKey in pomShortKeys ) {
                 String label = shortKey.substringBefore( ':' )
@@ -210,7 +221,7 @@ tr:hover { background-color: #DFDEF7; }
                         }
                     }
                     
-                    def pom = pomByKey[shortKey]
+                    def pom = pomByShortKey[shortKey]
                     def artifactId = pom.value( Pom.ARTIFACT_ID )
                     def version = pom.version()
                     
@@ -243,7 +254,7 @@ tr:hover { background-color: #DFDEF7; }
                 continue
             }
             
-            def pom = pomByKey[entry.key]
+            def pom = pomByShortKey[entry.key]
             if( !pom ) {
                 continue
             }
@@ -253,8 +264,8 @@ tr:hover { background-color: #DFDEF7; }
     }
     
     void checkMissingDependencies() {
-        for( def entry in dependencies.entrySet() ) {
-            def pom = pomByKey[entry.key]
+        for( def entry in dependencyUsage.entrySet() ) {
+            def pom = pomByShortKey[entry.key]
             
             if( !pom ) {
                 problems << new MissingDependency( entry.key, entry.value )
@@ -271,38 +282,43 @@ tr:hover { background-color: #DFDEF7; }
             }
         }
     }
+
+    /** List of all POMs in the repo */    
+    List<Pom> poms = []
     
-    // TODO rename to "poms"
-    List<Pom> pomFiles = []
-    // TODO rename to pomByShortKey
-    Map<String, Pom> pomByKey = [:]
+    /** shortKey -> POM */
+    Map<String, Pom> pomByShortKey = [:]
     
-    Map<String, List<Pom>> dependencies = [:]
+    /** shortKey or dependency -> list of POMs in which it is used */
+    Map<String, List<Pom>> dependencyUsage = [:]
     
+    /** All found problems */
     List<Problem> problems = []
+    
     /** All versions of a dependency */
     Map<String, Set<String>> versions = [:]
-    /** short key -> version -> poms */
+    
+    /** short key -> versions -> poms */
     Map<String, Map<String, List<Pom>>> versionBackRefsMap = [:]
     
     void analyzePom( File path ) {
         def pom = Pom.load( path )
-        pomFiles << pom
+        poms << pom
         
         log.debug( 'Analyzing {} {}', path, pom.key() )
         
         String shortKey = pom.shortKey()
-        Pom other = pomByKey[shortKey]
+        Pom other = pomByShortKey[shortKey]
         if( other ) {
             problems << new ProblemSameKeyDifferentVersion( pom, other )
         }
         
-        pomByKey[shortKey] = pom
+        pomByShortKey[shortKey] = pom
         
         for( def d in pom.dependencies ) {
             def depKey = d.shortKey()
             
-            def list = dependencies.get( depKey, [] )
+            def list = dependencyUsage.get( depKey, [] )
             list << pom
             
             String version = d.value( Dependency.VERSION )
@@ -322,7 +338,6 @@ tr:hover { background-color: #DFDEF7; }
 
 class Problem {
     Pom pom
-    String htmlTitle = 'Generic Problems'
     String message
     
     Problem( Pom pom, String message ) {
@@ -352,8 +367,6 @@ class ProblemSameKeyDifferentVersion extends Problem {
     ProblemSameKeyDifferentVersion( Pom pom, Pom other ) {
         super( pom, 'There is another POM with the same ID but a different version' )
         
-        htmlTitle = 'POMs with same ID but different version'
-        
         this.other = other
     }
     
@@ -364,7 +377,7 @@ class ProblemSameKeyDifferentVersion extends Problem {
     
     void render( MarkupBuilder builder ) {
         builder.div( 'class': 'problem' ) {
-            ['There are two POMs with the same ID but different version:']
+            yield( 'There are two POMs with the same ID but different version:', true )
             ul {
                 li {
                     span( 'class': 'pom', pom.key() )
@@ -386,8 +399,6 @@ class ProblemWithDependency extends Problem {
         super( pom, 'Missing version in dependency' )
         
         this.dependency = dependency
-        
-        htmlTitle = 'Problems With Dependencies'
     }
     
     @Override
@@ -415,8 +426,6 @@ class ProblemDifferentVersions extends Problem {
         super( pom, 'This dependency is referenced with different versions' )
         
         this.versionBackRefs = versionBackRefs
-        
-        htmlTitle = 'Dependencies With Different Versions'
     }
     
     @Override
@@ -487,8 +496,6 @@ class MissingDependency extends Problem {
         
         this.key = key
         this.poms = poms
-        
-        htmlTitle = 'Missing Dependencies'
     }
     
     @Override
@@ -505,9 +512,9 @@ class MissingDependency extends Problem {
     
     void render(MarkupBuilder builder) {
         builder.div( 'class': 'problem' ) {
-            [ 'The dependency ' ]
+            yield( 'The dependency ', true )
             span( 'class':'dependency', key )
-            [ " is used in ${poms.size} POMs but I can't find it in this M2 repo" ]
+            yield( " is used in ${poms.size} POMs:", true )
             
             ul {
                 for( def pom in poms ) {
@@ -518,4 +525,32 @@ class MissingDependency extends Problem {
             }
         }
 	}
+}
+
+enum ProblemType {
+    Problem( 'Generic Problems', null),
+    ProblemSameKeyDifferentVersion( 'POMs with same ID but different version', null),
+    ProblemWithDependency( 'Problems With Dependencies', null),
+    ProblemDifferentVersions( 'Dependencies With Different Versions', null),
+    MissingDependency( 'Missing Dependencies', "The following dependencies are used in POMs in the repository but they couldn't be found in it." )
+    
+    final String title
+    final String description
+    
+    private ProblemType( String title ) {
+        this( title, null )
+    }
+    
+    private ProblemType( String title, String description ) {
+        this.title = title
+        this.description = description
+    }
+    
+    public static ProblemType byClass( Class type ) {
+        ProblemType result = valueOf( type.simpleName )
+        if( null == result ) {
+            throw new RuntimeException( "Unknown type ${type.name}" )
+        }
+        return result
+    }
 }

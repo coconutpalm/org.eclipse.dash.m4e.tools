@@ -7,7 +7,7 @@
 .version { font-weight: bold; color: #007F55; font-family: monospace; }
 .files { font-style: italic; }
 .padLeft { padding-left: 10px; }
-tr:hover { background-color: #DFDEF7; }
+tr:hover { background-color: #D0E0FF; }
 .hidden { color: white; }
 </style>
   </head>
@@ -27,16 +27,17 @@ tr:hover { background-color: #DFDEF7; }
     <h2>
       <a name='toc1'>Missing Dependencies</a>
     </h2>
-    <div class='problem'>
-      <span class='dependency'>org.eclipse.core:org.eclipse.core.runtime</span>
+    <p>The following dependencies are used in POMs in the repository but they couldn't be found in it.</p>
+    <div class='problem'>The dependency 
+      <span class='dependency'>org.eclipse.core:org.eclipse.core.runtime</span> is used in 1 POMs:
       <ul>
         <li>
           <span class='pom'>org.eclipse.birt:org.eclipse.birt.core:2.6.1</span>
         </li>
       </ul>
     </div>
-    <div class='problem'>
-      <span class='dependency'>org.mozilla.javascript:org.mozilla.javascript</span>
+    <div class='problem'>The dependency 
+      <span class='dependency'>org.mozilla.javascript:org.mozilla.javascript</span> is used in 1 POMs:
       <ul>
         <li>
           <span class='pom'>org.eclipse.birt:org.eclipse.birt.core:2.6.1</span>
@@ -48,13 +49,18 @@ tr:hover { background-color: #DFDEF7; }
     </h2>
     <table border='0' cellspacing='0' cellpadding='0'>
       <tr>
+        <th>Group ID</th>
+        <th>Artifact ID + Version</th>
+        <th>Files</th>
+      </tr>
+      <tr>
         <td>org.eclipse.birt<span class='hidden'>:</span></td>
         <td>
           <span class='pom'>org.eclipse.birt.core</span><span class='hidden'>:</span>
           <span class='version'>2.6.1</span>
         </td>
         <td class='padLeft'>
-          <span class='files'>jar pom sources</span>
+          <span class='files'> jar pom sources</span>
         </td>
       </tr>
     </table>
