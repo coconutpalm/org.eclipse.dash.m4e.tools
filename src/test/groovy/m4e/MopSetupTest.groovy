@@ -38,6 +38,18 @@ class MopSetupTest {
     }
     
     @Test
+    public void testSubstringBefore() throws Exception {
+        assert 'aaa' == 'aaabx'.substringBefore( 'b' )
+        assert 'a' == 'abaabx'.substringBefore( 'b' )
+        assert 'aaabx' == 'aaabx'.substringBefore( 'xx' )
+        assert 'aaaby' == 'aaaby'.substringBefore( 'x' )
+        assert 'aaab' == 'aaaby'.substringBefore( 'y' )
+        assert '' == 'aaaby'.substringBefore( 'a' )
+        assert 'aaaby' == 'aaaby'.substringBefore( null )
+        assert 'aaaby' == 'aaaby'.substringBefore( '' )
+    }
+    
+    @Test
     public void testUnzip() throws Exception {
         File workDir = new File( tmpDir, "testUnzip" )
         assert workDir.deleteDir(), "Can't delete ${workDir}"
