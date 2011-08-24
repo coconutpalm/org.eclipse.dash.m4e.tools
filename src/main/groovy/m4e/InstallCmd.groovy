@@ -11,13 +11,13 @@
 
 package m4e
 
-import static PathUtils.*;
-import org.codehaus.groovy.runtime.ProcessGroovyMethods;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 class InstallCmd extends AbstractCommand {
 
+    final static String DESCRIPTION = '''archives...\n- Extract the specified archives and convert the Eclipse plug-ins inside into Maven artifacts'''
+    
     static final String MVN_VERSION = '3.0.3'
     def m3archive = "apache-maven-${MVN_VERSION}-bin.zip"
     def m3home

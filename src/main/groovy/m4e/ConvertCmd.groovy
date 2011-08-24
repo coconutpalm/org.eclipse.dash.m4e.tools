@@ -12,6 +12,8 @@ package m4e
 
 class ConvertCmd extends AbstractCommand {
 
+    final static String DESCRIPTION = 'groupId:artifactId:version\n- Convert everything in the directory "downloads" into one big Maven repository\n\nThe argument is used to create a POM file with a dependencyManagement element.'
+    
     void run( String... args ) {
         File downloads = new File( 'downloads' ).absoluteFile
         if( !downloads.exists() ) {

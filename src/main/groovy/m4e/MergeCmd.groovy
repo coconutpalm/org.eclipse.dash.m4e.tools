@@ -15,6 +15,8 @@ import java.io.File;
 
 class MergeCmd extends AbstractCommand {
     
+    final static String DESCRIPTION = '''directories... destination\n- Merge several Maven repositories into one.\n\nFor safety reasons, destination must not exist.'''
+    
     void run( String... args ) {
         if( args.size() == 1 ) {
             throw new UserError( 'Missing directories to merge' )

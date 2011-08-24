@@ -13,6 +13,8 @@ package m4e
 
 class AttachSourcesCmd extends AbstractCommand {
     
+    final static String DESCRIPTION = '''directories...\n- Source for source JARs and move them in the right place for Maven 2'''
+    
     int count
 
     void run( String... args ) {

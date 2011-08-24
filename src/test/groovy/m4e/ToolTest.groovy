@@ -44,6 +44,9 @@ convert groupId:artifactId:version
     target repository. Patches can be scripts or directories with scripts.
 [ analyze | an ] repository - Check a converted Maven 2 repository for various
     problems
+[ dependency-management | dm ] repository groupId:artifactId:version - Create a
+    POM with a huge dependencyManagement element that contains all the versions
+    of all the artifacts in the repository
 clean
     - Clean the work directory''' 
     
