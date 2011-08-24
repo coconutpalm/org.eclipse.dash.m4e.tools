@@ -17,8 +17,8 @@ class AnalyzeCmdTest {
         problem.render( builder )
         
         assertEquals( '''\
-<div class='problem'>
-  <span class='pom'>group:artifact:version</span>
+<div class='problem'>POM 
+  <span class='pom'>group:artifact:version</span> 
   <span class='message'>blabla</span>
 </div>''', buffer.toString() )
     }
@@ -40,7 +40,7 @@ class AnalyzeCmdTest {
         tool.run()
         
         String expected = new File( 'data/expected/repo1-analysis-19700101-000000.html' ).getText( 'utf-8' ).normalize().trim()
-        String actual = tool.reportFile.getText( 'utf-8' ).normalize().trim()
+        String actual = tool.reportFile.getText( 'utf-8' ).normalize().trim().replace( tool.repo.path, '${repo}' )
         
         assertEquals( expected, actual )
     }

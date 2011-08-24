@@ -113,6 +113,10 @@ class MopSetup {
                 throw new IOException( "Unknown error while renaming file ${delegate.absolutePath} to ${to}" )
             }
         }
+        
+        File.metaClass.normalize = {
+            return delegate.path.replace( File.separator, '/' )
+        }
     }
     
     static void mopCopy() {

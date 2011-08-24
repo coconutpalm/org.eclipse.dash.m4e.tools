@@ -140,7 +140,7 @@ class Pom extends PomElement {
         
         String prefix = "${value( ARTIFACT_ID )}-${version()}"
         
-        List<String> files = []
+        Set<String> files = new TreeSet()
         dir.eachFile() { File item ->
             String name = item.name
             
@@ -153,14 +153,14 @@ class Pom extends PomElement {
             if( name.startsWith( '.' ) || name.startsWith( '-' ) ) {
                 name = name.substring( 1 )
             }
+            name = name.removeEnd( '.sha1' )
+            name = name.removeEnd( '.md5' )
             name = name.removeEnd( '.jar' )
             
             files << name
         }
         
-        files.sort()
-        
-        return files
+        return new ArrayList( files )
     }
     
 	void save( File file ) {

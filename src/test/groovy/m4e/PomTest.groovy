@@ -52,9 +52,27 @@ class PomTest {
     public void testFiles() throws Exception {
 	MopSetup.setup()
 
-        def pom = Pom.load( new File( 'data/input/repo1/org/eclipse/birt/org.eclipse.birt.core/2.6.1/org.eclipse.birt.core-2.6.1.pom' ).absoluteFile )
+        def pom = Pom.load( new File( 'data/input/repo1/org/eclipse/birt/org.eclipse.birt.core/2.6.1/org.eclipse.birt.core-2.6.1.pom' ) )
         
         assertEquals( '[jar, pom, sources]', pom.files().toString() )
+    }
+    
+    @Test
+    public void testFiles2() throws Exception {
+        MopSetup.setup()
+        
+        def pom = Pom.load( new File( 'data/input/repo1/org/eclipse/core/org.eclipse.core.runtime/3.6.0/org.eclipse.core.runtime-3.6.0.pom' ) )
+        
+        assertEquals( '[jar, pom, sources]', pom.files().toString() )
+    }
+    
+    @Test
+    public void testFiles3() throws Exception {
+        MopSetup.setup()
+        
+        def pom = Pom.load( new File( 'data/input/repo1/junit/test/missing-version/1.0/missing-version-1.0.pom' ) )
+        
+        assertEquals( '[pom]', pom.files().toString() )
     }
     
     static final String POM_XML = '''\

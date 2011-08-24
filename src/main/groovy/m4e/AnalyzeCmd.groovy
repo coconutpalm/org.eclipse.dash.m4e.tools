@@ -45,7 +45,7 @@ class Analyzer {
     Calendar timestamp
     
     Analyzer( File repo, Calendar timestamp ) {
-        this.repo = repo
+        this.repo = repo.canonicalFile
         this.timestamp = timestamp
         
         SimpleDateFormat formatter = new SimpleDateFormat( 'yyyyMMdd-HHmmss' )
@@ -68,7 +68,7 @@ class Analyzer {
     }
     
     void report() {
-        textReport()
+//        textReport()
         htmlReport()
     }
     
@@ -122,7 +122,13 @@ tr:hover { background-color: #D0E0FF; }
                 p "Found ${problems.size()} problems"
                 
                 renderProblemsAsHtml( builder )
+                
                 renderRepoAsHtml( builder )
+                
+                // Add some empty space below the page to make sure anchors can always scroll to the top
+                div( style: 'height: 100%;' ) {
+                    yield( '&nbsp;', false )
+                }
             }
         }
     }
@@ -250,16 +256,13 @@ tr:hover { background-color: #D0E0FF; }
     
     void checkDifferentVersions() {
         for( def entry in versionBackRefsMap.entrySet() ) {
+            println "${entry.key} -> ${entry.value.keySet()}"
+            
             if( entry.value.size() <= 1 ) {
                 continue
             }
             
-            def pom = pomByShortKey[entry.key]
-            if( !pom ) {
-                continue
-            }
-            
-            problems << new ProblemDifferentVersions( pom, entry.value )
+            problems << new ProblemDifferentVersions( entry.key, entry.value )
         }
     }
     
@@ -307,10 +310,20 @@ tr:hover { background-color: #D0E0FF; }
         
         log.debug( 'Analyzing {} {}', path, pom.key() )
         
+        File pomPath = MavenRepositoryTools.buildPath( repo, pom.key(), 'pom' ).canonicalFile
+        if( path != pomPath ) {
+            problems << new PathProblem( pom, pomPath, path )
+        }
+        
         String shortKey = pom.shortKey()
         Pom other = pomByShortKey[shortKey]
         if( other ) {
             problems << new ProblemSameKeyDifferentVersion( pom, other )
+        }
+        
+        String version = pom.version()
+        if( version && version.endsWith( '-SNAPSHOT' ) ) {
+            problems << new ProblemSnaphotVersion( pom )
         }
         
         pomByShortKey[shortKey] = pom
@@ -321,9 +334,14 @@ tr:hover { background-color: #D0E0FF; }
             def list = dependencyUsage.get( depKey, [] )
             list << pom
             
-            String version = d.value( Dependency.VERSION )
+            version = d.value( Dependency.VERSION )
             if( !version || '[0,)' == version ) {
-                problems << new ProblemWithDependency( pom, dependency )
+                problems << new DependencyWithoutVersion( pom, d )
+            } else if( isVersionRange( version ) ) {
+                // This is no longer a problem because the version ranges are overwritten by dependency management
+                // problems << new ProblemVersionRange( pom, d )
+            } else if( version && version.endsWith( '-SNAPSHOT' ) ) {
+                problems << new ProblemSnaphotVersion( pom, d )
             }
             
             def set = versions.get( depKey, new HashSet<String>() )
@@ -333,6 +351,13 @@ tr:hover { background-color: #D0E0FF; }
             def backRefs = versionToPoms.get( version, [] )
             backRefs << pom
         }
+    }
+    
+    boolean isVersionRange( String version ) {
+        return version && ( 
+            version.startsWith( '[' )
+            || version.startsWith( '(' )
+        )
     }
 }
 
@@ -352,10 +377,101 @@ class Problem {
     
     void render( MarkupBuilder builder ) {
         builder.div( 'class': 'problem' ) {
-            ['POM ']
+            yield( 'POM ', true )
             span( 'class': 'pom', pom.key() )
-            [' ']
+            yield( ' ', true )
             span( 'class': 'message',  message )
+        }
+    }
+}
+
+class ProblemVersionRange extends Problem {
+    
+    Dependency dependency
+    
+    ProblemVersionRange( Pom pom, Dependency dependency ) {
+        super( pom, "The dependency ${dependency.key()} in POM ${pom.key()} uses a version range" )
+        
+        this.dependency = dependency
+    }
+    
+    @Override
+    public String toString() {
+        return "POM ${pom.key()}: ${message}";
+    }
+    
+    void render( MarkupBuilder builder ) {
+        builder.div( 'class': 'problem' ) {
+            yield( 'The dependency ', true )
+            span( 'class': 'dependency', dependency.key() )
+            yield( ' in POM ' )
+            span( 'class': 'pom', pom.key() )
+            yield( ' uses a version range' )
+        }
+    }
+}
+
+class PathProblem extends Problem {
+    
+    File expected
+    File actual
+    
+    PathProblem( Pom pom, File expected, File actual ) {
+        super( pom, "The path for the POM ${pom.key()} should [${expected}] but it is ${actual} " )
+        
+        this.expected = expected
+        this.actual = actual
+    }
+    
+    @Override
+    public String toString() {
+        return "POM ${pom.key()}: ${message}";
+    }
+    
+    void render( MarkupBuilder builder ) {
+        builder.div( 'class': 'problem' ) {
+            yield( 'The path for the POM ', true )
+            span( 'class': 'pom', pom.key() )
+            yield( ' should be' )
+            span( 'class': 'file', expected )
+            yield( ' but was ' )
+            span( 'class': 'file', actual )
+        }
+    }
+}
+
+class ProblemSnaphotVersion extends Problem {
+    
+    Dependency dependency
+    
+    ProblemSnaphotVersion( Pom pom ) {
+        super( pom, "The POM ${pom.key()} is a snapshot version" )
+    }
+    
+    ProblemSnaphotVersion( Pom pom, Dependency dependency ) {
+        super( pom, "The dependency ${dependency.key()} in POM ${pom.key()} uses a snapshot version" )
+        
+        this.dependency = dependency
+    }
+    
+    @Override
+    public String toString() {
+        return "${message}";
+    }
+    
+    void render( MarkupBuilder builder ) {
+        builder.div( 'class': 'problem' ) {
+            if( dependency ) {
+                yield( 'The dependency ', true )
+                span( 'class': 'dependency', dependency.key() )
+                yield( ' in POM ' )
+                span( 'class': 'pom', pom.key() )
+                yield( ' uses a snapshot version' )
+            } else {
+                yield( 'The POM ' )
+                span( 'class': 'pom', pom.key() )
+                yield( ' uses a snapshot version' )
+            }
         }
     }
 }
@@ -390,12 +506,11 @@ class ProblemSameKeyDifferentVersion extends Problem {
     }
 }
 
-// TODO rename to DependencyWithoutVersion
-class ProblemWithDependency extends Problem {
+class DependencyWithoutVersion extends Problem {
     
     Dependency dependency
     
-    ProblemWithDependency( Pom pom, Dependency dependency ) {
+    DependencyWithoutVersion( Pom pom, Dependency dependency ) {
         super( pom, 'Missing version in dependency' )
         
         this.dependency = dependency
@@ -408,11 +523,11 @@ class ProblemWithDependency extends Problem {
     
     void render( MarkupBuilder builder ) {
         builder.div( 'class': 'problem' ) {
-            ['POM ']
+            yield( 'POM ', true )
             span( 'class': 'pom', pom.key() )
-            [' ']
+            yield( ' ', true )
             span( 'class': 'message', message )
-            [' ']
+            yield( ' ', true )
             span( 'class': 'dependency', dependency.key() )
         }
     }
@@ -421,10 +536,12 @@ class ProblemWithDependency extends Problem {
 class ProblemDifferentVersions extends Problem {
     
     Map<String, List<Pom>> versionBackRefs
+    String dependency
     
-    ProblemDifferentVersions( Pom pom, Map<String, List<Pom>> versionBackRefs ) {
-        super( pom, 'This dependency is referenced with different versions' )
+    ProblemDifferentVersions( String dependency, Map<String, List<Pom>> versionBackRefs ) {
+        super( null, 'This dependency is referenced with different versions' )
         
+        this.dependency = dependency
         this.versionBackRefs = versionBackRefs
     }
     
@@ -453,15 +570,16 @@ class ProblemDifferentVersions extends Problem {
         Collections.sort( versions )
         
         builder.div( 'class': 'problem' ) {
-            ['The dependency ']
-            span( 'class': 'dependency', pom.key() )
-            [" is referenced with ${versions.size()} different versions:"]
+            yield( 'The dependency ', true )
+            span( 'class': 'dependency', dependency )
+            yield( " is referenced with ${versions.size()} different versions:", true )
+            
             ul() {
                 for( String version in versions ) {
                     li() {
-                        ['Version "']
+                        yield( 'Version "', true )
                         span('class': 'version', version)
-                        ['" is used in:']
+                        yield( '" is used in:', true )
                     }
                     
                     def backRefs = versionBackRefs[version]
@@ -475,7 +593,7 @@ class ProblemDifferentVersions extends Problem {
                             
                             li {
                                 span('class': 'pom', "${parts[0]}:${parts[1]}")
-                                [':']
+                                yield( ':', true )
                                 span('class': 'version', "${parts[2]}")
                             }
                         }
@@ -530,9 +648,12 @@ class MissingDependency extends Problem {
 enum ProblemType {
     Problem( 'Generic Problems', null),
     ProblemSameKeyDifferentVersion( 'POMs with same ID but different version', null),
-    ProblemWithDependency( 'Problems With Dependencies', null),
+    DependencyWithoutVersion( 'Problems With Dependencies', null),
     ProblemDifferentVersions( 'Dependencies With Different Versions', null),
-    MissingDependency( 'Missing Dependencies', "The following dependencies are used in POMs in the repository but they couldn't be found in it." )
+    MissingDependency( 'Missing Dependencies', "The following dependencies are used in POMs in the repository but they couldn't be found in it." ),
+    ProblemVersionRange( 'Dependencies With Version Ranges', 'Dependencies should not use version ranges.' ),
+    ProblemSnaphotVersion( 'Snapshot Versions', 'Release Repositories should not contain SNAPSHOTs' ),
+    PathProblem( 'Path Problems', 'These POMs are not where they should be' )
     
     final String title
     final String description
