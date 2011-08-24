@@ -24,8 +24,8 @@ The first argument is used to create a POM file with a dependencyManagement elem
             throw new UserError( "Missing directory ${downloads}. Please create it and copy all files into it that you want to convert." )
         }
         
-        if( args.size() != 2 ) {
-            throw new UserError( "Expected one argument: The groupId:artifactId:version of a POM in which to write the dependencyManagement element" )
+        if( args.size() < 2 ) {
+            throw new UserError( "Expected at least one argument: The groupId:artifactId:version of a POM in which to write the dependencyManagement element" )
         }
         
         targetRepo = new File( workDir, 'm2repo' )
@@ -102,7 +102,7 @@ The first argument is used to create a POM file with a dependencyManagement elem
     
     void applyPatches( List<String> patches ) {
         List args = [ 'ap', targetRepo.absolutePath ]
-        args << patches
+        args.addAll( patches )
         
         def cmd = new PatchCmd( workDir: workDir )
         cmd.run( args as String[] )

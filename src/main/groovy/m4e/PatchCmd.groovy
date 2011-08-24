@@ -39,24 +39,22 @@ target patches...
 			throw new UserError( "Directory ${target} doesn't exist" )
 		}
 		
-		def patches = args[2..-1]
+		String[] patches = args[2..<args.size()]
 		log.debug( "Patches: ${patches}" )
 		log.debug( "Target: ${target}" )
+        
+        log.info( "Applying patches to ${target}..." )
 
 		loadPatches( patches )
         
-        applyPatches( target )
+        MavenRepositoryTools.eachPom(target ) {
+            patchPom( it )
+        }
+        
+        log.info( "Patched ${count} POMs")
     }
     
-    void applyPatches( File dir ) {
-        dir.eachFile() {
-            if( it.isDirectory() ) {
-                applyPatches( dir )
-            } else if( it.name.endsWith( '.pom' ) ) {
-                patchPom( it )
-            }
-        }
-    }
+    int count
     
     void patchPom( File file ) {
         def pom = Pom.load( file )
@@ -70,6 +68,8 @@ target patches...
             
             log.debug( "Patched ${file}" )
             pom.save( file )
+            
+            count ++
         }
     }
 
