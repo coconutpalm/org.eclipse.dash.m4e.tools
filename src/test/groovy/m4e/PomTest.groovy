@@ -50,6 +50,8 @@ class PomTest {
     
     @Test
     public void testFiles() throws Exception {
+	MopSetup.setup()
+
         def pom = Pom.load( new File( 'data/input/repo1/org/eclipse/birt/org.eclipse.birt.core/2.6.1/org.eclipse.birt.core-2.6.1.pom' ).absoluteFile )
         
         assertEquals( '[jar, pom, sources]', pom.files().toString() )
