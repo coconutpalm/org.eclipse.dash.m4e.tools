@@ -11,6 +11,7 @@
 package m4e
 
 import java.util.zip.ZipInputStream;
+import org.codehaus.groovy.runtime.ProcessGroovyMethods;
 
 class MopSetup {
     
