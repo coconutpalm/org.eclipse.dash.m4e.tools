@@ -42,6 +42,8 @@ convert groupId:artifactId:version
     - Source for source JARs and move them in the right place for Maven 2
 [ apply-patches | patch | ap ] target patches... - Apply the patches to the
     target repository. Patches can be scripts or directories with scripts.
+[ analyze | an ] repository - Check a converted Maven 2 repository for various
+    problems
 clean
     - Clean the work directory''' 
     
