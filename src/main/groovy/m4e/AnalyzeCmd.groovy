@@ -57,8 +57,9 @@ class Analyzer {
     
     void run() {
         log.info( 'Analyzing {}...', repo )
-        
-        analyzeDir( repo )
+        MavenRepositoryTools.eachPom( repo ) {
+            analyzePom( it )
+        }
         
         log.info( 'Found {} POM files. Looking for problems...', poms.size() )
         validate()
@@ -277,16 +278,6 @@ tr:hover { background-color: #D0E0FF; }
         }
     }
     
-    void analyzeDir( File dir ) {
-        dir.eachFile() { File it ->
-            if( it.isDirectory() ) {
-                analyzeDir( it )
-            } else if( it.name.endsWith( '.pom' ) ){
-                analyzePom( it )
-            }
-        }
-    }
-
     /** List of all POMs in the repo */    
     List<Pom> poms = []
     
