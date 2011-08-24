@@ -11,6 +11,7 @@
 
 package m4e
 
+import org.codehaus.groovy.runtime.ProcessGroovyMethods;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -394,16 +395,20 @@ class ImportTool {
             } else if( line.startsWith( '[INFO] Installing ') && line.endsWith( '.jar' ) ) {
                 def parts = line.split(' ')
                 def path = parts[-1]
+//                println path
                 path = path[prefixLength..-1]
-                path = dirname(path)
                 
-                def version = basename(path)
+                File file = new File( path )
+                File dir = file.parentFile
                 
-                path = dirname(path)
+                def version = dir.name
                 
-                def artifactId = basename(path)
+                dir = dir.parentFile
                 
-                def groupId = dirname(path)
+                def artifactId = dir.name
+                
+                dir = dir.parentFile
+                def groupId = dir.path
                 groupId = groupId.replaceAll( '[/\\\\]', "." )
                 
                 def msg1 = "Installing ${min} of ${max} "
