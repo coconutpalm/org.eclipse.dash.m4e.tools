@@ -31,11 +31,11 @@ The first argument is used to create a POM file with a dependencyManagement elem
         targetRepo = new File( workDir, 'm2repo' )
         
         log.info( "Converting everything in ${downloads} into ${targetRepo}" )
-
+        
         checkDependencyManagementInfo( args[1] )
         
         List<String> patches = args[2..<args.size()] as List
-                
+        
         importArchives( downloads )
         
         mergeRepos()
