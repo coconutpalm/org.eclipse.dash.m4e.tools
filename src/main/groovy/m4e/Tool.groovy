@@ -20,7 +20,7 @@ class Tool {
     
     static final Logger log = LoggerFactory.getLogger( Tool )
     
-    static String VERSION = "0.9 (24.08.2011)"
+    static String VERSION = "0.10 (11.01.2012)"
     
     File workDir = new File( "tmp" ).absoluteFile
     
