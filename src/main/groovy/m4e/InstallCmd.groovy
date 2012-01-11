@@ -121,7 +121,9 @@ class InstallCmd extends AbstractCommand {
      * necessary plug-ins, so we can copy them later.
      */
     void loadNecessaryPlugins() {
-        def primingArchive = new File( 'data', 'priming.zip' )
+        def primingArchive = new File( workDir, 'priming.zip' )
+        extractPrimingArchive( primingArchive )
+        
         File priming_home = new File( workDir, 'priming_home' )
         templateRepo = new File( priming_home, 'm2repo' )
         File failure = new File( priming_home, ImportTool.FAILURE_FILE_NAME )
@@ -168,6 +170,22 @@ class InstallCmd extends AbstractCommand {
         failure.delete()
     }
 
+    void extractPrimingArchive( File primingArchive ) {
+        if( primingArchive.exists () ) {
+            return
+        }
+        
+        def resource = 'priming.zip'
+        def url = getClass().getResource( resource )
+        if( !url ) {
+            throw new IOException( "Can't find resource [${resource}] relative to ${getClass().name}" )
+        }
+        
+        url.withInputStream { stream ->
+            primingArchive << stream
+        }
+    }
+    
     ImportTool importIntoTmpRepo( File path ) {
         def tool = new ImportTool( templateRepo: templateRepo, m3exe: m3exe, m3home: m3home )
         tool.run( path )
@@ -358,7 +376,8 @@ class ImportTool {
             cmd << '-X'
         }
         
-        Process p = cmd.execute( [ "M2_HOME=${m3home.absolutePath}" ], null )
+        String javaHome = System.getProperty( 'java.home' )
+        Process p = cmd.execute( [ "M2_HOME=${m3home.absolutePath}", "JAVA_HOME=${javaHome}" ], null )
         
         ProcessGroovyMethods.consumeProcessErrorStream( p, System.err )
         
@@ -368,7 +387,7 @@ class ImportTool {
         
         int rc = p.waitFor()
         if( rc != 0 ) {
-            log.error( "Invoking Maven with ${args} failed with ${rc}. See logfile ${logFile} for details." )
+            log.error( "Invoking Maven with ${cmd} failed with ${rc}. See logfile ${logFile} for details." )
             throw new RuntimeException( "Importing the plug-ins from ${eclipseFolder} failed with error code ${rc}. See logfile ${logFile} for details." )
         }
     }
