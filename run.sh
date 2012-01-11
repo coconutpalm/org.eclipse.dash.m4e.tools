@@ -23,9 +23,9 @@ DECENT_XML="${M2_REPO}/de/pdark/decentxml/1.4-SNAPSHOT/decentxml-1.4-SNAPSHOT.ja
 java -Dfile.encoding=UTF-8 \
 -classpath \
 $PWD/target/classes:\
-${M2_REPO}/org/slf4j/slf4j-api/1.6.1/slf4j-api-1.6.1.jar:\
-${M2_REPO}/ch/qos/logback/logback-core/0.9.29/logback-core-0.9.29.jar:\
-${M2_REPO}/ch/qos/logback/logback-classic/0.9.29/logback-classic-0.9.29.jar:\
-${M2_REPO}/org/codehaus/groovy/groovy-all/1.8.1/groovy-all-1.8.1.jar:\
+${M2_REPO}/org/slf4j/slf4j-api/1.6.4/slf4j-api-1.6.4.jar:\
+${M2_REPO}/ch/qos/logback/logback-core/1.0.0/logback-core-1.0.0.jar:\
+${M2_REPO}/ch/qos/logback/logback-classic/1.0.0/logback-classic-1.0.0.jar:\
+${M2_REPO}/org/codehaus/groovy/groovy-all/1.8.5/groovy-all-1.8.5.jar:\
 ${DECENT_XML} \
 m4e.Tool "$@"
