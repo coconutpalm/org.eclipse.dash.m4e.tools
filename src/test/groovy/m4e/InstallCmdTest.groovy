@@ -14,7 +14,7 @@ class InstallCmdTest {
     Logger log = LoggerFactory.getLogger( getClass() )
 
     def fileName = 'eclipse-3.7.1-delta-pack.zip'
-    File archive = new File( 'Downloads', fileName )
+    File archive = new File( 'downloads', fileName )
 
     @Test
     void testImportSwt() throws Exception {
