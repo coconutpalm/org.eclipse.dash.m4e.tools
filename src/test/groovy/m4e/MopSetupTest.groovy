@@ -55,7 +55,7 @@ class MopSetupTest {
         assert workDir.deleteDir(), "Can't delete ${workDir}"
         workDir.makedirs()
 
-        new File( "data/priming.zip" ).unzip( workDir )
+        new File( "src/main/resources/m4e/priming.zip" ).unzip( workDir )
         
         File expected = new File( workDir, "priming/eclipse/plugins/org.eclipse.core.boot_3.1.200.v20100505.jar" )
         assert expected.exists(), "File ${expected} wasn't created"
