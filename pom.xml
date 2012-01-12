@@ -4,7 +4,7 @@
 
 	<groupId>org.eclipse.dash</groupId>
 	<artifactId>org.eclipse.dash.mt4e</artifactId>
-	<version>0.10.0-SNAPSHOT</version>
+	<version>0.10.0</version>
 	<name>Maven Tools for Eclipse</name>
 	
 	<licenses>
@@ -41,7 +41,7 @@
 		<dependency>
 			<groupId>de.pdark</groupId>
 			<artifactId>decentxml</artifactId>
-			<version>1.4-SNAPSHOT</version>
+			<version>1.4</version>
 		</dependency>
 	
 		<dependency>
