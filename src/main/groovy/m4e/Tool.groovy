@@ -33,6 +33,7 @@ class Tool {
         new CmdInfo( names: ['analyze', 'an'], impl: AnalyzeCmd ),
         new CmdInfo( names: ['dependency-management', 'dm'], impl: DependencyManagementCmd ),
         new CmdInfo( names: ['clean'], impl: CleanCmd ),
+        new CmdInfo( names: ['p2list', 'p2ls'], impl: P2ListCmd ),
     ]
     
     void run( String... args ) {
