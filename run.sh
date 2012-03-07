@@ -13,7 +13,8 @@
 
 # Helper script to run the result of "mvn install" 
 
-[[ -e "$PWD/target/classes" ]] || { echo "Missing classes; did you compile?" ; exit 1 ; }
+target=${target:-target}
+[[ -e "$PWD/${target}/classes" ]] || { echo "Missing classes; did you compile?" ; exit 1 ; }
 
 M2_REPO="$HOME/.m2/repository"
 DECENT_XML="${M2_REPO}/de/pdark/decentxml/1.4-SNAPSHOT/decentxml-1.4-SNAPSHOT.jar"
@@ -22,7 +23,7 @@ DECENT_XML="${M2_REPO}/de/pdark/decentxml/1.4-SNAPSHOT/decentxml-1.4-SNAPSHOT.ja
 
 java -Dfile.encoding=UTF-8 \
 -classpath \
-$PWD/target/classes:\
+$PWD/${target}/classes:\
 ${M2_REPO}/org/slf4j/slf4j-api/1.6.4/slf4j-api-1.6.4.jar:\
 ${M2_REPO}/ch/qos/logback/logback-core/1.0.0/logback-core-1.0.0.jar:\
 ${M2_REPO}/ch/qos/logback/logback-classic/1.0.0/logback-classic-1.0.0.jar:\
