@@ -1,0 +1,17 @@
+
+// this is a DSLD file
+// start off creating a custom DSL Descriptor for your Groovy DSL
+
+// The following snippet adds the 'newProp' to all types that are a subtype of GroovyObjects
+// currentType(subType('groovy.lang.GroovyObject')).accept {
+//   property name : 'newProp', type : String, provider : 'Sample DSL', doc : 'This is a sample.  You should see this in content assist for GroovyObjects: <pre>newProp</pre>'
+// }
+
+currentType( subType( 'java.io.File' ) ).accept {
+    method name: 'makedirs', type: Void, provider: 'MopSetup', doc: 'Create directories recursively unless they already exist'
+    method name: 'usefulDelete', type: Void, provider: 'MopSetup', doc: 'Delete a file if it exists. Throws exception when the target is a folder'
+}
+
+currentType( subType( 'java.lang.String' ) ).accept {
+    method name: 'removeEnd', type: String, params: [postfix: String], provider: 'MopSetup', doc: 'Remove a postfix if it exists'
+}
