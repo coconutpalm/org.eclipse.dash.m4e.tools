@@ -56,6 +56,19 @@ class MopSetup {
             return result
         }
         
+        String.metaClass.substringAfterLast = { String pattern ->
+            String result = delegate
+            
+            if( pattern ) {
+                int pos = result.lastIndexOf( pattern )
+                    if( pos >= 0 ) {
+                        return result.substring( pos + pattern.size() )
+                    }
+            }
+            
+            return ""
+        }
+        
         String.metaClass.substringBefore = { String pattern ->
         String result = delegate
         

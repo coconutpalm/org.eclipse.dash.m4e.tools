@@ -10,8 +10,10 @@
 currentType( subType( 'java.io.File' ) ).accept {
     method name: 'makedirs', type: Void, provider: 'MopSetup', doc: 'Create directories recursively unless they already exist'
     method name: 'usefulDelete', type: Void, provider: 'MopSetup', doc: 'Delete a file if it exists. Throws exception when the target is a folder'
+    method name: 'copy', type: Void, params: [target: File], provider: 'MopSetup', doc: 'Copy a file or folder'
 }
 
 currentType( subType( 'java.lang.String' ) ).accept {
-    method name: 'removeEnd', type: String, params: [postfix: String], provider: 'MopSetup', doc: 'Remove a postfix if it exists'
+    method name: 'removeEnd', type: String, params: [pattern: String], provider: 'MopSetup', doc: 'Remove a pattern if it exists at the end of a string'
+    method name: 'substringAfterLast', type: String, params: [pattern: String], provider: 'MopSetup', doc: 'Return the part of a String after the last occurrence of a pattern'
 }
