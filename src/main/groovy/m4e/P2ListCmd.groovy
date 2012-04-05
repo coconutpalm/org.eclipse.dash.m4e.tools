@@ -34,21 +34,28 @@ URL
 }
 
 class Version implements Comparable<Version> {
-    boolean blank
-    int major
-    int minor
-    int service
-    String qualifier
+    
+    final static int BIT_WIDTH = 10
+    final static int BIT_MASK = ( 1 << BIT_WIDTH ) - 1
+    
+    final boolean blank
+    final long version
+    final String qualifier
     
     Version( String pattern ) {
         if( pattern ) {
             String[] parts = pattern.split( '\\.', 4 )
             
-            major = Integer.parseInt( parts[0] )
-            minor = Integer.parseInt( parts[1] )
-            service = Integer.parseInt( parts[2] )
+            int major = Integer.parseInt( parts[0] )
+            int minor = Integer.parseInt( parts[1] )
+            int service = Integer.parseInt( parts[2] )
+            
+            version = ( ( ( major << BIT_WIDTH ) + minor ) << BIT_WIDTH ) + service 
+            
             qualifier = parts.size() == 4 ? parts[3] : null
             blank = false
+            
+            assert pattern == toString()
         } else {
             blank = true
         }
@@ -68,13 +75,7 @@ class Version implements Comparable<Version> {
         if( blank != other.blank ) {
             return false
         }
-        if( major != other.major ) {
-            return false
-        }
-        if( minor != other.minor ) {
-            return false
-        }
-        if( service != other.service ) {
+        if( version != other.version ) {
             return false
         }
         if( qualifier != other.qualifier ) {
@@ -89,7 +90,19 @@ class Version implements Comparable<Version> {
             return 0
         }
         
-        return 1311 * (major+1) * (minor+1) * (service+1) + ( qualifier ? qualifier.hashCode() : 0 )
+        return 1311 * version + ( qualifier ? qualifier.hashCode() : 0 )
+    }
+    
+    int getMajor() {
+        return version >>> (2*BIT_WIDTH)
+    }
+    
+    int getMinor() {
+        return ( version >>> BIT_WIDTH ) & BIT_MASK 
+    }
+    
+    int getService() {
+        return version & BIT_MASK 
     }
     
     String toString() {
@@ -119,13 +132,8 @@ class Version implements Comparable<Version> {
             return o.blank ? 0 : -1
         }
         
-        int d = major - o.major
-        if( d == 0 ) {
-            d = minor - o.minor
-        }
-        if( d == 0 ) {
-            d = service - o.service
-        }
+        int d = version - o.version
+
         if( d == 0 ) {
             if( qualifier ) {
                 if( o.qualifier ) {
@@ -147,13 +155,18 @@ class Version implements Comparable<Version> {
 }
 
 class VersionRange {
-    Version lower
-    boolean includeLower
-    Version upper
-    boolean includeUpper
     
-    VersionRange( String pattern ) {
+    static final NULL_RANGE = new VersionRange( null )
+    
+    final Version lower
+    final boolean includeLower
+    final Version upper
+    final boolean includeUpper
+    
+    VersionRange( String pattern, VersionCache cache = null ) {
         if( !pattern ) {
+            lower = upper = null
+            includeLower = includeUpper = false
             return
         }
         
@@ -163,6 +176,8 @@ class VersionRange {
         } else if( pattern.startsWith( '(' ) ) {
             includeLower = false
             pattern = pattern.substring( 1 )
+        } else {
+            includeLower = false 
         }
         
         if( pattern.endsWith( ']' ) ) {
@@ -171,16 +186,30 @@ class VersionRange {
         } else if( pattern.endsWith( ')' ) ) {
             includeUpper = false
             pattern = pattern.substring( 0, pattern.size() - 1 )
+        } else {
+            includeUpper = false
         }
         
         String[] parts = pattern.split( ',', 2 )
         
         if( parts.size() >= 1 ) {
-            lower = new Version( parts[0] )
+            lower = newVersion( cache, parts[0] )
+        } else {
+            lower = null
         }
         if( parts.size() >= 2 ) {
-            upper = new Version( parts[1] )
+            upper = newVersion( cache, parts[1] )
+        } else {
+            upper = null
         }
+    }
+    
+    private static newVersion( VersionCache cache, String pattern ) {
+        if( cache ) {
+            return cache.version( pattern )
+        }
+        
+        return new Version( pattern )
     }
     
     String toString() {
@@ -248,10 +277,25 @@ class VersionRange {
     }
 }
 
+class VersionCache {
+    
+    Map<String, Version> versions = [:].withDefault { pattern -> new Version( pattern ) }
+    Map<String, VersionRange> ranges = [:].withDefault { pattern -> new VersionRange( pattern, this ) }
+    
+    Version version( String pattern ) {
+        return versions.get( pattern )
+    }
+    
+    VersionRange range( String pattern ) {
+        return ranges.get( pattern )
+    }
+}
+
 class P2Dependency implements Comparable<P2Dependency> {
     String type
     String id
     VersionRange versionRange
+    List<P2Bundle> bundles 
     
     String toString() {
         return "${getClass().simpleName}( id=${id}, version=${versionRange}, type=${type} )"
@@ -293,6 +337,11 @@ class P2Dependency implements Comparable<P2Dependency> {
         }
         
         return false;
+    }
+    
+    @Override
+    public int hashCode() {
+        return id.hashCode() *  31 + type.hashCode() * 37 + versionRange.hashCode() * 97;
     }
 }
 
@@ -496,13 +545,33 @@ class DependencySet {
     }
 }
 
+class DependencyCache {
+    Map<String, P2Dependency> cache = [:]
+    
+    P2Dependency dependency( String id, String type, VersionRange versionRange ) {
+        String key = "${id}:${type}:${versionRange}"
+        
+        P2Dependency result = cache.get( key )
+        if( !result ) {
+            result = new P2Dependency( id: id, type: type, versionRange: versionRange )
+            cache[key] = result
+        }
+        
+        return result
+    }
+}
+
 class P2Repo {
+    
+    VersionCache versionCache = new VersionCache()
     
     List<P2Category> categories = []
     List<P2Feature> features = []
     List<P2Plugin> plugins = []
     List<P2Other> others = []
     List<P2Unit> units = []
+    
+    Map<String, List<P2Bundle>> bundlesById = [:].withDefault { [] }
     
     void list( Writer out ) {
         
@@ -523,234 +592,36 @@ class P2Repo {
         }
     }
     
-    P2Bundle latest( String id, VersionRange range = new VersionRange( null ) ) {
-        Version min = new Version( '0.0.0' )
+    private ZERO_VERSION = versionCache.version( '0.0.0' )
+    
+    Map<String, P2Bundle> latestCache = [:]
+    
+    P2Bundle latest( String id, VersionRange range = VersionRange.NULL_RANGE ) {
+        
+        String key = "${id}:${range}"
         P2Bundle result = null
+//        P2Bundle result = latestCache[key]
+//        if( result ) {
+//            return result
+//        }
+        
+        Version min = ZERO_VERSION
         def findMax = {
-            if( id == it.id && min.compareTo( it.version ) < 0 && range.contains( it.version ) ) {
+            if( min.compareTo( it.version ) < 0 && range.contains( it.version ) ) {
                 result = it
                 min = it.version
             }
         }
-        features.each findMax
+        bundlesById[id].each findMax
         
-        if( result ) {
-            return result
-        }
-        
-        min = new Version( '0.0.0' )
-        plugins.each findMax
+//        latestCache[key] = result
         
         return result
     }
     
     P2Bundle find( String id, Version version ) {
-        VersionRange range = new VersionRange( "[${version},${version}]" )
+        VersionRange range = versionCache.range( "[${version},${version}]" )
         return latest( id, range)
-    }
-    
-    void parseXml( File contentXmlFile ) {
-        def doc = new XmlParser().parse( contentXmlFile )
-        parse( doc )
-    }
-    
-    void parse( Node doc ) {
-        def units = doc.units
-        
-        log.info( "Found ${units.'@size'} items." )
-        
-        ProviderResolver providerResolver = new ProviderResolver( repo: this )
-        
-        for( Node unit : units.unit ) {
-            
-            def isCategory = getProperty( unit, 'org.eclipse.equinox.p2.type.category' )
-            if( 'true' == isCategory ) {
-                categories << parseCategory( unit )
-                continue
-            }
-
-            def artifacts = unit.artifacts[0]
-            parsePluginOrFeature( unit, artifacts, providerResolver )
-        }
-        
-        providerResolver.resolveRequirements()
-        
-        categories.sort()
-        features.sort()
-        plugins.sort()
-        others.sort { "${it.id} ${it.version}" }
-    }
-    
-    P2Category parseCategory( Node unit ) {
-        def id = unit.'@id'
-        def version = new Version( unit.'@version' )
-        def name = getProperty( unit, 'org.eclipse.equinox.p2.name' )
-        def description = getDescription( unit )
-        
-        def category = new P2Category( id: id, version: version, name: name, description: description )
-        category.dependencies = parseDependencies( unit )
-        
-        return category
-    }
-    
-    List<P2Dependency> parseDependencies( Node unit ) {
-        List<P2Dependency> result = []
-        
-        //println "parseDependencies ${unit.'@id'} ${unit.requires.size()} ${unit.artifacts.size()}"
-        if( unit.requires ) {
-            for( Node required : unit.requires[0].required ) {
-                
-                def type = required.'@namespace'
-                def id = required.'@name'
-                def versionRange = new VersionRange( required.'@range' )
-                
-                if( id.endsWith( '.feature.jar' ) ) {
-                    continue
-                }
-                
-                result << new P2Dependency( type: type, id: id, versionRange: versionRange )
-            }
-        }
-
-        if( unit.artifacts ) {
-            for( Node artifact: unit.artifacts[0].artifact ) {
-                
-                def type = artifact.'@classifier'
-                def id = artifact.'@id'
-                def versionRange = new VersionRange( artifact.'@version' )
-                
-                result << new P2Dependency( type: type, id: id, versionRange: versionRange )
-            }
-        }
-        
-        return result
-    }
-    
-    String getProperty( Node unit, String name ) {
-        def properties = unit.properties
-        if( !properties || properties.size() == 0 ) {
-            return null
-        }
-        
-        properties = properties[0]
-        return properties.property.find { name == it.'@name' }?.'@value'
-    }
-    
-    void parsePluginOrFeature( Node unit, Node artifacts, ProviderResolver providerResolver ) {
-
-        String id = unit.'@id'
-        //def updateFeaturePlugin = getProperty( unit, 'org.eclipse.update.feature.plugin' )
-        if( id.endsWith( '.feature.jar' ) ) {
-            // Ignore feature JARs
-            return
-        }
-        
-        String classifier = ''
-        if( artifacts ) {
-            classifier = artifacts.artifact[0].'@classifier'
-        }
-
-        def isTypeGroup = getProperty( unit, 'org.eclipse.equinox.p2.type.group' )
-        //println "${unit.'@id'} ${classifier} ${isTypeGroup}"
-        if( 'org.eclipse.update.feature' == classifier || 'true' == isTypeGroup || 'false' == isTypeGroup ) {
-            def feature = parseFeature( unit )
-            features << feature
-            providerResolver.register( feature, unit )
-            
-            return
-        }
-        
-        def typeFragment = getProperty( unit, 'org.eclipse.equinox.p2.type.fragment' )
-        if( 'osgi.bundle' == classifier || 'binary' == classifier || 'true' == typeFragment ) {
-            def plugin = parsePlugin( unit )
-            plugins << plugin
-            providerResolver.register( plugin, unit )
-            return
-        }
-        
-        if( !artifacts ) {
-            
-            def requires = unit.requires
-            if( id.startsWith( 'tooling' ) || id.startsWith( 'epp.package.' ) || !requires ) {
-                units << parseUnit( unit )
-                return
-            }
-            
-            println "${id} ${requires}"
-        }
-        
-        others << new P2Other( id: id, version: new Version( unit.'@version' ), message: "Unable to determine type" )
-    }
-    
-    P2Unit parseUnit( Node unit ) {
-        StringWriter buffer = new StringWriter( 10240 )
-        def ip = new IndentPrinter( buffer, '    ' )
-        def printer = new XmlNodePrinter( ip )
-        printer.print( unit )
-        String xml = buffer.toString()
-        String id = unit.'@id'
-        
-        def result = new P2Unit( id: id, version: new Version( unit.'@version' ), xml: xml )
-        return result
-    }
-    
-    P2Feature parseFeature( Node unit ) {
-        def id = unit.'@id'
-        def version = new Version( unit.'@version' )
-        def name = getName( unit )
-        def description = getDescription( unit )
-        if( name == description ) {
-            description = null
-        }
-
-        def result = new P2Feature( id: id, version: version, name: name, description: description )
-        result.dependencies = parseDependencies( unit )
-        
-        return result
-    }
-    
-    String getName( Node unit ) {
-        
-        String name = getProperty( unit, 'org.eclipse.equinox.p2.name' )
-        if( name && name.startsWith( '%' ) ) {
-            String key = 'df_LT.' + name.substring( 1 )
-            name = getProperty( unit, key )
-        }
-        
-        if( name ) {
-            return name
-        }
-        
-        return unit.'@id'
-    }
-    
-    String getDescription( Node unit ) {
-        def description = getProperty( unit, 'org.eclipse.equinox.p2.description' )
-        if( !description ) {
-            return null
-        }
-        
-        if( description.startsWith( '%' ) ) {
-            String key = 'df_LT.' + description.substring( 1 )
-            description = getProperty( unit, key )
-        }
-        
-        return description
-    }
-    
-    P2Plugin parsePlugin( Node unit ) {
-        def id = unit.'@id'
-        def version = new Version( unit.'@version' )
-        def name = getName( unit )
-        def description = getDescription( unit )
-        if( name == description ) {
-            description = null
-        }
-        
-        def result = new P2Plugin( id: id, version: version, name: name, description: description )
-        result.dependencies = parseDependencies( unit )
-        
-        return result
     }
     
     File workDir
@@ -778,7 +649,8 @@ class P2Repo {
             unpackContentJar(contentJarFile, contentXmlFile)
         }
         
-        parseXml( contentXmlFile )
+        def parser = new ContentXmlParser( repo: this )
+        parser.parseXml( contentXmlFile )
     }
     
     File urlToPath( URL url ) {
@@ -856,8 +728,231 @@ class P2Repo {
     ProgressFactory progressFactory = new ProgressFactory()
 }
 
+class ContentXmlParser {
+    static final Logger log = LoggerFactory.getLogger( ContentXmlParser )
+
+    P2Repo repo
+    ProviderResolver providerResolver
+    VersionCache versionCache
+    DependencyCache dependencyCache = new DependencyCache()
+    
+    void parseXml( File contentXmlFile ) {
+        providerResolver = new ProviderResolver( repo: repo, dependencyCache: dependencyCache )
+        versionCache = repo.versionCache
+        
+        def doc = new XmlParser().parse( contentXmlFile )
+        parse( doc )
+        
+        log.info( "Parsed ${contentXmlFile}" )
+        log.info( "dependencyCache has ${dependencyCache.cache.size()} elements" )
+    }
+    
+    void parse( Node doc ) {
+        def units = doc.units
+        
+        log.info( "Found ${units.'@size'} items." )
+        
+        for( Node unit : units.unit ) {
+            
+            def isCategory = getProperty( unit, 'org.eclipse.equinox.p2.type.category' )
+            if( 'true' == isCategory ) {
+                repo.categories << parseCategory( unit )
+                continue
+            }
+
+            def artifacts = unit.artifacts[0]
+            parsePluginOrFeature( unit, artifacts )
+        }
+        
+        providerResolver.resolveRequirements()
+        
+        repo.categories.sort()
+        repo.features.sort()
+        repo.plugins.sort()
+        repo.others.sort { "${it.id} ${it.version}" }
+    }
+    
+    P2Category parseCategory( Node unit ) {
+        def id = unit.'@id'
+        def version = versionCache.version( unit.'@version' )
+        def name = getProperty( unit, 'org.eclipse.equinox.p2.name' )
+        def description = getDescription( unit )
+        
+        def category = new P2Category( id: id, version: version, name: name, description: description )
+        category.dependencies = parseDependencies( unit )
+        
+        return category
+    }
+    
+    List<P2Dependency> parseDependencies( Node unit ) {
+        List<P2Dependency> result = []
+        
+        //println "parseDependencies ${unit.'@id'} ${unit.requires.size()} ${unit.artifacts.size()}"
+        if( unit.requires ) {
+            for( Node required : unit.requires[0].required ) {
+                
+                def type = required.'@namespace'
+                def id = required.'@name'
+                def versionRange = versionCache.range( required.'@range' )
+                
+                if( id.endsWith( '.feature.jar' ) ) {
+                    continue
+                }
+                
+                result << dependencyCache.dependency( id, type, versionRange )
+            }
+        }
+
+        if( unit.artifacts ) {
+            for( Node artifact: unit.artifacts[0].artifact ) {
+                
+                def type = artifact.'@classifier'
+                def id = artifact.'@id'
+                def versionRange = versionCache.range( artifact.'@version' )
+                
+                result << dependencyCache.dependency( id, type, versionRange )
+            }
+        }
+        
+        return result
+    }
+    
+    String getProperty( Node unit, String name ) {
+        def properties = unit.properties
+        if( !properties || properties.size() == 0 ) {
+            return null
+        }
+        
+        properties = properties[0]
+        return properties.property.find { name == it.'@name' }?.'@value'
+    }
+    
+    void parsePluginOrFeature( Node unit, Node artifacts ) {
+
+        String id = unit.'@id'
+        //def updateFeaturePlugin = getProperty( unit, 'org.eclipse.update.feature.plugin' )
+        if( id.endsWith( '.feature.jar' ) ) {
+            // Ignore feature JARs
+            return
+        }
+        
+        String classifier = ''
+        if( artifacts ) {
+            classifier = artifacts.artifact[0].'@classifier'
+        }
+
+        def isTypeGroup = getProperty( unit, 'org.eclipse.equinox.p2.type.group' )
+        //println "${unit.'@id'} ${classifier} ${isTypeGroup}"
+        if( 'org.eclipse.update.feature' == classifier || 'true' == isTypeGroup || 'false' == isTypeGroup ) {
+            parseFeature( unit )
+            return
+        }
+        
+        def typeFragment = getProperty( unit, 'org.eclipse.equinox.p2.type.fragment' )
+        if( 'osgi.bundle' == classifier || 'binary' == classifier || 'true' == typeFragment ) {
+            parsePlugin( unit )
+            return
+        }
+        
+        if( !artifacts ) {
+            
+            def requires = unit.requires
+            if( id.startsWith( 'tooling' ) || id.startsWith( 'epp.package.' ) || !requires ) {
+                repo.units << parseUnit( unit )
+                return
+            }
+            
+            println "${id} ${requires}"
+        }
+        
+        repo.others << new P2Other( id: id, version: versionCache.version( unit.'@version' ), message: "Unable to determine type" )
+    }
+    
+    P2Unit parseUnit( Node unit ) {
+        StringWriter buffer = new StringWriter( 10240 )
+        def ip = new IndentPrinter( buffer, '    ' )
+        def printer = new XmlNodePrinter( ip )
+        printer.print( unit )
+        String xml = buffer.toString()
+        String id = unit.'@id'
+        
+        def result = new P2Unit( id: id, version: versionCache.version( unit.'@version' ), xml: xml )
+        return result
+    }
+    
+    P2Feature parseFeature( Node unit ) {
+        def id = unit.'@id'
+        def version = versionCache.version( unit.'@version' )
+        def name = getName( unit )
+        def description = getDescription( unit )
+        if( name == description ) {
+            description = null
+        }
+
+        def result = new P2Feature( id: id, version: version, name: name, description: description )
+        result.dependencies = parseDependencies( unit )
+        
+        repo.features << result
+        providerResolver.register( result, unit )
+        repo.bundlesById.get( id ) << result
+
+        return result
+    }
+    
+    String getName( Node unit ) {
+        
+        String name = getProperty( unit, 'org.eclipse.equinox.p2.name' )
+        if( name && name.startsWith( '%' ) ) {
+            String key = 'df_LT.' + name.substring( 1 )
+            name = getProperty( unit, key )
+        }
+        
+        if( name ) {
+            return name
+        }
+        
+        return unit.'@id'
+    }
+    
+    String getDescription( Node unit ) {
+        def description = getProperty( unit, 'org.eclipse.equinox.p2.description' )
+        if( !description ) {
+            return null
+        }
+        
+        if( description.startsWith( '%' ) ) {
+            String key = 'df_LT.' + description.substring( 1 )
+            description = getProperty( unit, key )
+        }
+        
+        return description
+    }
+    
+    P2Plugin parsePlugin( Node unit ) {
+        def id = unit.'@id'
+        def version = versionCache.version( unit.'@version' )
+        def name = getName( unit )
+        def description = getDescription( unit )
+        if( name == description ) {
+            description = null
+        }
+        
+        def result = new P2Plugin( id: id, version: version, name: name, description: description )
+        result.dependencies = parseDependencies( unit )
+        
+        repo.plugins << result
+        providerResolver.register( result, unit )
+        repo.bundlesById.get( id ) << result
+        
+        return result
+    }
+    
+}
+
 class ProviderResolver {
     P2Repo repo
+    DependencyCache dependencyCache
+    
     Map<String, List<P2Bundle>> providers = new HashMap().withDefault { [] }
     
     void register( P2Bundle feature, Node unit ) {
@@ -904,11 +999,15 @@ class ProviderResolver {
 //            println bundles
             if( bundles ) {
                 bundles.each { bundle ->
-                    def versionRange = new VersionRange( "[${bundle.version},${bundle.version}]" )
-                    newDeps << new P2Dependency( type: 'osgi.bundle', id: bundle.id, versionRange: versionRange )
+                    def versionRange = repo.versionCache.range( "[${bundle.version},${bundle.version}]" )
+                    newDeps << dependencyCache.dependency( bundle.id, 'osgi.bundle', versionRange )
                 }
             } else {
-                println dep
+                // TODO P2Dependency( id=org.eclipse.acceleo_root, version=3.1.3.v20120214-0359, type=binary )
+                // TODO P2Dependency( id=org.apache.commons.csv, version=[1.0.0,2.0.0), type=java.package )
+                // TODO P2Dependency( id=javax.sql, version=0.0.0, type=java.package )
+
+                //println dep
                 newDeps << dep
             }
         }

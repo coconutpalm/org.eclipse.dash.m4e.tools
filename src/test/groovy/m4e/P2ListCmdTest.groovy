@@ -178,7 +178,8 @@ class P2ListCmdTest {
         testUnpack()
         
         def repo = new P2Repo(  workDir: new File( testFolder, 'pydevRepo' ), url: new URL( 'http://pydev.org/updates' ) )
-        repo.parseXml( contentXmlFile )
+        def parser = new ContentXmlParser( repo: repo )
+        parser.parseXml( contentXmlFile )
 
         __pydevRepo = repo
         return __pydevRepo
