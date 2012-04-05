@@ -3,6 +3,7 @@ package m4e;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.junit.Assume;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +19,9 @@ class InstallCmdTest {
 
     @Test
     void testImportSwt() throws Exception {
+
+	Assume.assumeTrue( Boolean.getBoolean( 'skipSlowTests' ) == false );
+
         MopSetup.setup()
         downloadDeltaPack()
         
