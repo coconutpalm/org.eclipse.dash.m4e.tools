@@ -47,7 +47,9 @@ convert groupId:artifactId:version patches...
     - Create a POM with a huge dependencyManagement element that contains all
     the versions of all the artifacts in the repository
 clean
-    - Clean the work directory''' 
+    - Clean the work directory
+[ p2list | p2ls ] URL
+    - List the content of a P2 repository.''' 
     
     @Test
     public void testNoArguments() throws Exception {
