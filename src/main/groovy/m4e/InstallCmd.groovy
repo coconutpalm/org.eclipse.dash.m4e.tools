@@ -294,6 +294,7 @@ class InstallCmd extends AbstractCommand {
             return
         }
 
+        // TODO Find closer mirror
         def downloadUrl = 'http://mirror.switch.ch/mirror/apache/dist/maven/binaries/' + m3archive
 
         log.info( 'Downloading Maven 3...' )
