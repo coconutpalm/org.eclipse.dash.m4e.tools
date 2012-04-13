@@ -32,7 +32,7 @@ class InstallCmdTest {
         InstallCmd cmd = new InstallCmd( workDir: workDir )
         cmd.run([ 'install', archive.path ])
         
-        def file = new File( workDir, 'apache-maven-3.0.3/bin/mvn' )
+        def file = new File( workDir, "apache-maven-${InstallCmd.MVN_VERSION}/bin/mvn" )
         assert file.exists (), "Maven executable not found: Missing ${file.absolutePath}"
         
         file = new File( workDir, 'priming_home/m2repo/org/eclipse/core/resources/3.3.0-v20070604/resources-3.3.0-v20070604.pom' )
