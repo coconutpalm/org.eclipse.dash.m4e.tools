@@ -567,15 +567,11 @@ class DependencyCache {
 }
 
 class P2Index {
-    private File file;
-    // TODO Using this gives: groovy.lang.MissingMethodException: No signature of method: java.util.LinkedHashMap.load() is applicable for argument types: (java.io.BufferedInputStream) values: [java.io.BufferedInputStream@7db5391b]
-    // Possible solutions: clear(), clear(), clone(), clear(), find(), sort()
-    //private java.util.Properties properties = new Properties();
-    File contentJarFile
-    File contentXmlFile
+
+    String contentJarName
+    String contentXmlName
     
     P2Index( File file ) {
-        this.file = file;
         
         Properties properties = new Properties();
         file.withInputStream {
@@ -585,8 +581,8 @@ class P2Index {
         def value = properties.getProperty( 'metadata.repository.factory.order' )
         value = value.trim().removeEnd( ',!' )
         
-        contentJarFile = new File( file.parentFile, value.removeEnd( '.xml' ) + '.jar' )
-        contentXmlFile = new File( file.parentFile, value )
+        contentXmlName = value
+        contentJarName = value.removeEnd( '.xml' ) + '.jar'
     }
 }
 
@@ -749,7 +745,201 @@ class Downloader {
     ProgressFactory progressFactory = new ProgressFactory()
 }
 
-class P2Repo {
+interface IP2Repo {
+    P2Bundle latest( String id )
+    P2Bundle latest( String id, VersionRange range )
+    P2Bundle find( String id, Version version )
+}
+
+class P2RepoLoader {
+    
+    static final Logger log = LoggerFactory.getLogger( P2RepoLoader )
+    
+    File workDir
+    private URL url
+    
+    void setUrl( URL url ) {
+        if( !url.path.endsWith( '/' ) ) {
+            url = new URL( url.toExternalForm() + '/' )
+        }
+        this.url = url
+    }
+    
+    URL getUrl() {
+        return url
+    }
+
+    IP2Repo load() {
+        return load( new Downloader( cacheRoot: new File( workDir, 'p2' ) ) )
+    }
+    
+    Downloader downloader
+    
+    IP2Repo load( Downloader downloader ) {
+        
+        this.downloader = downloader
+        
+        File contentXmlFile
+        
+        try {
+            def p2indexFile = downloader.download( new URL( url, 'p2.index' ) )
+            
+            def p2index = new P2Index( p2indexFile )
+            
+            return loadP2Index( p2index )
+        } catch( FileNotFoundException e ) {
+            return loadContent()
+        }
+    }
+    
+    IP2Repo loadContent() {
+        File contentXmlFile
+        
+        try {
+            def contentJarFile = downloader.download( new URL( url, 'content.jar' ) )
+            
+            contentXmlFile = unpackContentJar( contentJarFile )
+        } catch( FileNotFoundException e ) {
+            
+            try {
+                contentXmlFile = downloader.download( new URL( url, 'content.xml' ) )
+            } catch( FileNotFoundException e2 ) {
+                // Last frantic attempt. Example: http://download.eclipse.org/modeling/emft/mwe/updates/releases/helios/compositeContent.xml
+                return loadCompositeContentXmlFile( 'compositeContent.jar', 'compositeContent.xml' )
+            }
+        }
+        
+        P2Repo repo = new P2Repo( workDir: workDir, url: url )
+        
+        log.debug( 'Parsing {}', contentXmlFile )
+        def parser = new ContentXmlParser( repo: repo )
+        parser.parseXml( contentXmlFile )
+        
+        return repo
+    }
+    
+    IP2Repo loadP2Index( P2Index p2index ) {
+        
+        return loadCompositeContentXmlFile( p2index.contentJarName, p2index.contentXmlName )
+    }
+    
+    IP2Repo loadCompositeContentXmlFile( contentJarName, contentXmlName ) {
+        File contentXmlFile
+        
+        try {
+            def contentJarFile = downloader.download( new URL( url, contentJarName ) )
+            
+            contentXmlFile = unpackContentJar( contentJarFile )
+        } catch( FileNotFoundException e2 ) {
+            contentXmlFile = downloader.download( new URL( url, contentXmlName ) )
+        }
+        
+        P2Repo repo = new P2Repo( workDir: workDir, url: url )
+        repo.downloader = downloader
+        
+        log.debug( 'Parsing {}', contentXmlFile )
+        def parser = new ContentXmlParser( repo: repo )
+        try {
+            parser.parseXml( contentXmlFile )
+        } catch( CompositeRepoException e ) {
+            return loadCompositeRepo( contentXmlFile )
+        }
+        
+        return repo
+    }
+    
+    IP2Repo loadCompositeRepo( File compositeContentXmlFile ) {
+        
+        def doc = new XmlParser().parse( compositeContentXmlFile )
+        
+        try {
+            return parse( doc )
+        } catch( Exception e ) {
+            throw new P2Exception( "Error parsing ${compositeContentXmlFile}: ${e}", e )
+        }
+    }
+    
+    IP2Repo parse( Node doc ) {
+        
+        def result = new MergedP2Repo()
+        
+        def children = doc.get( 'children' )
+        
+        for( Node node : children.child ) {
+            def location = node.'@location'
+            
+            P2RepoLoader sub = new P2RepoLoader( workDir: workDir, url: new URL( url, location ) )
+            result.add( sub.load() )  
+        }
+        
+        return result
+    }
+    
+    private File unpackContentJar( File contentJarFile ) {
+        
+        String name = contentJarFile.name.removeEnd( '.jar' ) + '.xml'
+        File contentXmlFile = new File( contentJarFile.parentFile, name )
+        
+        if( contentXmlFile.exists() ) {
+            if( contentXmlFile.lastModified() >= contentJarFile.lastModified() ) {
+                return contentXmlFile
+            }
+            
+            contentXmlFile.usefulDelete()
+        }
+        
+        def jar = new JarFile( contentJarFile )
+        def entry = jar.getEntry( name )
+        if( ! entry ) {
+            throw new P2Exception( "Missing ${name} in ${contentJarFile}" )
+        }
+        def input = jar.getInputStream( entry )
+
+        input.withStream { it ->
+            contentXmlFile << it
+        }
+        
+        return contentXmlFile
+    }
+}
+
+class MergedP2Repo implements IP2Repo {
+    
+    private List<IP2Repo> repos = []
+
+    void add( IP2Repo repo ) {
+        repos << repo
+    }
+
+    P2Bundle latest( String id, VersionRange range = VersionRange.NULL_RANGE ) {
+        
+        for( IP2Repo repo : repos ) {
+            P2Bundle result = repo.latest( id, range )
+            if( result ) {
+                return result
+            }
+        }
+        
+        return null;
+    }
+
+    P2Bundle find( String id, Version version ) {
+        
+        for( IP2Repo repo : repos ) {
+            P2Bundle result = repo.find( id, version )
+            if( result ) {
+                return result
+            }
+        }
+        
+        return null;
+    }    
+    
+}
+
+class P2Repo implements IP2Repo {
+
+    static final Logger log = LoggerFactory.getLogger( P2Repo )
     
     VersionCache versionCache = new VersionCache()
     
@@ -814,76 +1004,10 @@ class P2Repo {
     
     File workDir
     URL url
-    static final Logger log = LoggerFactory.getLogger( P2Repo )
-    
-    void setUrl( URL url ) {
-        if( !url.path.endsWith( '/' ) ) {
-            url = new URL( url.toExternalForm() + '/' )
-        }
-        this.url = url
-    }
-    
-    void load() {
-        load( new Downloader( cacheRoot: new File( workDir, 'p2' ) ) )
-    }
-    
     Downloader downloader
-    
-    void load( Downloader downloader ) {
-        
-        this.downloader = downloader
-
-        File contentXmlFile
-        
-        try {
-            def p2indexFile = downloader.download( new URL( url, 'p2.index' ) )
-            
-            def p2index = new P2Index( p2indexFile )
-            
-            loadP2Index( p2index )
-        } catch( FileNotFoundException e ) {
-            
-            try {
-                def contentJarFile = downloader.download( new URL( url, 'content.jar' ) )
-                
-                contentXmlFile = unpackContentJar( contentJarFile )
-            } catch( FileNotFoundException e2 ) {
-                contentXmlFile = downloader.download( new URL( url, 'content.xml' ) )
-            }
-        
-            log.debug( 'Parsing {}', contentXmlFile )
-            def parser = new ContentXmlParser( repo: this )
-            parser.parseXml( contentXmlFile )
-        }
-    }
-    
-    void loadP2Index( P2Index p2index ) {
-        throw new UnsupportedOperationException()
-    }
-    
-    private File unpackContentJar( File contentJarFile ) {
-        
-        File contentXmlFile = new File( contentJarFile.parentFile, 'content.xml' )
-        
-        if( contentXmlFile.exists() ) {
-            if( contentXmlFile.lastModified() >= contentJarFile.lastModified() ) {
-                return contentXmlFile
-            }
-            
-            contentXmlFile.usefulDelete()
-        }
-        
-        def jar = new JarFile( contentJarFile )
-        def entry = jar.getEntry( 'content.xml' )
-        def input = jar.getInputStream( entry )
-
-        input.withStream { it ->
-            contentXmlFile << it
-        }
-        
-        return contentXmlFile
-    }
 }
+
+class CompositeRepoException extends RuntimeException {}
 
 class ContentXmlParser {
     static final Logger log = LoggerFactory.getLogger( ContentXmlParser )
@@ -905,6 +1029,16 @@ class ContentXmlParser {
     }
     
     void parse( Node doc ) {
+        
+        String type = doc.'@type'
+        if( type == 'org.eclipse.equinox.internal.p2.metadata.repository.CompositeMetadataRepository' ) {
+            throw new CompositeRepoException()
+        }
+        
+        if( type != 'org.eclipse.equinox.internal.p2.metadata.repository.LocalMetadataRepository' ) {
+            throw new P2Exception( "Unsupported repository type ${type}" )
+        }
+        
         def units = doc.units
         
         log.info( "Found ${units.'@size'} items." )
@@ -1214,5 +1348,9 @@ class Progress {
 class P2Exception extends RuntimeException {
     P2Exception( String message ) {
         super( message )
+    }
+    
+    P2Exception( String message, Throwable cause ) {
+        super( message, cause )
     }
 }

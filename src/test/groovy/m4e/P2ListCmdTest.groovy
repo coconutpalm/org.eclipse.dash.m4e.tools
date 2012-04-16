@@ -1085,8 +1085,14 @@ P2Plugin( id=org.eclipse.m2e.logback.appender, version=1.0.200.20111228-1245, na
     @Test
     public void testXtext() throws Exception {
         def url = new URL( 'http://download.eclipse.org/modeling/tmf/xtext/updates/composite/releases/' )
-        def repo = new P2Repo( workDir: new File( testFolder, "xtext" ), url: url )
-        repo.load()
+        def loader = new P2RepoLoader( workDir: new File( testFolder, "xtext" ), url: url )
+        def repo = loader.load()
+        
+        def bundle = repo.find( 'org.eclipse.xtext', new Version( '2.2.1.v201112130541' ) )
+        assertEquals( 'P2Plugin( id=org.eclipse.xtext, version=2.2.1.v201112130541, name=Xtext  )', bundle.toString() )
+        
+        bundle = repo.latest( 'org.eclipse.xtext.runtime.feature.group' )
+        assertEquals( 'P2Feature( id=org.eclipse.xtext.runtime.feature.group, version=2.1.1.v201111141332, name=Xtext Runtime  )', bundle.toString() )
     }
 }
 
