@@ -858,7 +858,7 @@ class P2Repo {
     }
     
     void loadP2Index( P2Index p2index ) {
-        
+        throw new UnsupportedOperationException()
     }
     
     private File unpackContentJar( File contentJarFile ) {

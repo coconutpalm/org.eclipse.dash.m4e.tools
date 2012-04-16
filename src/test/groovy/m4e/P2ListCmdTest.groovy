@@ -141,10 +141,13 @@ class P2ListCmdTest {
         
         def url = new File( "data/input/pydev" ).toURI().toURL()
         
-        P2Repo repo = new P2Repo( workDir: new File( testFolder, 'pydevRepo' ), url: url, progressFactory: new MockProgressFactory() )
-        repo.downloadContentJar( contentJar )
+        File workDir = new File( testFolder, 'pydevRepo' )
+        def downloader = new Downloader( cacheRoot: new File( workDir, 'p2' ), progressFactory: new MockProgressFactory() )
+        File jar = downloader.download( new URL( url, "content.jar" ) )
         
-        assertTrue( contentJar.exists() )
+        assertTrue( jar.exists() )
+        
+        jar.copy( contentJar )
     }
     
     static boolean testUnpackRanOnce
@@ -162,8 +165,8 @@ class P2ListCmdTest {
         
         contentXmlFile.usefulDelete()
         
-        P2Repo repo = new P2Repo( workDir: new File( testFolder, 'pydevRepo' ), progressFactory: new MockProgressFactory() )
-        repo.unpackContentJar( contentJar, contentXmlFile )
+        P2Repo repo = new P2Repo( workDir: new File( testFolder, 'pydevRepo' ) )
+        repo.unpackContentJar( contentJar )
         
         assertTrue( contentXmlFile.exists() )
     }
@@ -178,6 +181,10 @@ class P2ListCmdTest {
         testUnpack()
         
         def repo = new P2Repo(  workDir: new File( testFolder, 'pydevRepo' ), url: new URL( 'http://pydev.org/updates' ) )
+
+        def downloader = new Downloader( cacheRoot: new File( repo.workDir, 'p2' ), progressFactory: new MockProgressFactory() )
+        repo.downloader = downloader
+        
         def parser = new ContentXmlParser( repo: repo )
         parser.parseXml( contentXmlFile )
 
@@ -1074,6 +1081,13 @@ P2Plugin( id=org.eclipse.m2e.logback.appender, version=1.0.200.20111228-1245, na
         deps.download( new File( testFolder, 'org.eclipse.m2e' ) )
     }
     
+    
+    @Test
+    public void testXtext() throws Exception {
+        def url = new URL( 'http://download.eclipse.org/modeling/tmf/xtext/updates/composite/releases/' )
+        def repo = new P2Repo( workDir: new File( testFolder, "xtext" ), url: url )
+        repo.load()
+    }
 }
 
 class MockProgressFactory extends ProgressFactory {
