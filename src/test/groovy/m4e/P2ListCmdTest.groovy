@@ -883,8 +883,8 @@ P2Dependency( id=org.junit, version=[3.8.0,3.9.9], type=osgi.bundle )'''
     
     @Test
     public void testParseIndigoSR2() throws Exception {
-        def repo = new P2Repo( workDir: new File( testFolder, "testParseIndigoSR2" ), url: new URL( 'http://download.eclipse.org/releases/indigo/201202240900/' ) )
-        repo.load()
+        def loader = new P2RepoLoader( workDir: new File( testFolder, "testParseIndigoSR2" ), url: new URL( 'http://download.eclipse.org/releases/indigo/201202240900/' ) )
+        def repo = loader.load()
         
         assertEquals( '''\
 P2Category( id=Application Development Frameworks, version=0.0.0.67C3cLWJM6, name=Application Development Frameworks )
@@ -914,8 +914,8 @@ P2Category( id=Web, XML, Java EE and OSGi Enterprise Development, version=0.0.0.
     
     @Test
     public void testParseIndigoSR2Epps() throws Exception {
-        def repo = new P2Repo( workDir: new File( testFolder, "testParseIndigoSR2Epps" ), url: new URL( 'http://download.eclipse.org/technology/epp/packages/indigo/SR2/' ) )
-        repo.load()
+        def loader = new P2RepoLoader( workDir: new File( testFolder, "testParseIndigoSR2Epps" ), url: new URL( 'http://download.eclipse.org/technology/epp/packages/indigo/SR2/' ) )
+        def repo = loader.load()
         
         assertEquals( 0, repo.categories.size() )
         assertEquals( 23, repo.features.size() )
