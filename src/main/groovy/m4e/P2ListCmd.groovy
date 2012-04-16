@@ -424,7 +424,7 @@ class P2Unit {
 }
 
 class DependencySet {
-    P2Repo repo
+    IP2Repo repo
     List<P2Bundle> bundles = []
     Map<String, P2Bundle> bundleById = [:]
     List<P2Dependency> unknown = []
