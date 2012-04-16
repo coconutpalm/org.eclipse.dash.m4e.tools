@@ -165,8 +165,8 @@ class P2ListCmdTest {
         
         contentXmlFile.usefulDelete()
         
-        P2Repo repo = new P2Repo( workDir: new File( testFolder, 'pydevRepo' ) )
-        repo.unpackContentJar( contentJar )
+        def loader = new P2RepoLoader( workDir: new File( testFolder, 'pydevRepo' ) )
+        loader.unpackContentJar( contentJar )
         
         assertTrue( contentXmlFile.exists() )
     }
@@ -180,8 +180,9 @@ class P2ListCmdTest {
         
         testUnpack()
         
-        def repo = new P2Repo(  workDir: new File( testFolder, 'pydevRepo' ), url: new URL( 'http://pydev.org/updates' ) )
-
+        def url = new File( "data/input/pydev" ).toURI().toURL()
+        def repo = new P2Repo(  workDir: new File( testFolder, 'pydevRepo' ), url: url )
+        
         def downloader = new Downloader( cacheRoot: new File( repo.workDir, 'p2' ), progressFactory: new MockProgressFactory() )
         repo.downloader = downloader
         
@@ -928,8 +929,8 @@ P2Category( id=Web, XML, Java EE and OSGi Enterprise Development, version=0.0.0.
     @Test
     public void testM2E() throws Exception {
         def url = new URL( 'http://download.eclipse.org/technology/m2e/releases/1.0/1.0.200.20111228-1245' )
-        def repo = new P2Repo( workDir: new File( testFolder, "m2e" ), url: url )
-        repo.load()
+        def loader = new P2RepoLoader( workDir: new File( testFolder, "m2e" ), url: url )
+        def repo = loader.load()
         
         def bundle = repo.latest( 'org.slf4j.api' )
         assertEquals( 'P2Plugin( id=org.slf4j.api, version=1.6.1.v20100831-0715, name=SLF4J API )', bundle.toString() )

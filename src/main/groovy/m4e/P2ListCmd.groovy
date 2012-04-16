@@ -810,6 +810,7 @@ class P2RepoLoader {
         }
         
         P2Repo repo = new P2Repo( workDir: workDir, url: url )
+        repo.downloader = downloader
         
         log.debug( 'Parsing {}', contentXmlFile )
         def parser = new ContentXmlParser( repo: repo )
