@@ -482,22 +482,23 @@ class DependencySet {
             if( !fileName ) {
                 fileName = url.path
             }
-            File cached = new File( repo.workDir, 'p2/cache/' + fileName )
-            File tmp = new File( repo.workDir, 'p2/cache/download.tmp' )
             
-            if( !cached.exists() ) {
-                File packedFile = new File( repo.workDir, 'p2/cache/' + fileName + ".pack.gz" )
+            File cacheDir = new File( repo.workDir, 'p2/cache' )
+            File cached = new File( cacheDir, fileName )
+            cacheDir.makedirs()
+            
+            URL packed = new URL( "${url.toExternalForm()}.pack.gz" )
+            try {
+                File packedFile = repo.downloader.download( packed )
                 
-                URL packed = new URL( "${url.toExternalForm()}.pack.gz" )
-                try {
-                    repo.download( packed, packedFile )
-                    
+                if( cached.exists() && packedFile.lastModified() > cached.lastModified() ) {
+                    File tmp = new File( cacheDir, 'download.tmp' )
                     unpack( packedFile, tmp )
-                } catch( FileNotFoundException e ) {
-                    repo.download( url, tmp )
-                }
                 
-                tmp.renameTo( cached )
+                    tmp.renameTo( cached )
+                }
+            } catch( FileNotFoundException e ) {
+                cached = repo.downloader.download( url )
             }
             
             String path = ( it instanceof P2Feature ) ? 'features' : 'plugins'
@@ -508,6 +509,10 @@ class DependencySet {
     }
     
     void unpack( File packedFile, File unpackedFile ) {
+        
+        if( unpackedFile.exists() ) {
+            unpackedFile.usefulDelete()
+        }
         
         unpackedFile.withOutputStream { out ->
             out = new JarOutputStream( out )
@@ -559,6 +564,189 @@ class DependencyCache {
         
         return result
     }
+}
+
+class P2Index {
+    private File file;
+    // TODO Using this gives: groovy.lang.MissingMethodException: No signature of method: java.util.LinkedHashMap.load() is applicable for argument types: (java.io.BufferedInputStream) values: [java.io.BufferedInputStream@7db5391b]
+    // Possible solutions: clear(), clear(), clone(), clear(), find(), sort()
+    //private java.util.Properties properties = new Properties();
+    File contentJarFile
+    File contentXmlFile
+    
+    P2Index( File file ) {
+        this.file = file;
+        
+        Properties properties = new Properties();
+        file.withInputStream {
+            properties.load( it )
+        }
+        
+        def value = properties.getProperty( 'metadata.repository.factory.order' )
+        value = value.trim().removeEnd( ',!' )
+        
+        contentJarFile = new File( file.parentFile, value.removeEnd( '.xml' ) + '.jar' )
+        contentXmlFile = new File( file.parentFile, value )
+    }
+}
+
+class DownloadMetadata {
+
+    static final Logger log = LoggerFactory.getLogger( DownloadMetadata )
+    
+    static DownloadMetadata load( File file ) {
+        File metaFile = new File( file.absolutePath + ".meta" )
+        
+        def result = new DownloadMetadata( file: file, metaFile: metaFile )
+        result.load()
+        
+        return result
+    }
+    
+    File file
+    File metaFile
+    long timeout = 24*60*60*1000
+    boolean needsRefresh
+    FileNotFoundException fileNotFound
+    
+    static final String LAST_UPDATE_KEY = 'lastUpdate'
+    static final String FILE_NOT_FOUND_KEY = 'fileNotFound'
+    
+    void load() {
+        if( !metaFile.exists() ) {
+            needsRefresh = true
+            log.debug( "${metaFile} not found -> needs refresh" )
+            return
+        }
+        
+        def config = new Properties()
+        metaFile.withInputStream {
+            config.load( it )
+        }
+        
+        long lastUpdate
+        try {
+            lastUpdate = Long.parseLong( config.getProperty( LAST_UPDATE_KEY ) )
+        } catch( Exception e ) {
+            lastUpdate = 0
+        }
+        needsRefresh = ( lastUpdate + timeout < System.currentTimeMillis() )
+        
+        String value = config.getProperty( FILE_NOT_FOUND_KEY )
+        if( value ) {
+            fileNotFound = new FileNotFoundException( value )
+        }
+        
+        if( !file.exists() && !fileNotFound ) {
+            needsRefresh = true
+        }
+        
+        log.debug( "Loaded meta ${needsRefresh}" )
+    }
+    
+    void save() {
+        needsRefresh = false
+        
+        def config = new Properties()
+        config.setProperty( LAST_UPDATE_KEY, "${System.currentTimeMillis()}" )
+        
+        if( fileNotFound ) {
+            config.setProperty( FILE_NOT_FOUND_KEY, fileNotFound.message )
+        }
+        
+        metaFile.withOutputStream {
+            config.store( it, null )
+        }
+    }
+    
+    void success() {
+        fileNotFound = null
+        save()
+    }
+    
+    void failed( FileNotFoundException e ) {
+        
+        fileNotFound = e;
+        save()
+    }
+}
+
+class Downloader {
+    
+    static final Logger log = LoggerFactory.getLogger( Downloader )
+    
+    File cacheRoot
+    
+    File urlToPath( URL url ) {
+        File path = new File( cacheRoot, url.host )
+        
+        if( url.port != 80 && url.port != -1 ) {
+            path = new File( path, "${url.port}" )
+        }
+        
+        path = new File( path, url.path )
+        return path
+    }
+
+    File download( URL url ) {
+        File file = urlToPath( url )
+        def meta = DownloadMetadata.load( file )
+        
+        if( !meta.needsRefresh ) {
+            if( meta.fileNotFound ) {
+                throw meta.fileNotFound;
+            }
+            
+            log.info( "Using cached version of ${url}" )
+            return file
+        }
+        
+        log.info( "Downloading ${url} to ${file}..." )
+        
+        URLConnection conn = url.openConnection()
+        conn.connect()
+        
+        def value = conn.getHeaderField("Content-Length")
+        long contentLength = value ? Long.parseLong( value ) : 0
+        Progress p = progressFactory.newProgress( contentLength )
+        log.info( 'Size: {} bytes = {} kb', p.size, p.sizeInKB )
+        
+        p.update( 0 )
+        
+        File tmp = new File( "${file.absolutePath.removeEnd('.jar')}.tmp" )
+        File dir = tmp.parentFile
+        if( dir ) {
+            dir.makedirs()
+        }
+        
+        try {
+            url.withInputStream { input ->
+                byte[] buffer = new byte[10240]
+                
+                tmp.withOutputStream { output ->
+                    int len
+                    while( ( len = input.read(buffer) ) > 0 ) {
+                        p.update( len )
+                        
+                        output.write( buffer, 0, len )
+                    }
+                }
+            }
+            
+            p.close()
+            
+            tmp.renameTo( file )
+            
+            meta.success()
+        } catch( FileNotFoundException e ) {
+            meta.failed( e )
+            throw e
+        }
+        
+        return file
+    }
+    
+    ProgressFactory progressFactory = new ProgressFactory()
 }
 
 class P2Repo {
@@ -636,86 +824,55 @@ class P2Repo {
     }
     
     void load() {
-        def path = urlToPath( url )
-        path.makedirs()
-        
-        def contentJarFile = new File( path, 'content.jar' )
-        if( !contentJarFile.exists() ) {
-            downloadContentJar( contentJarFile )
-        }
-        
-        def contentXmlFile = new File( path, 'content.xml' )
-        if( !contentXmlFile.exists() ) {
-            unpackContentJar(contentJarFile, contentXmlFile)
-        }
-        
-        def parser = new ContentXmlParser( repo: this )
-        parser.parseXml( contentXmlFile )
+        load( new Downloader( cacheRoot: new File( workDir, 'p2' ) ) )
     }
     
-    File urlToPath( URL url ) {
-        def path = new File( workDir, "p2" )
-        path = new File( path, url.host )
-        
-        if( url.port != 80 && url.port != -1 ) {
-            path = new File( path, "${url.port}" )
-        }
-        
-        path = new File( path, url.path )
-        return path
-    }
+    Downloader downloader
     
-    void downloadContentJar( File contentJarFile ) {
+    void load( Downloader downloader ) {
         
-        def downloadUrl = new URL( "${url.toExternalForm()}content.jar" )
-        log.info( 'Downloading content.jar from {} to {}', downloadUrl, contentJarFile )
+        this.downloader = downloader
+
+        File contentXmlFile
         
-        download( downloadUrl, contentJarFile )
-    }
-    
-    void download( URL url, File file ) {
-        if( file.exists() ) {
-            log.info( "Using cached version of ${url}" )
-            return
-        }
-        
-        log.info( "Downloading ${url}..." )
-        
-        URLConnection conn = url.openConnection()
-        conn.connect()
-        
-        def value = conn.getHeaderField("Content-Length")
-        long contentLength = value ? Long.parseLong( value ) : 0
-        Progress p = progressFactory.newProgress( contentLength )
-        log.info( 'Size: {} bytes = {} kb', p.size, p.sizeInKB )
-        
-        p.update( 0 )
-        
-        File tmp = new File( "${file.absolutePath.removeEnd('.jar')}.tmp" )
-        File dir = tmp.parentFile
-        if( dir ) {
-            dir.makedirs()
-        }
-        
-        url.withInputStream { input ->
-            byte[] buffer = new byte[10240]
+        try {
+            def p2indexFile = downloader.download( new URL( url, 'p2.index' ) )
             
-            tmp.withOutputStream { output ->
-                int len
-                while( ( len = input.read(buffer) ) > 0 ) {
-                    p.update( len )
-                    
-                    output.write( buffer, 0, len )
-                }
+            def p2index = new P2Index( p2indexFile )
+            
+            loadP2Index( p2index )
+        } catch( FileNotFoundException e ) {
+            
+            try {
+                def contentJarFile = downloader.download( new URL( url, 'content.jar' ) )
+                
+                contentXmlFile = unpackContentJar( contentJarFile )
+            } catch( FileNotFoundException e2 ) {
+                contentXmlFile = downloader.download( new URL( url, 'content.xml' ) )
             }
+        
+            log.debug( 'Parsing {}', contentXmlFile )
+            def parser = new ContentXmlParser( repo: this )
+            parser.parseXml( contentXmlFile )
         }
-        
-        p.close()
-        
-        tmp.renameTo( file )
     }
     
-    private File unpackContentJar(File contentJarFile, File contentXmlFile) {
+    void loadP2Index( P2Index p2index ) {
+        
+    }
+    
+    private File unpackContentJar( File contentJarFile ) {
+        
+        File contentXmlFile = new File( contentJarFile.parentFile, 'content.xml' )
+        
+        if( contentXmlFile.exists() ) {
+            if( contentXmlFile.lastModified() >= contentJarFile.lastModified() ) {
+                return contentXmlFile
+            }
+            
+            contentXmlFile.usefulDelete()
+        }
+        
         def jar = new JarFile( contentJarFile )
         def entry = jar.getEntry( 'content.xml' )
         def input = jar.getInputStream( entry )
@@ -723,9 +880,9 @@ class P2Repo {
         input.withStream { it ->
             contentXmlFile << it
         }
+        
+        return contentXmlFile
     }
-
-    ProgressFactory progressFactory = new ProgressFactory()
 }
 
 class ContentXmlParser {
