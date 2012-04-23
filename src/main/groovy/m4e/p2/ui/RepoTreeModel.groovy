@@ -177,7 +177,7 @@ class OtherList extends LazyNode {
     @Override
     public List createSwingChildren ()
     {
-        return children.collect { new LabelNode( "${it.id} ${it.version}: ${it.message}", it ) }
+        return children.collect { new LabelNode( "${it.id} ${it.version}: ${it.message}", it ) }.sort { it.toString() }
     }
     
     @Override
@@ -195,7 +195,7 @@ class UnitList extends LazyNode {
     @Override
     public List createSwingChildren ()
     {
-        return children.collect { new LabelNode( "${it.id} ${it.version}", it ) }
+        return children.collect { new LabelNode( "${it.id} ${it.version}", it ) }.sort { it.toString() }
     }
     
     @Override
@@ -217,14 +217,16 @@ class SwingBundle extends LazyNode {
     
     @Override
     public List createSwingChildren () {
-        def result = children.collect { new SwingDependency( root, it ) }
-        result.sort { it.toString() }
-        return result;
+        return children.collect { new SwingDependency( root, it ) }.sort { it.toString() }
     }
     
     @Override
     String toString() {
         if( bundle.name ) {
+            if( bundle.name == bundle.id ) {
+                return "${bundle.name} ${bundle.version}"
+            }
+            
             return "${bundle.name} ${bundle.version} (${bundle.id})"
         }
         
@@ -290,9 +292,7 @@ class BundleList extends LazyNode {
     
     @Override
     public List createSwingChildren () {
-        def result = children.collect { new SwingBundle( root, it ) }
-        result.sort { it.toString () }
-        return result;
+        return children.collect { new SwingBundle( root, it ) }.sort { it.toString() }
     }
     
     @Override
@@ -316,7 +316,7 @@ class SwingRepo extends LazyNode {
     public List createSwingChildren ()
     {
         if( repo instanceof MergedP2Repo ) {
-            return repo.repos.collect { new SwingRepo( root, it ) }
+            return repo.repos.collect { new SwingRepo( root, it ) }.sort { it.toString() }
         }
         
         return [
