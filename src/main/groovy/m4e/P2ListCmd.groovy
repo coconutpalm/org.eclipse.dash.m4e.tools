@@ -697,6 +697,8 @@ class Downloader {
             return file
         }
         
+        url = locateMirror( url )
+        
         log.info( "Downloading ${url} to ${file}..." )
         
         URLConnection conn = url.openConnection()
@@ -740,6 +742,37 @@ class Downloader {
         }
         
         return file
+    }
+    
+    URL locateMirror( URL url ) {
+        if( 'http' != url.protocol ) {
+            return url
+        }
+        
+        if( -1 != url.port ) {
+            return url
+        }
+        
+        if( 'download.eclipse.org' != url.host ) {
+            return url
+        }
+        
+        String path = URLEncoder.encode( url.path, 'UTF-8' )
+        URL mirrorList = new URL( "http://www.eclipse.org/downloads/download.php?file=${path}&protocol=http&format=xml" )
+        
+        def doc
+        mirrorList.withInputStream {
+            doc = new XmlParser().parse( it )
+        }
+        
+        def mirrors = doc.mirror
+        if( !mirrors ) {
+            return url
+        }
+        
+        // TODO switch to a different mirror when this one is down
+        log.debug( "Found ${mirrors.size()} mirrors. Using ${mirrors[0].'@label'}" )
+        return new URL( mirrors[0].'@url' )
     }
     
     ProgressFactory progressFactory = new ProgressFactory()
