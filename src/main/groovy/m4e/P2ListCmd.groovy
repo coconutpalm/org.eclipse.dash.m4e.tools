@@ -1075,7 +1075,7 @@ class ContentXmlParser {
         
         def units = doc.units
         
-        log.info( "Found ${units.'@size'} items." )
+        log.info( "Found ${units.size()} items." )
         
         for( Node unit : units.unit ) {
             
