@@ -1,0 +1,56 @@
+package m4e.p2;
+
+class P2Dependency implements Comparable<P2Dependency> {
+    String type
+    String id
+    VersionRange versionRange
+    List<P2Bundle> bundles 
+    
+    String toString() {
+        return "${getClass().simpleName}( id=${id}, version=${versionRange}, type=${type} )"
+    }
+    
+    void list( IndentPrinter out ) {
+        out.printIndent()
+        out.println( "${id} ${versionRange.shortVersion()}" )
+    }
+    
+    public int compareTo( P2Dependency o ) {
+        int d = id.compareTo( o.id )
+        
+        if( d == 0 ) {
+            d = versionRange.lower.compareTo( o.versionRange.lower )
+        }
+        
+        return d
+    }
+    
+    @Override
+    public boolean equals( Object obj ) {
+        if( this == obj ) {
+            return true
+        }
+        
+        if( !(obj instanceof P2Dependency) ) {
+            return false
+        }
+        
+        P2Dependency other = obj
+        if( !id.equals( other.id ) ) {
+            return false
+        }
+        if( !type.equals( other.type ) ) {
+            return false
+        }
+        if( !versionRange.equals( other.versionRange ) ) {
+            return false
+        }
+        
+        return false;
+    }
+    
+    @Override
+    public int hashCode() {
+        return id.hashCode() *  31 + type.hashCode() * 37 + versionRange.hashCode() * 97;
+    }
+}
