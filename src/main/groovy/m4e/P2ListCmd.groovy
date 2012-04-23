@@ -120,32 +120,19 @@ URL
 class RepoTreeModel implements TreeModel {
     
     private IP2Repo root
-    private List listeners = []
-    
-    IP2Repo getRoot() {
-        return root
-    }
+    private SwingRepo rootNode
+    private List<TreeModelListener> listeners = []
     
     RepoTreeModel( IP2Repo root ) {
         this.root = root
+        rootNode = new SwingRepo( root, root )
     }
     
+    Object getRoot() {
+        return rootNode
+    }
+
     Object getChild(Object parent, int index) {
-        if( parent instanceof MergedP2Repo ) {
-            return parent.repos[ index ]
-        }
-        if( parent instanceof P2Repo ) {
-            switch( index ) {
-                case 0: return new BundleList( getRoot(), 'categories', parent.categories, index )
-                case 1: return new BundleList( getRoot(), 'features', parent.features, index )
-                case 2: return new BundleList( getRoot(), 'plugins', parent.plugins, index )
-                case 3: return new UnitList( parent.units, index )
-                case 4: return new OtherList( parent.others, index )
-                // TODO other
-            }
-            
-            return null
-        }
         if( parent instanceof ITreeNode ) {
             return parent.getChild( index )
         }
@@ -154,12 +141,6 @@ class RepoTreeModel implements TreeModel {
     }
     
     int getChildCount(Object parent) {
-        if( parent instanceof MergedP2Repo ) {
-            return parent.size()
-        }
-        if( parent instanceof P2Repo ) {
-            return 5
-        }
         if( parent instanceof ITreeNode ) {
             return parent.getChildCount()
         }
@@ -168,12 +149,6 @@ class RepoTreeModel implements TreeModel {
     }
     
     boolean isLeaf(Object node) {
-        if( node instanceof MergedP2Repo ) {
-            return false
-        }
-        if( node instanceof P2Repo ) {
-            return false
-        }
         if( node instanceof ITreeNode ) {
             return node.isLeaf()
         }
@@ -182,12 +157,6 @@ class RepoTreeModel implements TreeModel {
     }
     
     int getIndexOfChild(Object parent, Object child) {
-        if( parent instanceof MergedP2Repo ) {
-            return parent.repos.indexOf( child )
-        }
-        if( parent instanceof P2Repo ) {
-            return child.index
-        }
         if( parent instanceof ITreeNode ) {
             return parent.indexOf( child )
         }
@@ -199,22 +168,18 @@ class RepoTreeModel implements TreeModel {
         // Do nothing
     }
     
-    private void fireTreeNodesChanged(TreePath parentPath, int[] indices, Object[] children) {
-        TreeModelEvent event = new TreeModelEvent(this, parentPath, indices, children);
-        Iterator iterator = listeners.iterator();
-        TreeModelListener listener = null;
-        while (iterator.hasNext()) {
-            listener = (TreeModelListener) iterator.next();
-            listener.treeNodesChanged(event);
-        }
+    private void fireTreeNodesChanged( TreePath parentPath, int[] indices, Object[] children ) {
+        TreeModelEvent event = new TreeModelEvent( this, parentPath, indices, children )
+        
+        listeners.each { it.treeNodesChanged( event ) }
     }
 
     public void addTreeModelListener(TreeModelListener listener) {
-        listeners.add(listener);
+        listeners << listener
     }
 
     public void removeTreeModelListener(TreeModelListener listener) {
-        listeners.remove(listener);
+        listeners.remove( listener )
     }
 }
 
@@ -262,36 +227,60 @@ class LabelNode extends LeafNode {
     }
 } 
 
-class OtherList implements ITreeNode {
+abstract class LazyNode implements ITreeNode {
     
-    List<LeafNode> children
-    int index
+    protected List children
+    private List swingChildren
+    private int childCount
     
-    OtherList( List<P2Other> others, int index ) {
-        children = others.collect { new LabelNode( "${it.id} ${it.version}: ${it.message}", it ) }
-        this.index = index
+    LazyNode( List children ) {
+        this.childCount = children ? children.size() : 0
+        this.children = children
     }
-    
+
+    LazyNode( int childCount ) {
+        this.childCount = childCount
+    }
+        
     @Override
     boolean isLeaf() {
-        return children.isEmpty()
+        return childCount == 0
     }
     
     @Override
     int getChildCount() {
-        return children.size()
+        return childCount
     }
     
     @Override
     Object getChild( int index ) {
-        return children[ index ]
+        if( null == swingChildren ) {
+            swingChildren = createSwingChildren()
+        }
+        
+        return swingChildren[ index ]
     }
     
     @Override
     int indexOf( Object child ) {
         int pos = 0
         
-        return children.indexOf( child )
+        return swingChildren.indexOf( child )
+    }
+    
+    abstract List createSwingChildren();
+}
+
+class OtherList extends LazyNode {
+    
+    OtherList( List<P2Other> others ) {
+        super( others )
+    }
+    
+    @Override
+    public List createSwingChildren ()
+    {
+        return children.collect { new LabelNode( "${it.id} ${it.version}: ${it.message}", it ) }
     }
     
     @Override
@@ -300,36 +289,16 @@ class OtherList implements ITreeNode {
     }
 }
 
-class UnitList implements ITreeNode {
+class UnitList extends LazyNode {
     
-    List<LeafNode> children
-    int index
-    
-    UnitList( List<P2Unit> others, int index ) {
-        children = others.collect { new LabelNode( "${it.id} ${it.version}", it ) }
-        this.index = index
+    UnitList( List<P2Unit> others ) {
+        super( others )
     }
-    
+
     @Override
-    boolean isLeaf() {
-        return children.isEmpty()
-    }
-    
-    @Override
-    int getChildCount() {
-        return children.size()
-    }
-    
-    @Override
-    Object getChild( int index ) {
-        return children[ index ]
-    }
-    
-    @Override
-    int indexOf( Object child ) {
-        int pos = 0
-        
-        return children.indexOf( child )
+    public List createSwingChildren ()
+    {
+        return children.collect { new LabelNode( "${it.id} ${it.version}", it ) }
     }
     
     @Override
@@ -338,44 +307,22 @@ class UnitList implements ITreeNode {
     }
 }
 
-class SwingBundle implements ITreeNode {
+class SwingBundle extends LazyNode {
     IP2Repo root
     P2Bundle bundle
-    List<P2Dependency> deps
-    List<SwingDependency> swingDeps
     
     SwingBundle( IP2Repo root, P2Bundle bundle ) {
+        super( bundle.dependencies.findAll { it.id != bundle.id } )
+        
         this.root = root
         this.bundle = bundle
-        
-        this.deps = bundle.dependencies.findAll { it.id != bundle.id }
     }
     
     @Override
-    boolean isLeaf() {
-        return deps.isEmpty()
-    }
-    
-    @Override
-    int getChildCount() {
-        return deps.size()
-    }
-    
-    @Override
-    Object getChild( int index ) {
-        if( null == swingDeps ) {
-            swingDeps = deps.collect { new SwingDependency( root, it ) }
-            swingDeps.sort { it.toString() }
-        }
-        
-        return swingDeps[ index ]
-    }
-    
-    @Override
-    int indexOf( Object child ) {
-        int pos = 0
-        
-        return swingDeps.indexOf( child )
+    public List createSwingChildren () {
+        def result = children.collect { new SwingDependency( root, it ) }
+        result.sort { it.toString() }
+        return result;
     }
     
     @Override
@@ -432,43 +379,60 @@ class SwingDependency implements ITreeNode {
     }
 }
 
-class BundleList implements ITreeNode {
+class BundleList extends LazyNode {
     
+    IP2Repo root
     String title
-    int index
-    List<SwingBundle> bundles
     
-    BundleList( IP2Repo root, String title, List<P2Bundle> bundles, int index ) {
+    BundleList( IP2Repo root, String title, List<P2Bundle> bundles ) {
+        super( bundles )
+        
+        this.root = root
         this.title = title
-        
-        this.bundles = bundles.collect { new SwingBundle( root, it ) }
-        this.bundles.sort { it.toString () }
-        
-        this.index = index
     }
     
     @Override
-    boolean isLeaf() {
-        return bundles.isEmpty()
-    }
-    
-    @Override
-    int getChildCount() {
-        return bundles.size()
-    }
-    
-    @Override
-    Object getChild( int index ) {
-        return bundles[ index ]
-    }
-    
-    @Override
-    int indexOf( Object child ) {
-        return bundles.indexOf( child )
+    public List createSwingChildren () {
+        def result = children.collect { new SwingBundle( root, it ) }
+        result.sort { it.toString () }
+        return result;
     }
     
     @Override
     String toString() {
-        return "${bundles.size()} ${title}"
+        return "${children.size()} ${title}"
+    }
+}
+
+class SwingRepo extends LazyNode {
+    IP2Repo repo
+    IP2Repo root
+    
+    SwingRepo( IP2Repo root, IP2Repo current ) {
+        super( current instanceof MergedP2Repo ? current.repos.size() : 5 )
+        
+        this.root = root
+        this.repo = current
+    }
+    
+    @Override
+    public List createSwingChildren ()
+    {
+        if( repo instanceof MergedP2Repo ) {
+            return repo.repos.collect { new SwingRepo( root, it ) }
+        }
+        
+        return [
+            new BundleList( getRoot(), 'categories', repo.categories ),
+            new BundleList( getRoot(), 'features', repo.features ),
+            new BundleList( getRoot(), 'plugins', repo.plugins ),
+            new UnitList( repo.units ),
+            new OtherList( repo.others )
+        ]
+    }
+    
+    @Override
+    String toString() {
+        return repo.toString()
     }
 }
