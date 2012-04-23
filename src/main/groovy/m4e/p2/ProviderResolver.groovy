@@ -11,16 +11,18 @@ class ProviderResolver {
     
     Map<String, List<P2Bundle>> providers = new HashMap().withDefault { [] }
     
-    void register( P2Bundle feature, Node unit ) {
+    void register( P2Bundle bundle, Node unit ) {
         def provides = unit.provides
         if( !provides ) {
             return
         }
         
         provides.provided.each { provided ->
-            String key = "${provided.'@namespace'}:${provided.'@name'}"
+            String namespace = provided.'@namespace'
+            String key = "${namespace}:${provided.'@name'}"
             
-            providers.get( key ).add( feature )
+//            println "define ${key}"
+            providers.get( key ).add( bundle )
         }
     }
     
@@ -45,15 +47,18 @@ class ProviderResolver {
         
         dependencies.each { dep ->
             if( dep.type == 'osgi.bundle' || dep.type == 'org.eclipse.equinox.p2.iu' ) {
+//                println "Keep ${dep}"
                 newDeps << dep
                 return
             }
             
             String key = "${dep.type}:${dep.id}"
+//            println key
             def bundles = providers[key]
 //            println dep
 //            println bundles
             if( bundles ) {
+//                println "Found ${key}"
                 bundles.each { bundle ->
                     def versionRange = repo.versionCache.range( "[${bundle.version},${bundle.version}]" )
                     newDeps << dependencyCache.dependency( bundle.id, 'osgi.bundle', versionRange )
@@ -64,6 +69,7 @@ class ProviderResolver {
                 // TODO P2Dependency( id=javax.sql, version=0.0.0, type=java.package )
 
                 //println dep
+//                println "Missing ${key}"
                 newDeps << dep
             }
         }
