@@ -44,5 +44,18 @@ class MergedP2Repo implements IP2Repo {
         }
         
         out.decrementIndent()
-    }   
+    }
+    
+    String toString() {
+        return "Composite repo (${repos.size()})"
+    }
+    
+    List<IP2Repo> getRepos() {
+        return repos
+    }
+    
+    int size() {
+        return repos.size()
+    }
+    
 }

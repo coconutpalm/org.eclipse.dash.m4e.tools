@@ -89,4 +89,8 @@ class P2Repo implements IP2Repo {
     File workDir
     URL url
     Downloader downloader
+    
+    String toString() {
+        return "P2 Repository ${url}"
+    }
 }
