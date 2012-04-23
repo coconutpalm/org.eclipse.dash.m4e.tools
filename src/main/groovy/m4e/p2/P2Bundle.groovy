@@ -69,6 +69,7 @@ class P2Other {
     String id
     Version version
     String message
+    String xml
     
     String toString() {
         return "${id} ${version}: ${message}"

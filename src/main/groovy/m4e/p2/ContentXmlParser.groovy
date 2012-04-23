@@ -155,19 +155,25 @@ class ContentXmlParser {
             println "${id} ${requires}"
         }
         
-        repo.others << new P2Other( id: id, version: versionCache.version( unit.'@version' ), message: "Unable to determine type" )
+        String xml = xmlToString( unit )
+        repo.others << new P2Other( id: id, version: versionCache.version( unit.'@version' ), message: "Unable to determine type", xml: xml )
     }
     
     P2Unit parseUnit( Node unit ) {
-        StringWriter buffer = new StringWriter( 10240 )
-        def ip = new IndentPrinter( buffer, '    ' )
-        def printer = new XmlNodePrinter( ip )
-        printer.print( unit )
-        String xml = buffer.toString()
+        String xml = xmlToString( unit )
         String id = unit.'@id'
         
         def result = new P2Unit( id: id, version: versionCache.version( unit.'@version' ), xml: xml )
         return result
+    }
+    
+    String xmlToString( Node node ) {
+        StringWriter buffer = new StringWriter( 10240 )
+        def ip = new IndentPrinter( buffer, '    ' )
+        def printer = new XmlNodePrinter( ip )
+        printer.print( node )
+        String xml = buffer.toString()
+        return xml
     }
     
     P2Feature parseFeature( Node unit ) {

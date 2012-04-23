@@ -1,21 +1,27 @@
 package m4e
 
 import java.io.PrintWriter;
+import java.util.List;
 
 import javax.swing.JFrame;
+import javax.swing.JTree;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 
 import m4e.p2.MergedP2Repo;
 import m4e.p2.P2Bundle;
 import m4e.p2.P2Dependency;
+import m4e.p2.P2Other;
 import m4e.p2.P2Repo;
 import m4e.p2.P2RepoLoader;
 import m4e.p2.IP2Repo;
+import m4e.p2.P2Unit;
 
 import groovy.swing.SwingBuilder
 
@@ -46,14 +52,22 @@ URL
         def swing = new SwingBuilder()
 
         def model = new RepoTreeModel( repo )
+        JTree repoTree
         
         swing.edt {
             frame( title: 'P2 Repository View', defaultCloseOperation: JFrame.EXIT_ON_CLOSE, size: [ 800, 800 ], show: true) {
                 scrollPane {
-                    tree( model: model )
+                    repoTree = tree( model: model )
                 }
             }
         }
+        
+        repoTree.selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
+        def l = {
+            def node = repoTree.lastSelectedPathComponent
+            selectionChanged( node )
+        } as TreeSelectionListener
+        repoTree.addTreeSelectionListener( l )
     }
     
     void listToConsole( IP2Repo repo ) {
@@ -87,6 +101,20 @@ URL
         String ui = args[ pos ]
         return ui
     }
+    
+    void selectionChanged( Object node ) {
+        println node
+        if( node instanceof LabelNode ) {
+            def data = node.data
+            println data
+            
+            if( data instanceof P2Unit ) {
+                println data.xml
+            } else if( data instanceof P2Other ) {
+                println data.xml
+            }
+        }
+    }
 }
 
 class RepoTreeModel implements TreeModel {
@@ -111,6 +139,8 @@ class RepoTreeModel implements TreeModel {
                 case 0: return new BundleList( getRoot(), 'categories', parent.categories, index )
                 case 1: return new BundleList( getRoot(), 'features', parent.features, index )
                 case 2: return new BundleList( getRoot(), 'plugins', parent.plugins, index )
+                case 3: return new UnitList( parent.units, index )
+                case 4: return new OtherList( parent.others, index )
                 // TODO other
             }
             
@@ -128,8 +158,7 @@ class RepoTreeModel implements TreeModel {
             return parent.size()
         }
         if( parent instanceof P2Repo ) {
-            // TODO other
-            return 3
+            return 5
         }
         if( parent instanceof ITreeNode ) {
             return parent.getChildCount()
@@ -194,6 +223,119 @@ interface ITreeNode {
     int getChildCount()
     Object getChild( int index )
     int indexOf( Object child )
+}
+
+abstract class LeafNode implements ITreeNode {
+    
+    @Override
+    boolean isLeaf() {
+        return true
+    }
+    
+    @Override
+    int getChildCount() {
+        return 0
+    }
+    
+    @Override
+    Object getChild( int index ) {
+        return null
+    }
+    
+    @Override
+    int indexOf( Object child ) {
+        return -1
+    }
+}
+
+class LabelNode extends LeafNode {
+    String label
+    Object data
+    
+    LabelNode( String label, Object data = null ) {
+        this.label = label
+        this.data = data
+    }
+    
+    String toString() {
+        return label
+    }
+} 
+
+class OtherList implements ITreeNode {
+    
+    List<LeafNode> children
+    int index
+    
+    OtherList( List<P2Other> others, int index ) {
+        children = others.collect { new LabelNode( "${it.id} ${it.version}: ${it.message}", it ) }
+        this.index = index
+    }
+    
+    @Override
+    boolean isLeaf() {
+        return children.isEmpty()
+    }
+    
+    @Override
+    int getChildCount() {
+        return children.size()
+    }
+    
+    @Override
+    Object getChild( int index ) {
+        return children[ index ]
+    }
+    
+    @Override
+    int indexOf( Object child ) {
+        int pos = 0
+        
+        return children.indexOf( child )
+    }
+    
+    @Override
+    String toString() {
+        return "${children.size()} other nodes"
+    }
+}
+
+class UnitList implements ITreeNode {
+    
+    List<LeafNode> children
+    int index
+    
+    UnitList( List<P2Unit> others, int index ) {
+        children = others.collect { new LabelNode( "${it.id} ${it.version}", it ) }
+        this.index = index
+    }
+    
+    @Override
+    boolean isLeaf() {
+        return children.isEmpty()
+    }
+    
+    @Override
+    int getChildCount() {
+        return children.size()
+    }
+    
+    @Override
+    Object getChild( int index ) {
+        return children[ index ]
+    }
+    
+    @Override
+    int indexOf( Object child ) {
+        int pos = 0
+        
+        return children.indexOf( child )
+    }
+    
+    @Override
+    String toString() {
+        return "${children.size()} special units"
+    }
 }
 
 class SwingBundle implements ITreeNode {
