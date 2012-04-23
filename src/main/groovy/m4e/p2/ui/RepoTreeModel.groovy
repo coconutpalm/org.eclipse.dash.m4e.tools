@@ -23,7 +23,7 @@ class RepoTreeModel implements TreeModel {
     
     RepoTreeModel( IP2Repo root ) {
         this.root = root
-        rootNode = new SwingRepo( root, root )
+        rootNode = new SwingRepo( this, root, 0 )
     }
     
     Object getRoot() {
@@ -79,6 +79,30 @@ class RepoTreeModel implements TreeModel {
     public void removeTreeModelListener(TreeModelListener listener) {
         listeners.remove( listener )
     }
+    
+    String pattern = ''
+    
+    void filter( String pattern ) {
+//        println "filter '${pattern}'"
+        
+        this.pattern = pattern
+        
+        rootNode = new SwingRepo( this, root, 0 )
+        
+        def path = new TreePath( root )
+        TreeModelEvent event = new TreeModelEvent( this, path, null, null )
+        listeners.each { it.treeStructureChanged( event ) }
+    }
+    
+    boolean matches( String nodeLabel ) {
+        if( pattern.size() == 0 ) {
+            return true
+        }
+        
+        boolean result = nodeLabel.contains( pattern )
+//        println "${result} ${nodeLabel}"
+        return result
+    }
 }
 
 interface ITreeNode {
@@ -86,6 +110,7 @@ interface ITreeNode {
     int getChildCount()
     Object getChild( int index )
     int indexOf( Object child )
+    String id()
 }
 
 abstract class LeafNode implements ITreeNode {
@@ -108,6 +133,11 @@ abstract class LeafNode implements ITreeNode {
     @Override
     int indexOf( Object child ) {
         return -1
+    }
+    
+    @Override
+    String id() {
+        return toString()
     }
 }
 
@@ -185,6 +215,11 @@ class OtherList extends LazyNode {
     String toString() {
         return "${children.size()} other nodes"
     }
+    
+    @Override
+    String id() {
+        return 'other';
+    }
 }
 
 class UnitList extends LazyNode {
@@ -203,23 +238,28 @@ class UnitList extends LazyNode {
     String toString() {
         return "${children.size()} special units"
     }
+    
+    @Override
+    String id() {
+        return 'specialUnit';
+    }
 }
 
 class SwingBundle extends LazyNode {
-    IP2Repo root
+    RepoTreeModel model
     P2Bundle bundle
     boolean hasSource
     
-    SwingBundle( IP2Repo root, P2Bundle bundle ) {
+    SwingBundle( RepoTreeModel model, P2Bundle bundle ) {
         super( bundle.dependencies.findAll { it.id != bundle.id } )
         
-        this.root = root
+        this.model = model
         this.bundle = bundle
     }
     
     @Override
     public List createSwingChildren () {
-        return children.collect { new SwingDependency( root, it ) }.sort { it.toString() }
+        return children.collect { new SwingDependency( model, it ) }.sort { it.toString() }
     }
     
     @Override
@@ -237,18 +277,22 @@ class SwingBundle extends LazyNode {
         return "${bundle.id} ${bundle.version}${source}"
     }
 
+    @Override
+    String id() {
+        return "${bundle.id}:${bundle.version}";
+    }
 }
 
 class SwingDependency implements ITreeNode {
     P2Dependency dependency
     SwingBundle bundle
     
-    SwingDependency( IP2Repo root, P2Dependency dependency ) {
+    SwingDependency( RepoTreeModel model, P2Dependency dependency ) {
         this.dependency = dependency
         
-        def bundle = root.latest( dependency.id, dependency.versionRange )
+        def bundle = model.root.latest( dependency.id, dependency.versionRange )
         if( bundle ) {
-            this.bundle = new SwingBundle( root, bundle )
+            this.bundle = new SwingBundle( model, bundle )
         }
     }
 
@@ -280,19 +324,24 @@ class SwingDependency implements ITreeNode {
     String toString() {
         return "Dependency ${dependency.id} ${dependency.versionRange}"
     }
+
+    @Override
+    String id() {
+        return "${dependency.id}:${dependency.versionRange}";
+    }
 }
 
 class BundleList extends LazyNode {
     
-    IP2Repo root
+    RepoTreeModel model
     String title
     List<P2Bundle> bundles
     
-    BundleList( IP2Repo root, String title, List<P2Bundle> bundles ) {
-        super( bundles.findAll { !it.isSourceBundle() } )
+    BundleList( RepoTreeModel model, String title, List<P2Bundle> bundles ) {
+        super( bundles.findAll { !it.isSourceBundle() && model.matches( "${it.id}" ) } )
         
         this.bundles = bundles
-        this.root = root
+        this.model = model
         this.title = title
     }
     
@@ -301,7 +350,7 @@ class BundleList extends LazyNode {
         Set<String> sourceBundles = new HashSet( bundles.findAll { it.isSourceBundle() }.collect { it.id.removeEnd( '.source' ) } )
         
         return children.collect {
-            def swing = new SwingBundle( root, it )
+            def swing = new SwingBundle( model, it )
             swing.hasSource = sourceBundles.contains( it.id )
             return swing
         }.sort { it.toString() }
@@ -311,30 +360,39 @@ class BundleList extends LazyNode {
     String toString() {
         return "${children.size()} ${title}"
     }
+    
+    @Override
+    String id() {
+        return title
+    }
 }
 
 class SwingRepo extends LazyNode {
+    RepoTreeModel model
     IP2Repo repo
-    IP2Repo root
+    String id
     
-    SwingRepo( IP2Repo root, IP2Repo current ) {
+    SwingRepo( RepoTreeModel model, IP2Repo current, int index ) {
         super( current instanceof MergedP2Repo ? current.repos.size() : 5 )
         
-        this.root = root
+        this.model = model
         this.repo = current
+        
+        this.id = current instanceof MergedP2Repo ? ( 'complexRepo' + index ) : current.url.toString()
     }
     
     @Override
     public List createSwingChildren ()
     {
         if( repo instanceof MergedP2Repo ) {
-            return repo.repos.collect { new SwingRepo( root, it ) }.sort { it.toString() }
+            int index = 0
+            return repo.repos.collect { new SwingRepo( model, it, index ++ ) }.sort { it.toString() }
         }
         
         return [
-            new BundleList( getRoot(), 'categories', repo.categories ),
-            new BundleList( getRoot(), 'features', repo.features ),
-            new BundleList( getRoot(), 'plugins', repo.plugins ),
+            new BundleList( model, 'categories', repo.categories ),
+            new BundleList( model, 'features', repo.features ),
+            new BundleList( model, 'plugins', repo.plugins ),
             new UnitList( repo.units ),
             new OtherList( repo.others )
         ]
@@ -343,5 +401,10 @@ class SwingRepo extends LazyNode {
     @Override
     String toString() {
         return repo.toString()
+    }
+    
+    @Override
+    String id() {
+        return id
     }
 }
