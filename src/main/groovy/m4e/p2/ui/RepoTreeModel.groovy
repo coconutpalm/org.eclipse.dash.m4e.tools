@@ -378,7 +378,7 @@ class SwingRepo extends LazyNode {
         this.model = model
         this.repo = current
         
-        this.id = current instanceof MergedP2Repo ? ( 'complexRepo' + index ) : current.url.toString()
+        this.id = current.url.toString()
     }
     
     @Override

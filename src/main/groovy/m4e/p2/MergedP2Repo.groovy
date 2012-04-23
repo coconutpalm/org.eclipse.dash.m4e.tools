@@ -4,6 +4,8 @@ import java.util.List;
 
 class MergedP2Repo implements IP2Repo {
     
+    URL url
+    
     private List<IP2Repo> repos = []
 
     void add( IP2Repo repo ) {
@@ -47,7 +49,7 @@ class MergedP2Repo implements IP2Repo {
     }
     
     String toString() {
-        return "Composite repo (${repos.size()})"
+        return "Composite repo ${url} (${repos.size()})"
     }
     
     List<IP2Repo> getRepos() {

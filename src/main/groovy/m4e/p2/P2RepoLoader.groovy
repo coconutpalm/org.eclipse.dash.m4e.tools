@@ -121,7 +121,7 @@ class P2RepoLoader {
     
     IP2Repo parse( Node doc ) {
         
-        def result = new MergedP2Repo()
+        def result = new MergedP2Repo( url: url )
         
         def children = doc.get( 'children' )
         
