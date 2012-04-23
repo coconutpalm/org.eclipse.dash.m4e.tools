@@ -1058,8 +1058,8 @@ class ContentXmlParser {
         def doc = new XmlParser().parse( contentXmlFile )
         parse( doc )
         
-        log.info( "Parsed ${contentXmlFile}" )
-        log.info( "dependencyCache has ${dependencyCache.cache.size()} elements" )
+        log.debug( "Parsed ${contentXmlFile}" )
+        log.debug( "dependencyCache has ${dependencyCache.cache.size()} elements" )
     }
     
     void parse( Node doc ) {
