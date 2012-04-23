@@ -697,17 +697,45 @@ class Downloader {
             return file
         }
         
-        url = locateMirror( url )
+        List<URL> urls = locateMirror( url )
         
-        log.info( "Downloading ${url} to ${file}..." )
+        boolean success = false
+        int i = 0
+        while( !success && i < urls.size() ) {
+            def url2 = urls[ i ++ ]
+            log.info( "Downloading ${url2} to ${file}..." )
+            
+            URLConnection conn = url2.openConnection()
+            conn.connect()
+            
+            def value = conn.getHeaderField("Content-Length")
+            long contentLength = value ? Long.parseLong( value ) : 0
+            Progress p = progressFactory.newProgress( contentLength )
+            log.info( 'Size: {} bytes = {} kb', p.size, p.sizeInKB )
+            
+            try {
+                doDownload( url2, file, p )
+                
+                meta.success()
+                return file
+            } catch( FileNotFoundException e ) {
+                meta.failed( e )
+                throw e
+            } catch( IOException e ) {
+                String message = e.message
+                if( message.startsWith ( 'Server returned HTTP response code: 503' ) ) {
+                    log.debug( "Mirror ${url2} failed with: ${message}" )
+                    continue
+                }
+                
+                throw e
+            }
+        }
         
-        URLConnection conn = url.openConnection()
-        conn.connect()
-        
-        def value = conn.getHeaderField("Content-Length")
-        long contentLength = value ? Long.parseLong( value ) : 0
-        Progress p = progressFactory.newProgress( contentLength )
-        log.info( 'Size: {} bytes = {} kb', p.size, p.sizeInKB )
+        throw new P2Exception( "Unable to download ${url} from\n${urls.join( '\n' )}" )
+    }
+    
+    void doDownload( URL url, File file, Progress p ) {
         
         p.update( 0 )
         
@@ -717,44 +745,35 @@ class Downloader {
             dir.makedirs()
         }
         
-        try {
-            url.withInputStream { input ->
-                byte[] buffer = new byte[10240]
-                
-                tmp.withOutputStream { output ->
-                    int len
-                    while( ( len = input.read(buffer) ) > 0 ) {
-                        p.update( len )
-                        
-                        output.write( buffer, 0, len )
-                    }
+        url.withInputStream { input ->
+            byte[] buffer = new byte[10240]
+            
+            tmp.withOutputStream { output ->
+                int len
+                while( ( len = input.read(buffer) ) > 0 ) {
+                    p.update( len )
+                    
+                    output.write( buffer, 0, len )
                 }
             }
-            
-            p.close()
-            
-            tmp.renameTo( file )
-            
-            meta.success()
-        } catch( FileNotFoundException e ) {
-            meta.failed( e )
-            throw e
         }
         
-        return file
+        p.close()
+        
+        tmp.renameTo( file )
     }
     
-    URL locateMirror( URL url ) {
+    List<URL> locateMirror( URL url ) {
         if( 'http' != url.protocol ) {
-            return url
+            return [ url ]
         }
         
         if( -1 != url.port ) {
-            return url
+            return [ url ]
         }
         
         if( 'download.eclipse.org' != url.host ) {
-            return url
+            return [ url ]
         }
         
         String path = URLEncoder.encode( url.path, 'UTF-8' )
@@ -765,14 +784,21 @@ class Downloader {
             doc = new XmlParser().parse( it )
         }
         
-        def mirrors = doc.mirror
+        NodeList mirrors = doc.mirror
         if( !mirrors ) {
-            return url
+            return [ url ]
         }
         
-        // TODO switch to a different mirror when this one is down
-        log.debug( "Found ${mirrors.size()} mirrors. Using ${mirrors[0].'@label'}" )
-        return new URL( mirrors[0].'@url' )
+        log.debug( "Found ${mirrors.size()} mirrors." )
+        def result = []
+        if( mirrors.size() > 5 ) {
+            mirrors = mirrors.subList( 0, 5 )
+        }
+        mirrors.each {
+            result << new URL( it.'@url' )
+        }
+        result << url
+        return result
     }
     
     ProgressFactory progressFactory = new ProgressFactory()
