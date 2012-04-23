@@ -16,7 +16,8 @@ class IndigoSR2Test {
 
     @Test
     public void testParseIndigoSR2() throws Exception {
-        def loader = new P2RepoLoader( workDir: new File( PyDevTest.testFolder, "testParseIndigoSR2" ), url: new URL( 'http://download.eclipse.org/releases/indigo/201202240900/' ) )
+        def url = new URL( 'http://download.eclipse.org/releases/indigo/201202240900/' )
+        def loader = new P2RepoLoader( workDir: new File( PyDevTest.testFolder, "testParseIndigoSR2" ), url: url )
         def repo = loader.load()
         
         assertEquals( '''\
