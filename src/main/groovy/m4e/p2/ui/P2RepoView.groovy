@@ -2,8 +2,11 @@ package m4e.p2.ui
 
 import javax.swing.AbstractAction
 import javax.swing.Action;
+import javax.swing.JDialog
 import javax.swing.JFrame
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu
+import javax.swing.JScrollPane
 import javax.swing.JTextField;
 import javax.swing.JTree
 import javax.swing.event.DocumentEvent;
@@ -11,10 +14,16 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel
+import javax.xml.stream.events.StartDocument;
+
 import java.awt.BorderLayout as BL
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
 import java.util.Enumeration;
 
 import groovy.swing.SwingBuilder
@@ -22,7 +31,9 @@ import groovy.swing.impl.DefaultAction;
 import m4e.p2.DependencySet;
 import m4e.p2.IP2Repo
 import m4e.p2.P2Bundle
+import m4e.p2.P2Feature
 import m4e.p2.P2Other
+import m4e.p2.P2Plugin
 import m4e.p2.P2Unit
 
 class P2RepoView {
@@ -35,6 +46,8 @@ class P2RepoView {
         this.workDir = workDir
     }
     
+    JFrame mainFrame
+    
     void show() {
         def swing = new SwingBuilder()
         
@@ -43,7 +56,7 @@ class P2RepoView {
         JTextField filter = new JTextField()
         
         swing.edt {
-            frame( title: 'P2 Repository View', defaultCloseOperation: JFrame.EXIT_ON_CLOSE, size: [ 800, 800 ], show: true) {
+            mainFrame = frame( title: 'P2 Repository View', defaultCloseOperation: JFrame.EXIT_ON_CLOSE, size: [ 800, 800 ], show: true) {
                 borderLayout()
                 hbox( constraints: BL.NORTH ) {
                     label( text: 'Filter:', labelFor: filter, displayedMnemonic: 'F' )
@@ -62,7 +75,7 @@ class P2RepoView {
         } as TreeSelectionListener
         repoTree.addTreeSelectionListener( l )
         
-        l = new PopupAdapter( workDir: workDir )
+        l = new PopupAdapter( workDir: workDir, mainFrame: mainFrame )
         repoTree.addMouseListener( l )
         
         l = new FilterChangeListener() {
@@ -96,6 +109,7 @@ class P2RepoView {
 class PopupAdapter extends MouseAdapter {
     
     File workDir
+    JFrame mainFrame
     
     void mousePressed( MouseEvent e ) {
         if( !e.isPopupTrigger() ) {
@@ -138,6 +152,7 @@ class PopupAdapter extends MouseAdapter {
         def result = []
         if( repo ) {
             result << new DownloadAction( repo, bundle, workDir )
+            result << new DownloadWithDependenciesAction( repo, bundle, workDir, mainFrame )
         }
         
         return result
@@ -171,6 +186,151 @@ class DownloadAction extends AbstractAction {
                 deps.download( workDir )
             }
         }
+    }
+}
+
+class DownloadWithDependenciesAction extends AbstractAction {
+    
+    IP2Repo repo
+    P2Bundle bundle
+    File workDir
+    JFrame mainFrame
+    
+    DownloadWithDependenciesAction( IP2Repo repo, P2Bundle bundle, File workDir, JFrame mainFrame ) {
+        super( 'Download with all dependencies...' )
+        
+        this.repo = repo
+        this.bundle = bundle
+        this.workDir = workDir
+        this.mainFrame = mainFrame
+    }
+
+    void actionPerformed( ActionEvent e ) {
+        def deps = new DependencySet( repo: repo )
+        
+        SwingBuilder.build {
+            doOutside {
+                deps.resolveDependencies( bundle.id, bundle.version )
+                
+                doLater {
+                    new DownloadDialog( mainFrame, deps, workDir )
+                }
+            }
+        }
+    }
+}
+
+// Based on code from http://docs.oracle.com/javase/tutorial/uiswing/components/dialog.html
+class DownloadDialog extends JDialog implements PropertyChangeListener {
+    
+    JOptionPane optionPane
+    DependencySet deps
+    File workDir
+    
+    public DownloadDialog( JFrame frame, DependencySet deps, File workDir ) {
+        super( frame, false )
+        resizable = true
+        title = "Confirm Download of ${deps.size()} bundles"
+        
+        this.deps = deps
+        this.workDir = workDir
+        
+        def swing = new SwingBuilder()
+        
+        def textPane = swing.textPane( contentType: 'text/html' )
+        textPane.text = text() 
+        
+        def scrollPane = new JScrollPane( textPane )
+
+        optionPane = new JOptionPane( scrollPane, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION )
+        contentPane = optionPane
+        
+        defaultCloseOperation = DO_NOTHING_ON_CLOSE
+        addWindowListener ( new WindowAdapter() {
+            void windowClosing( WindowEvent e ) {
+                optionPane.value = JOptionPane.CLOSED_OPTION
+            }
+        } )
+        
+        optionPane.addPropertyChangeListener( this )
+        
+        pack()
+        visible = true
+    }
+    
+    void propertyChange( PropertyChangeEvent e ) {
+        if( !isVisible() ) {
+            return
+        }
+        
+        if( e.source != optionPane ) {
+            return
+        }
+        
+        String prop = e.propertyName
+        if( JOptionPane.VALUE_PROPERTY != prop && JOptionPane.INPUT_VALUE_PROPERTY != prop ) {
+            return
+        }
+        
+        def value = optionPane.value
+        if( JOptionPane.UNINITIALIZED_VALUE == value ) {
+            return
+        }
+        
+        optionPane.value = JOptionPane.UNINITIALIZED_VALUE
+        
+//        println value
+        if( JOptionPane.OK_OPTION == value ) {
+            startDownload()
+        }
+        
+        close()
+    }
+    
+    void close() {
+        visible = false
+    }
+    
+    void startDownload() {
+        SwingBuilder.build {
+            doOutside {
+                deps.download( workDir )
+            }
+        }
+    }
+    
+    String text() {
+        def text = new StringBuilder()
+        
+        text << "You are about to download <b>${deps.size()}</b> bundles from <tt>${deps.repo.url}</tt> to <tt>${workDir.absolutePath}</tt>:<p>\n\n<table>\n"
+        text << '<tr><th>Type</th><th>Name</th><th>Version</th><th>ID</th></tr>'
+        List<String> bundles = deps.bundles.collect { toHTML( it ) }
+        bundles.sort().each {
+            text << '<tr>' << it << '</tr>'
+        }
+        text << '\n</table>'
+        
+        def unknownIds = deps.unknownIds as ArrayList
+        if( unknownIds ) {
+            text << "<p>\n\nThe following <b>${unknownIds.size()}</b> dependencies couldn't be resolved from this repo:<p>\n\n"
+            unknownIds.sort().each {
+                text << '<tt>' << it << '</tt><br/>'
+            }
+        }
+
+        return text.toString()
+    }
+    
+    String toHTML( P2Feature item ) {
+        return "<td>Feature</td><td>${item.name}</td><td>${item.version}</td><td>${item.id}</td>"
+    }
+    
+    String toHTML( P2Plugin item ) {
+        return "<td>Plug-in</td><td>${item.name}</td><td>${item.version}</td><td>${item.id}</td>"
+    }
+    
+    String toHTML( Object item ) {
+        return item.toString()
     }
 }
 

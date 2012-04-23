@@ -8,7 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory;
+
 class DependencySet {
+    
+    private static Logger log = LoggerFactory.getLogger( DependencySet )
+    
     IP2Repo repo
     List<P2Bundle> bundles = []
     Map<String, P2Bundle> bundleById = [:]
@@ -60,6 +66,10 @@ class DependencySet {
         }
     }
     
+    int size() {
+        return bundles.size()
+    }
+    
     void download( File dest ) {
         bundles.each {
             URL url = it.downloadURL( repo.url )
@@ -88,8 +98,10 @@ class DependencySet {
             
             String path = ( it instanceof P2Feature ) ? 'features' : 'plugins'
             File dir = new File( dest, path )
+            File result = new File( dir, fileName )
+            log.info( "Downloaded to ${result}" )
             
-            cached.copy( new File( dir, fileName ) )
+            cached.copy( result )
         }
     }
     
