@@ -12,6 +12,7 @@ import m4e.p2.MergedP2Repo
 import m4e.p2.P2Bundle;
 import m4e.p2.P2Dependency;
 import m4e.p2.P2Other;
+import m4e.p2.P2Plugin;
 import m4e.p2.P2Unit;
 
 class RepoTreeModel implements TreeModel {
@@ -207,6 +208,7 @@ class UnitList extends LazyNode {
 class SwingBundle extends LazyNode {
     IP2Repo root
     P2Bundle bundle
+    boolean hasSource
     
     SwingBundle( IP2Repo root, P2Bundle bundle ) {
         super( bundle.dependencies.findAll { it.id != bundle.id } )
@@ -222,15 +224,17 @@ class SwingBundle extends LazyNode {
     
     @Override
     String toString() {
+        String source = hasSource ? ' (+Source)' : ''
+        
         if( bundle.name ) {
             if( bundle.name == bundle.id ) {
-                return "${bundle.name} ${bundle.version}"
+                return "${bundle.name} ${bundle.version}${source}"
             }
             
-            return "${bundle.name} ${bundle.version} (${bundle.id})"
+            return "${bundle.name} ${bundle.version} (${bundle.id})${source}"
         }
         
-        return "${bundle.id} ${bundle.version}"
+        return "${bundle.id} ${bundle.version}${source}"
     }
 
 }
@@ -282,17 +286,25 @@ class BundleList extends LazyNode {
     
     IP2Repo root
     String title
+    List<P2Bundle> bundles
     
     BundleList( IP2Repo root, String title, List<P2Bundle> bundles ) {
-        super( bundles )
+        super( bundles.findAll { !it.isSourceBundle() } )
         
+        this.bundles = bundles
         this.root = root
         this.title = title
     }
     
     @Override
     public List createSwingChildren () {
-        return children.collect { new SwingBundle( root, it ) }.sort { it.toString() }
+        Set<String> sourceBundles = new HashSet( bundles.findAll { it.isSourceBundle() }.collect { it.id.removeEnd( '.source' ) } )
+        
+        return children.collect {
+            def swing = new SwingBundle( root, it )
+            swing.hasSource = sourceBundles.contains( it.id )
+            return swing
+        }.sort { it.toString() }
     }
     
     @Override

@@ -232,8 +232,18 @@ class ContentXmlParser {
         if( name == description ) {
             description = null
         }
+        boolean source = false
+        if( unit.provides ) {
+            for( Node provided : unit.provides[0].provided ) {
+                String namespace = provided.'@namespace'
+                if( 'org.eclipse.equinox.p2.eclipse.type' == namespace ) {
+                    source = 'source' == provided.'@name'
+                    break
+                }
+            }
+        }
         
-        def result = new P2Plugin( id: id, version: version, name: name, description: description )
+        def result = new P2Plugin( id: id, version: version, name: name, description: description, source: source )
         result.dependencies = parseDependencies( unit )
         
         repo.plugins << result

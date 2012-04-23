@@ -42,12 +42,24 @@ abstract class P2Bundle implements Comparable<P2Bundle> {
         return d;
     }
     
+    boolean isSourceBundle() {
+        return false
+    }
+    
     public abstract URL downloadURL( URL baseURL );
 }
 
 class P2Plugin extends P2Bundle {
+    
+    /** true if this is a source bundle */
+    boolean source
+    
     public URL downloadURL( URL baseURL ) {
         return new URL( baseURL, "plugins/${id}_${version}.jar" )
+    }
+    
+    boolean isSourceBundle() {
+        return source
     }
 }
 
