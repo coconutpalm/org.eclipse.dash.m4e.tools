@@ -491,7 +491,7 @@ class DependencySet {
             try {
                 File packedFile = repo.downloader.download( packed )
                 
-                if( cached.exists() && packedFile.lastModified() > cached.lastModified() ) {
+                if( !cached.exists() || packedFile.lastModified() > cached.lastModified() ) {
                     File tmp = new File( cacheDir, 'download.tmp' )
                     unpack( packedFile, tmp )
                 
