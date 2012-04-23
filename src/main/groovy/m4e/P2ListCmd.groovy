@@ -32,7 +32,7 @@ URL
     }
     
     void listToSwing( IP2Repo repo ) {
-        def view = new P2RepoView( repo )
+        def view = new P2RepoView( repo, workDir )
         view.show()
     }
     

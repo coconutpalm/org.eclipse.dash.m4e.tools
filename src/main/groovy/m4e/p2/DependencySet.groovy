@@ -2,6 +2,7 @@ package m4e.p2
 
 import java.io.File;
 import java.util.jar.JarOutputStream;
+import java.util.jar.Pack200;
 import java.util.zip.GZIPInputStream
 import java.util.List;
 import java.util.Map;
