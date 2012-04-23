@@ -4,7 +4,6 @@ class P2Dependency implements Comparable<P2Dependency> {
     String type
     String id
     VersionRange versionRange
-    List<P2Bundle> bundles 
     
     String toString() {
         return "${getClass().simpleName}( id=${id}, version=${versionRange}, type=${type} )"
