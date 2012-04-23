@@ -47,7 +47,12 @@ class Downloader {
             log.info( "Downloading ${url2} to ${file}..." )
             
             URLConnection conn = url2.openConnection()
-            conn.connect()
+            try {
+                conn.connect()
+            } catch( SocketException e ) {
+                log.warn( "Unable to connect to ${url2}: ${e.message}", e )
+                continue
+            }
             
             def value = conn.getHeaderField("Content-Length")
             long contentLength = value ? Long.parseLong( value ) : 0
