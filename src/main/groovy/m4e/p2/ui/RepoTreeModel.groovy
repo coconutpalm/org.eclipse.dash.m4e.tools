@@ -17,13 +17,13 @@ import m4e.p2.P2Unit;
 
 class RepoTreeModel implements TreeModel {
     
-    private IP2Repo root
+    private IP2Repo repo
     private SwingRepo rootNode
     private List<TreeModelListener> listeners = []
     
-    RepoTreeModel( IP2Repo root ) {
-        this.root = root
-        rootNode = new SwingRepo( this, root, 0 )
+    RepoTreeModel( IP2Repo repo ) {
+        this.repo = repo
+        rootNode = new SwingRepo( this, repo, 0 )
     }
     
     Object getRoot() {
@@ -87,9 +87,9 @@ class RepoTreeModel implements TreeModel {
         
         this.pattern = pattern
         
-        rootNode = new SwingRepo( this, root, 0 )
+        rootNode = new SwingRepo( this, repo, 0 )
         
-        def path = new TreePath( root )
+        def path = new TreePath( repo )
         TreeModelEvent event = new TreeModelEvent( this, path, null, null )
         listeners.each { it.treeStructureChanged( event ) }
     }
@@ -251,7 +251,7 @@ class SwingBundle extends LazyNode {
     boolean hasSource
     
     SwingBundle( RepoTreeModel model, P2Bundle bundle ) {
-        super( bundle.dependencies.findAll { it.id != bundle.id } )
+        super( bundle.dependencies.findAll { it.id != bundle.id && model.matches( "${it.id}" ) } )
         
         this.model = model
         this.bundle = bundle
@@ -290,7 +290,7 @@ class SwingDependency implements ITreeNode {
     SwingDependency( RepoTreeModel model, P2Dependency dependency ) {
         this.dependency = dependency
         
-        def bundle = model.root.latest( dependency.id, dependency.versionRange )
+        def bundle = model.repo.latest( dependency.id, dependency.versionRange )
         if( bundle ) {
             this.bundle = new SwingBundle( model, bundle )
         }
