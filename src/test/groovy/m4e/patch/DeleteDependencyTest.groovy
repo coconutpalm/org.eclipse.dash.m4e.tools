@@ -8,9 +8,10 @@
  * Contributors:
  *    Aaron Digulla - initial API and implementation and/or initial documentation
  *******************************************************************************/
-package m4e;
+package m4e.patch;
 
 import static org.junit.Assert.*;
+import m4e.Pom;
 import org.junit.Test;
 
 class DeleteDependencyTest {

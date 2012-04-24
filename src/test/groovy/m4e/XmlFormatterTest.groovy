@@ -20,31 +20,31 @@ public class XmlFormatterTest {
         String result = format( '<project />' )
         assertEquals( '<project />', result )
     }
-    
+
     @Test
     public void test2() {
         String result = format( '<project></project>' )
-            assertEquals( '<project></project>', result )
+        assertEquals( '<project></project>', result )
     }
-    
+
     @Test
     public void test3() {
         String result = format( '<project><a /></project>' )
-            assertEquals( '<project>\n  <a />\n</project>', result )
+        assertEquals( '<project>\n  <a />\n</project>', result )
     }
-    
+
     @Test
     public void test4() {
         String result = format( '<project><a /><b /></project>' )
-            assertEquals( '<project>\n  <a />\n  <b />\n</project>', result )
+        assertEquals( '<project>\n  <a />\n  <b />\n</project>', result )
     }
 
     String format( String input ) {
         def pom = Pom.load( input )
-        
+
         XmlFormatter formatter = new XmlFormatter( pom: pom )
         formatter.format()
-        
+
         return pom.toString()
     }
 }

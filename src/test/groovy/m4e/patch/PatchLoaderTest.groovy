@@ -8,9 +8,12 @@
  * Contributors:
  *    Aaron Digulla - initial API and implementation and/or initial documentation
  *******************************************************************************/
-package m4e;
+package m4e.patch;
 
 import static org.junit.Assert.*;
+import m4e.MopSetup;
+import m4e.PatchCmd;
+import m4e.UserError;
 import org.junit.Test;
 
 class PatchLoaderTest {
@@ -18,7 +21,7 @@ class PatchLoaderTest {
     @Test
     void testLoadEclipse362() throws Exception {
         
-        PatchLoader loader = new PatchLoader( new File( 'patches/eclipse-3.6.2.patches' ) )
+        PatchLoader loader = new PatchLoader( new File( 'patches/eclipse-3.6.2.patches' ), new GlobalPatches() )
         
         def patch = loader.load()
         
@@ -31,7 +34,7 @@ ReplaceDependencies( defaultProfile=m4e.orbit, profile=m4e.maven-central, replac
     @Test
     void testLoadEclipse370() throws Exception {
         
-        PatchLoader loader = new PatchLoader( new File( 'patches/eclipse-3.7.0.patches' ) )
+        PatchLoader loader = new PatchLoader( new File( 'patches/eclipse-3.7.0.patches' ), new GlobalPatches() )
         
         def patch = loader.load()
         

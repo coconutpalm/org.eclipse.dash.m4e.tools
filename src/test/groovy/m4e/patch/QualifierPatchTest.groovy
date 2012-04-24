@@ -1,4 +1,4 @@
-package m4e;
+package m4e.patch;
 
 import static org.junit.Assert.*;
 import org.junit.Test;

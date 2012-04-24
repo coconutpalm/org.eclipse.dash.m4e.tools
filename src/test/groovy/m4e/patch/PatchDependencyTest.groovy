@@ -8,10 +8,12 @@
  * Contributors:
  *    Aaron Digulla - initial API and implementation and/or initial documentation
  *******************************************************************************/
-package m4e;
+package m4e.patch;
 
 import static org.junit.Assert.*;
+import m4e.ImportTool;
 import org.junit.Test;
+import m4e.UserError
 
 class PatchDependencyTest {
 

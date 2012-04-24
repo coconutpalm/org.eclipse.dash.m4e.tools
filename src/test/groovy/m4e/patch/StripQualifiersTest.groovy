@@ -8,10 +8,12 @@
  * Contributors:
  *    Aaron Digulla - initial API and implementation and/or initial documentation
  *******************************************************************************/
-package m4e;
+package m4e.patch;
 
 import static org.junit.Assert.*;
 import java.io.File;
+import m4e.MopSetup;
+import m4e.Pom;
 import org.junit.Test;
 
 class StripQualifiersTest {
