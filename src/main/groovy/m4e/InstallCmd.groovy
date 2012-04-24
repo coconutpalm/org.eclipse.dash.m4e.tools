@@ -368,7 +368,7 @@ class ImportTool {
             '/bin/sh',
             m3exe.toString(),
             'eclipse:make-artifacts',
-            '-DstripQualifier=true',
+            '-DstripQualifier=false',
             "-DeclipseDir=${eclipseFolder}",
             "-Dmaven.repo.local=${m2repo}",
         ]
