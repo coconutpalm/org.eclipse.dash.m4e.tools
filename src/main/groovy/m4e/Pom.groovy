@@ -18,7 +18,7 @@ class PomElement {
     
     String value( TextNode node ) {
         Element e = xml( node )
-            return e == null ? null : e.trimmedText
+        return e == null ? null : e.trimmedText
     }
     
     void value( TextNode node, String text ) {
@@ -47,12 +47,15 @@ class PomElement {
         return result ?: []
     }
     
-    Element xml( def node ) {
-        return xml.getChild( node.name )
+    Element xml( node ) {
+        if( !(node instanceof String ) ) {
+            node = node.name
+        }
+        return xml.getChild( node )
     }
     
     PomElement element( node ) {
-        Element child = xml.getChild( node.name )
+        Element child = xml( node )
         
         return child ? new PomElement( xml: child, pom: pom ) : null
     }
@@ -100,10 +103,10 @@ class Pom extends PomElement {
     
     String version() {
         String version = value( VERSION )
-            if( null == version ) {
-                PomElement parent = element( PARENT )
-                    version = parent.value( VERSION )
-            }
+        if( null == version ) {
+            PomElement parent = element( PARENT )
+            version = parent.value( VERSION )
+        }
         return version
     }
 
@@ -237,13 +240,17 @@ class PomUtils {
             return
         }
         
-        int index = e.parentElement.nodeIndexOf( e )
-        if( index > 0 ) {
+        Element parent = e.parentElement
+        int index = parent.nodeIndexOf( e )
+        while( index > 0 ) {
             index --
-            Node previous = e.parentElement.getNode( index )
-            if( XMLUtils.isText( previous ) ) {
-                e.parentElement.removeNode( index )
+            
+            Node previous = parent.getNode( index )
+            if( ! XMLUtils.isText( previous ) ) {
+                break
             }
+            
+            parent.removeNode( index )
         }
         e.remove()
     }
@@ -349,6 +356,7 @@ class Profile extends PomElement {
 
 class XmlFormatter {
     Pom pom
+    private String indentStep = '  '
     
     void format() {
         pom.xml.getChild( 'profiles' )?.getChildren( 'profile' ).each {
@@ -361,7 +369,7 @@ class XmlFormatter {
     
     void format( Element e ) {
         int level = PomUtils.getLevel( e ) + 1
-        String indent = '\n' + '  ' * level
+        String indent = '\n' + indentStep * level
         
         int N = e.nodeCount()
 //        println "level=${level} N=${N} ${e.name}"
@@ -377,7 +385,7 @@ class XmlFormatter {
         
         N = e.nodeCount()
         if( N > 0 ) {
-            indent = '\n' + '  ' * ( level - 1 )
+            indent = '\n' + indentStep * ( level - 1 )
             
             Node n = e.getNode( N - 1 )
             if( XMLUtils.isElement( n ) ) {
