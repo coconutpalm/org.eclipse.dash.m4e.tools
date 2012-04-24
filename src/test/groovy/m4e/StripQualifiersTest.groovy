@@ -11,6 +11,7 @@
 package m4e;
 
 import static org.junit.Assert.*;
+import java.io.File;
 import org.junit.Test;
 
 class StripQualifiersTest {
@@ -33,6 +34,11 @@ class StripQualifiersTest {
     @Test
     public void testVersion1_3_2() throws Exception {
         assertEquals( '1.3.2', new StripQualifiers().stripQualifier( '1.3.2' ) )
+    }
+    
+    @Test
+    public void testVersionMinusQualifier() throws Exception {
+        assertEquals( '3.7.1', new StripQualifiers().stripQualifier( '3.7.1-v3738a' ) )
     }
     
     @Test
@@ -68,5 +74,161 @@ class StripQualifiersTest {
     @Test
     public void testQualifier3() throws Exception {
         assertEquals( '[2.1.2,3.0.0)', new StripQualifiers().stripQualifier( '[2.1.2.v20101206-r8635,3.0.0)' ) )
+    }
+
+    static final File testFolder = new File( "tmp-test" )
+    
+    @Test
+    public void testStripQualifierFromPomVersion() throws Exception {
+        MopSetup.setup()
+
+        File template = new File( 'data/input/stripQualifier' )
+        File target = new File( testFolder, 'testStripQualifierFromPomVersion/m2repo' )
+        assert target.deleteDir()
+        
+        template.copy( target )
+        
+        GlobalPatches globalPatches = new GlobalPatches()
+        def tool = new StripQualifiers( globalPatches: globalPatches, target: target )
+        
+        File dir = new File( target, 'org/eclipse/swt/org.eclipse.swt.gtk.linux.x86' )
+        def pom = Pom.load( new File( dir, '3.7.1-v3738a/org.eclipse.swt.gtk.linux.x86-3.7.1-v3738a.pom' ) )
+        tool.apply( pom )
+        
+        assertEquals( '3.7.1', pom.version() )
+        
+        File newDir = new File( dir, pom.version() )
+        assert newDir.exists()
+
+        pom.save( new File( pom.source ) )
+        
+        def l = []
+        newDir.eachFile { l << it.name }
+        l.sort()
+        
+        assertEquals( '''\
+org.eclipse.swt.gtk.linux.x86-3.7.1-sources.jar
+org.eclipse.swt.gtk.linux.x86-3.7.1-sources.jar.sha1
+org.eclipse.swt.gtk.linux.x86-3.7.1.jar
+org.eclipse.swt.gtk.linux.x86-3.7.1.jar.bak
+org.eclipse.swt.gtk.linux.x86-3.7.1.pom
+org.eclipse.swt.gtk.linux.x86-3.7.1.pom.bak
+org.eclipse.swt.gtk.linux.x86-3.7.1.sha1
+org.eclipse.swt.gtk.linux.x86-3.7.1xxx''', 
+            l.join( '\n' ) )
+        
+        String actual = new File( newDir, 'org.eclipse.swt.gtk.linux.x86-3.7.1.pom' ).getText( "UTF-8" )
+        assertEquals( '''\
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.eclipse.swt</groupId>
+  <artifactId>org.eclipse.swt.gtk.linux.x86</artifactId>
+  <version>3.7.1</version>
+  <name>%fragmentName</name>
+  <licenses>
+    <license>
+      <name>Eclipse Public License - v 1.0</name>
+      <url>http://www.eclipse.org/org/documents/epl-v10.html</url>
+    </license>
+  </licenses>
+  
+  <dependencies>
+    <dependency>
+      <groupId>g</groupId>
+      <artifactId>a</artifactId>
+      <version>3.7.1</version>
+    </dependency>
+  </dependencies>
+</project>
+''',
+            actual )
+
+        globalPatches.qualifierPatches << new QualifierPatch( 'org.apache.batik:org.apache.batik.util:1.6.0-v201011041432', '1.6.0.1' )
+        
+        dir = new File( target, 'org/apache/batik/org.apache.batik.util' )
+        
+        pom = Pom.load( new File( dir, '1.6.0-v201011041432/org.apache.batik.util-1.6.0-v201011041432.pom' ) )
+        tool.apply( pom )
+        
+        assertEquals( '1.6.0.1', pom.version() )
+        
+        newDir = new File( dir, pom.version() )
+        assert newDir.exists()
+        
+        pom.save( new File( pom.source ) )
+        actual = new File( newDir, 'org.apache.batik.util-1.6.0.1.pom' ).getText( "UTF-8" )
+        assertEquals( '''\
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.apache.batik</groupId>
+  <artifactId>org.apache.batik.util</artifactId>
+  <version>1.6.0.1</version>
+  <name>Apache Batik Utilities</name>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.batik</groupId>
+      <artifactId>org.apache.batik.util.gui</artifactId>
+      <version>[1.6.0,1.7.0)</version>
+      <optional>false</optional>
+    </dependency>
+  </dependencies>
+</project>
+''',
+            actual )
+
+        dir = new File( target, 'org/apache/batik/org.apache.batik.dom' )
+        
+        pom = Pom.load( new File( dir, '1.6.0-v201011041432/org.apache.batik.dom-1.6.0-v201011041432.pom' ) )
+        tool.apply( pom )
+        
+        assertEquals( '1.6.0', pom.version() )
+        
+        newDir = new File( dir, pom.version() )
+        assert newDir.exists()
+        
+        pom.save( new File( pom.source ) )
+        actual = new File( newDir, 'org.apache.batik.dom-1.6.0.pom' ).getText( "UTF-8" )
+        assertEquals( '''\
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.apache.batik</groupId>
+  <artifactId>org.apache.batik.dom</artifactId>
+  <version>1.6.0</version>
+  <name>Apache Batik DOM</name>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.batik</groupId>
+      <artifactId>org.apache.batik.css</artifactId>
+      <version>[1.6.0,1.7.0)</version>
+      <optional>false</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.batik</groupId>
+      <artifactId>org.apache.batik.util</artifactId>
+      <version>[1.6.0,1.7.0)</version>
+      <optional>false</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.batik</groupId>
+      <artifactId>org.apache.batik.xml</artifactId>
+      <version>[1.6.0,1.7.0)</version>
+      <optional>false</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.w3c.css</groupId>
+      <artifactId>org.w3c.css.sac</artifactId>
+      <version>[1.3.0,1.4.0)</version>
+      <optional>false</optional>
+    </dependency>
+  </dependencies>
+</project>
+''',
+            actual )
     }
 }

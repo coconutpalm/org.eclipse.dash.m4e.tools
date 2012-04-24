@@ -68,28 +68,31 @@ target patches...
         if( result != orig ) {
             new XmlFormatter( pom: pom ).format()
             
+            file = new File( pom.source )
             log.debug( "Patched ${file}" )
-            pom.save( file )
+            save( pom, file )
             
             count ++
         }
     }
     
-    List<String> artifactsToDelete = []
-
+    protected void save( Pom pom, File file ) {
+        pom.save( file )
+    }
+    
+    GlobalPatches globalPatches = new GlobalPatches()
+    
 	void loadPatches( String... patches ) {
 		set = new PatchSet()
 		
 		set.patches << new RemoveNonOptional()
-		set.patches << new StripQualifiers()
+		set.patches << new StripQualifiers( globalPatches: globalPatches, target: target )
         
         for( String patchName : patches ) {
-            def loader = new PatchLoader( new File( patchName ).getAbsoluteFile() )
+            def loader = new PatchLoader( new File( patchName ).getAbsoluteFile(), globalPatches )
             def patch = loader.load()
             
             set.patches << patch
-            
-            artifactsToDelete.addAll( loader.artifactsToDelete )
         }
 	}
     
@@ -125,25 +128,61 @@ target patches...
     }
 }
 
+class QualifierPatch {
+    /** Apply this patch to these POMs */
+    Pattern pattern
+    /** The new version string for matching POMs */
+    String version
+    
+    QualifierPatch( String pattern, String version ) {
+        this.pattern = compile( pattern )
+        this.version = version
+    }
+    
+    Pattern compile( String text ) {
+        return Pattern.compile( text.replace( '.', '\\.' ).replace( '*', '[^:]*' ) )
+    }
+    
+    boolean appliesTo( String key ) {
+        if( pattern.matcher( key ).matches() ) {
+            return true
+        }
+        
+        return false
+    }
+}
+
+class GlobalPatches {
+    List<String> artifactsToDelete = []
+    List<QualifierPatch> qualifierPatches = []
+    
+    void merge( GlobalPatches other ) {
+        artifactsToDelete.addAll( other.artifactsToDelete )
+        qualifierPatches.addAll( other.qualifierPatches )
+    }
+}
+
 class PatchLoader {
     
     File file
     String text
-    List<String> artifactsToDelete = []
+    GlobalPatches globalPatches
     
-    PatchLoader( File file ) {
+    PatchLoader( File file, GlobalPatches globalPatches ) {
         if( !file.exists() ) {
             throw new UserError( "Can't find patch ${file}" )
         }
         
         this.file = file
+        this.globalPatches = globalPatches
     }
 
+    /** For unit tests */
     PatchLoader( String text ) {
         this.text = text
     }
-        
-    ScriptedPatchSet set
+    
+    ScriptedPatchSet patchSet
     ReplaceDependencies replacer
     
     PatchSet load() {
@@ -154,21 +193,22 @@ class PatchLoader {
         
         def text = this.text ? this.text : file.getText( 'utf-8' )
         text += "\n\nthis"
-        PatchScript inst = shell.evaluate( text, "PatchScript" )
+        String source = file ? file.absolutePath : 'JUnit test'
+        PatchScript inst = shell.evaluate( text, source )
         
-        set = inst.set
-        set.source = file ? file.absolutePath : 'JUnit test'
-        artifactsToDelete = inst.artifactsToDelete
+        patchSet = inst.patchSet
+        patchSet.source = source
+        globalPatches.merge( inst.globalPatches )
         
         replacer = inst.replacer
         
         if( replacer.replacements ) {
-            set.patches << replacer
+            patchSet.patches << replacer
         }
         
         check()
         
-        return set
+        return patchSet
     }
     
     void check() {
@@ -196,11 +236,11 @@ class ScriptedPatchSet extends PatchSet {
 }
 
 abstract class PatchScript extends Script {
-    ScriptedPatchSet set = new ScriptedPatchSet()
+    ScriptedPatchSet patchSet = new ScriptedPatchSet()
 
     ReplaceDependencies replacer = new ReplaceDependencies()
     
-    List<String> artifactsToDelete = []
+    GlobalPatches globalPatches = new GlobalPatches()
     
     void defaultProfile( String name ) {
         replacer.defaultProfile = name
@@ -220,11 +260,16 @@ abstract class PatchScript extends Script {
     }
     
     void deleteDependency( String pattern ) {
-        set.patches << new DeleteDependency( key: pattern )
+        patchSet.patches << new DeleteDependency( key: pattern )
     }
     
     void deleteArtifact( String pattern ) {
-        artifactsToDelete << pattern
+        globalPatches.artifactsToDelete << pattern
+    }
+    
+    /** Give some bundles a special version */
+    void mapQualifier( String pattern, String version ) {
+        globalPatches.qualifierPatches << new QualifierPatch( pattern, version )
     }
 }
 
@@ -436,17 +481,102 @@ class ReplaceDependencies extends Patch {
     }
 }
 
-/** Strip Eclipse qualifiers from versions */
+/** Strip Eclipse qualifiers from versions.
+ * 
+ *  <p>This patcher supports versions like "1", "1.0", "[1.0,2.0)" and standard
+ *  Eclipse versions (three numbers plus optional qualifier)
+ */
 class StripQualifiers extends Patch {
     
     // ~/.../ isn't supported by the Eclipse Groovy editor
     Pattern versionRangePattern = Pattern.compile( '^([\\[\\]()])([^,]*),([^,]*?)([\\[\\]()])$' );
     
+    GlobalPatches globalPatches
+    File target
+    
     void apply( Pom pom ) {
+        
+        updateVersion( pom )
+        
         pom.dependencies.each {
             String version = it.value( Dependency.VERSION )
-            version = stripQualifier( version )
+            
+            QualifierPatch p = findQualifierPatch( it.key() )
+            if( p ) {
+                version = p.version
+            } else {
+                version = stripQualifier( version )
+            }
+            
             it.value( Dependency.VERSION, version )
+        }
+    }
+    
+    QualifierPatch findQualifierPatch( String key ) {
+        for( QualifierPatch p : globalPatches.qualifierPatches ) {
+            if( p.appliesTo( key ) ) {
+                return p
+            }
+        }
+        
+        return null
+    }
+    
+    void updateVersion( Pom pom ) {
+        
+        String key = pom.key()
+        QualifierPatch p = findQualifierPatch( key )
+        if( p ) {
+            updateVersion( pom, p.version )
+            return
+        }
+        
+        String oldVersion = pom.version()
+        String newVersion = stripQualifier( oldVersion )
+        
+        if( oldVersion != newVersion ) {
+            updateVersion( pom, newVersion )
+        }
+    }
+    
+    void updateVersion( Pom pom, String newVersion ) {
+        def e = pom.xml( Pom.VERSION )
+        if( ! e ) {
+            throw new RuntimeException( 'TODO Missing version element' )
+        }
+        
+        String oldVersion = e.text
+        e.text = newVersion
+        println "${newVersion} ${e.text} ${pom.version()}"
+        
+        renameFiles( pom, oldVersion, newVersion )
+    }
+    
+    void renameFiles( Pom pom, String oldVersion, String newVersion ) {
+        File oldPomPath = new File( pom.source )
+        File newPomPath = MavenRepositoryTools.buildPath( target, pom.key(), 'pom' )
+        pom.source = newPomPath.absolutePath
+        
+        File oldFolder = oldPomPath.parentFile
+        File newFolder = newPomPath.parentFile
+        newFolder.makedirs()
+        
+        String prefix = pom.value( Pom.ARTIFACT_ID ) + '-' + oldVersion
+        String newPrefix = pom.value( Pom.ARTIFACT_ID ) + '-' + newVersion
+        
+        int extraFileCount = 0
+        oldFolder.eachFile { it ->
+            if( it.name.startsWith( prefix ) ) {
+                String newName = newPrefix + it.name.substring( prefix.size() )
+                File dest = new File( newFolder, newName )
+                assert it.renameTo( dest )
+            } else {
+                extraFileCount ++
+            }
+        }
+        
+        if( extraFileCount == 0 ) {
+            assert oldFolder.delete()
         }
     }
 
@@ -473,6 +603,10 @@ class StripQualifiers extends Patch {
     
     String stripQualifier2( String version ) {
         def parts = version.split('\\.', -1)
+        if( parts.size() == 3 ) {
+            def m = parts[2] =~ '^\\d+'
+            parts[2] = m[0]
+        }
         int end = Math.min( parts.size()-1, 2 )
         return parts[0..end].join( '.' )
     }
