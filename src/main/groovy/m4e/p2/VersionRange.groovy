@@ -50,6 +50,17 @@ class VersionRange {
         }
     }
     
+    private VersionRange( Version lower, boolean includeLower, Version upper, boolean includeUpper ) {
+        this.lower = lower
+        this.includeLower = includeLower
+        this.upper = upper
+        this.includeUpper = includeUpper
+    }
+    
+    public VersionRange stripQualifier() {
+        return new VersionRange( lower?.stripQualifier(), includeLower, upper?.stripQualifier(), includeUpper )
+    }
+    
     private static newVersion( VersionCache cache, String pattern ) {
         if( cache ) {
             return cache.version( pattern )

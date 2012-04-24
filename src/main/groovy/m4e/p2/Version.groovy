@@ -119,4 +119,8 @@ class Version implements Comparable<Version> {
     Version next() {
         return new Version( "${major}.${minor}.${service+1}" )
     }
+    
+    Version stripQualifier() {
+        return new Version( "${major}.${minor}.${service}" )
+    }
 }
