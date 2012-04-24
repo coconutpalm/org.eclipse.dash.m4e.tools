@@ -42,7 +42,7 @@ class InstallCmdTest {
         assert file.exists (), "Delta Pack archive wasn't unpacked as expected: Missing ${file.absolutePath}"
         
         File deltaPackHome = new File( workDir, 'eclipse-3.7.1-delta-pack_home' )
-        file = new File( deltaPackHome, 'm2repo/org/eclipse/swt/org.eclipse.swt.gtk.linux.x86_64/3.7.1/org.eclipse.swt.gtk.linux.x86_64-3.7.1.pom' )
+        file = new File( deltaPackHome, 'm2repo/org/eclipse/swt/org.eclipse.swt.gtk.linux.x86_64/3.7.1-v3738a/org.eclipse.swt.gtk.linux.x86_64-3.7.1-v3738a.pom' )
         assert file.exists (), "Delta Pack wasn't imported as expected: Missing ${file.absolutePath}"
         
         int pomCount = 0
