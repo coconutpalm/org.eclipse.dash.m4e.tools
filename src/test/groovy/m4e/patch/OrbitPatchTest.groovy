@@ -2,6 +2,7 @@ package m4e.patch;
 
 import static org.junit.Assert.*;
 import java.io.File;
+import m4e.CommonTestCode;
 import m4e.MavenRepositoryTools;
 import m4e.MopSetup;
 import m4e.PatchCmd
@@ -10,18 +11,10 @@ import org.junit.Test;
 
 public class OrbitPatchTest {
 
-    static final File testFolder = new File( "tmp-test" )
-
     @Test
     public void testOrbitPatch() {
         
-        MopSetup.setup()
-
-        File template = new File( 'data/input/stripQualifier' )
-        File target = new File( testFolder, 'testOrbitPatch/m2repo' )
-        assert target.deleteDir()
-        
-        template.copy( target )
+        def target = CommonTestCode.prepareRepo( new File( 'data/input/stripQualifier' ), 'testOrbitPatch/m2repo' )
         
         def tool = new PatchCmd( workDir: target.parentFile, target: target )
         tool.init()

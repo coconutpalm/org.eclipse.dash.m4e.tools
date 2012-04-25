@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 
+import m4e.CommonTestCode;
 import m4e.MopSetup;
 
 import org.junit.Test;
@@ -17,7 +18,7 @@ class IndigoSR2Test {
     @Test
     public void testParseIndigoSR2() throws Exception {
         def url = new URL( 'http://download.eclipse.org/releases/indigo/201202240900/' )
-        def loader = new P2RepoLoader( workDir: new File( PyDevTest.testFolder, "testParseIndigoSR2" ), url: url )
+        def loader = new P2RepoLoader( workDir: CommonTestCode.newFile( "testParseIndigoSR2" ), url: url )
         def repo = loader.load()
         
         assertEquals( '''\
@@ -48,7 +49,7 @@ P2Category( id=Web, XML, Java EE and OSGi Enterprise Development, version=0.0.0.
     
     @Test
     public void testParseIndigoSR2Epps() throws Exception {
-        def loader = new P2RepoLoader( workDir: new File( PyDevTest.testFolder, "testParseIndigoSR2Epps" ), url: new URL( 'http://download.eclipse.org/technology/epp/packages/indigo/SR2/' ) )
+        def loader = new P2RepoLoader( workDir: CommonTestCode.newFile( "testParseIndigoSR2Epps" ), url: new URL( 'http://download.eclipse.org/technology/epp/packages/indigo/SR2/' ) )
         def repo = loader.load()
         
         assertEquals( 0, repo.categories.size() )

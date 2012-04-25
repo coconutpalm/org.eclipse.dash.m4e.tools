@@ -6,6 +6,7 @@ import java.io.File;
 
 import org.junit.Test;
 
+import m4e.CommonTestCode;
 import m4e.MopSetup;
 
 class PyDevTest {
@@ -14,9 +15,8 @@ class PyDevTest {
         MopSetup.setup()
     }
 
-    static File testFolder = new File( "tmp-test" )
-    static File contentJar = new File( testFolder, "pydevRepo/content.jar" )
-    static File contentXmlFile = new File( testFolder, "pydevRepo/content.xml" )
+    static File contentJar = CommonTestCode.newFile( "pydevRepo/content.jar" )
+    static File contentXmlFile = CommonTestCode.newFile( "pydevRepo/content.xml" )
     
     static boolean testDownloadRanOnce
     
@@ -32,7 +32,7 @@ class PyDevTest {
         
         def url = new File( "data/input/pydev" ).toURI().toURL()
         
-        File workDir = new File( testFolder, 'pydevRepo' )
+        File workDir = CommonTestCode.newFile( 'pydevRepo' )
         def downloader = new Downloader( cacheRoot: new File( workDir, 'p2' ), progressFactory: new MockProgressFactory() )
         File jar = downloader.download( new URL( url, "content.jar" ) )
         
@@ -56,7 +56,7 @@ class PyDevTest {
         
         contentXmlFile.usefulDelete()
         
-        def loader = new P2RepoLoader( workDir: new File( testFolder, 'pydevRepo' ) )
+        def loader = new P2RepoLoader( workDir: CommonTestCode.newFile( 'pydevRepo' ) )
         loader.unpackContentJar( contentJar )
         
         assertTrue( contentXmlFile.exists() )
@@ -72,7 +72,7 @@ class PyDevTest {
         testUnpack()
         
         def url = new File( "data/input/pydev" ).toURI().toURL()
-        def repo = new P2Repo(  workDir: new File( testFolder, 'pydevRepo' ), url: url )
+        def repo = new P2Repo(  workDir: CommonTestCode.newFile( 'pydevRepo' ), url: url )
         
         def downloader = new Downloader( cacheRoot: new File( repo.workDir, 'p2' ), progressFactory: new MockProgressFactory() )
         repo.downloader = downloader
@@ -705,7 +705,7 @@ P2Dependency( id=org.eclipse.ui.workbench.texteditor, version=0.0.0, type=osgi.b
 P2Dependency( id=org.junit, version=[3.8.0,3.9.9], type=osgi.bundle )'''
             , unknown.join( '\n' ) )
         
-        deps.download( new File( testFolder, 'testPyDevResolveDependencies' ) )
+        deps.download( CommonTestCode.newFile( 'testPyDevResolveDependencies' ) )
     }
     
     @Test
@@ -769,7 +769,7 @@ P2Dependency( id=org.eclipse.ui.workbench.texteditor, version=0.0.0, type=org.ec
 P2Dependency( id=org.junit, version=[3.8.0,3.9.9], type=osgi.bundle )'''
             , unknown.join( '\n' ) )
                 
-        deps.download( new File( testFolder, 'testPyDevDownloadFeature' ) )
+        deps.download( CommonTestCode.newFile( 'testPyDevDownloadFeature' ) )
     }
     
 

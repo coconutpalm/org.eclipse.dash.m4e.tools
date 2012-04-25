@@ -83,12 +83,10 @@ clean
         assertTrue( "Help wasn't printed", called )
     }
     
-    File tmpDir = new File( 'tmp-test' )
-    
     @Test
     public void testClean() throws Exception {
         
-        tmpDir = new File( tmpDir, "testClean" )
+        File tmpDir = CommonTestCode.newFile( "testClean" )
         assert tmpDir.deleteDir(), "Can't delete ${tmpDir}"
         
         File workDir = new File( tmpDir, "work" )

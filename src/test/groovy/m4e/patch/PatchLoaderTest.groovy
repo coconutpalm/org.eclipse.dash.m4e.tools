@@ -11,6 +11,7 @@
 package m4e.patch;
 
 import static org.junit.Assert.*;
+import m4e.CommonTestCode;
 import m4e.MopSetup;
 import m4e.PatchCmd;
 import m4e.UserError;
@@ -80,7 +81,7 @@ replace( 'a:b:1', 'x:y:2' )
         def file = new File( 'data/input', fileName )
         def expectedFile = new File( 'data/expected', fileName )
         
-        def dir = new File( 'tmp-test/patchLoaderTest' )
+        def dir = CommonTestCode.newFile( 'patchLoaderTest' )
         dir.makedirs()
         
         def copy = new File( dir, fileName )

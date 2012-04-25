@@ -13,7 +13,7 @@ class P2ListCmdTest {
     @Test
     public void testListM2e () throws Exception {
         
-        def workDir = new File( 'tmp-test/testListM2e' )
+        def workDir = CommonTestCode.newFile( 'testListM2e' )
         assert workDir.deleteDir(), "Failed to delete ${workDir.absolutePath}"
         workDir.makedirs()
 

@@ -1,6 +1,7 @@
 package m4e.p2;
 
 import static org.junit.Assert.*;
+import m4e.CommonTestCode;
 import m4e.MopSetup;
 
 import org.junit.Test;
@@ -14,7 +15,7 @@ class M2ETest {
     @Test
     public void testM2E() throws Exception {
         def url = new URL( 'http://download.eclipse.org/technology/m2e/releases/1.0/1.0.200.20111228-1245' )
-        def loader = new P2RepoLoader( workDir: new File( PyDevTest.testFolder, "m2e" ), url: url )
+        def loader = new P2RepoLoader( workDir: CommonTestCode.newFile( "m2e" ), url: url )
         def repo = loader.load()
         
         def bundle = repo.latest( 'org.slf4j.api' )
@@ -164,7 +165,7 @@ P2Plugin( id=org.eclipse.m2e.logback.configuration, version=1.0.200.20111228-124
 P2Plugin( id=org.eclipse.m2e.logback.appender, version=1.0.200.20111228-1245, name=m2e logback appender )'''
             , deps.bundles.join( '\n' ) )
         
-        deps.download( new File( PyDevTest.testFolder, 'org.eclipse.m2e' ) )
+        deps.download( CommonTestCode.newFile( 'org.eclipse.m2e' ) )
     }
     
 }

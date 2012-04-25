@@ -10,11 +10,15 @@ class CommonTestCode {
     
     static File prepareRepo( File template, String repoName ) {
         
-        File copy = new File( testDir, repoName )
+        File copy = newFile( repoName )
         assert copy.deleteDir()
         
         template.copy( copy )
         
         return copy
+    }
+    
+    static File newFile( String path ) {
+        return new File( testDir, path )
     }
 }

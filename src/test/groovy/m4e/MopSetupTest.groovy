@@ -9,8 +9,6 @@ import org.junit.Test;
 
 class MopSetupTest {
 
-    File tmpDir = new File( 'tmp-test' )
-    
     @BeforeClass
     static void mopSetup() {
         MopSetup.setup();
@@ -51,7 +49,7 @@ class MopSetupTest {
     
     @Test
     public void testUnzip() throws Exception {
-        File workDir = new File( tmpDir, "testUnzip" )
+        File workDir = CommonTestCode.newFile( "testUnzip" )
         assert workDir.deleteDir(), "Can't delete ${workDir}"
         workDir.makedirs()
 
@@ -63,7 +61,7 @@ class MopSetupTest {
     
     @Test
     public void testUnzipIllegalPaths() throws Exception {
-        File workDir = new File( tmpDir, "testUnzipIllegalPaths" )
+        File workDir = CommonTestCode.newFile( "testUnzipIllegalPaths" )
         assert workDir.deleteDir(), "Can't delete ${workDir}"
         workDir.makedirs()
 

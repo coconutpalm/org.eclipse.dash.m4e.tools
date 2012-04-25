@@ -12,6 +12,7 @@ package m4e.patch;
 
 import static org.junit.Assert.*;
 import java.io.File;
+import m4e.CommonTestCode;
 import m4e.MopSetup;
 import m4e.PatchCmd
 import m4e.Pom;
@@ -79,17 +80,10 @@ class StripQualifiersTest {
         assertEquals( '[2.1.2,3.0.0)', new StripQualifiers().stripQualifier( '[2.1.2.v20101206-r8635,3.0.0)' ) )
     }
 
-    static final File testFolder = new File( "tmp-test" )
-    
     @Test
     public void testStripQualifierFromPomVersion() throws Exception {
-        MopSetup.setup()
-
-        File template = new File( 'data/input/stripQualifier' )
-        File target = new File( testFolder, 'testStripQualifierFromPomVersion/m2repo' )
-        assert target.deleteDir()
         
-        template.copy( target )
+        File target = CommonTestCode.prepareRepo( new File( 'data/input/stripQualifier' ), 'testStripQualifierFromPomVersion/m2repo' )
         
         def tool = new PatchCmd( target: target )
         tool.init()

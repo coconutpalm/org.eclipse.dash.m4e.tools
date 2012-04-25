@@ -25,7 +25,7 @@ class InstallCmdTest {
         MopSetup.setup()
         downloadDeltaPack()
         
-        def workDir = new File( 'tmp-test/testImportSwt' )
+        def workDir = CommonTestCode.newFile( 'testImportSwt' )
         assert workDir.deleteDir(), "Failed to delete ${workDir.absolutePath}"
         workDir.makedirs()
         

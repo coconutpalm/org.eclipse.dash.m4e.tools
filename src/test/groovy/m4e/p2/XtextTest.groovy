@@ -1,6 +1,7 @@
 package m4e.p2;
 
 import static org.junit.Assert.*;
+import m4e.CommonTestCode;
 import m4e.MopSetup;
 
 import org.junit.Test;
@@ -14,7 +15,7 @@ class XtextTest {
     @Test
     public void testXtext() throws Exception {
         def url = new URL( 'http://download.eclipse.org/modeling/tmf/xtext/updates/composite/releases/' )
-        def loader = new P2RepoLoader( workDir: new File( PyDevTest.testFolder, "xtext" ), url: url )
+        def loader = new P2RepoLoader( workDir: CommonTestCode.newFile( "xtext" ), url: url )
         def repo = loader.load()
         
         def bundle = repo.find( 'org.eclipse.xtext', new Version( '2.2.1.v201112130541' ) )
