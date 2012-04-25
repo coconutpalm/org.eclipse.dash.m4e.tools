@@ -29,24 +29,24 @@ class ReplaceDependenciesTest {
     public void testPatchScopeOptional() throws Exception {
         def pom = runTest( 'rhino:js:1.7R2:scope=test:optional=true' )
             
-            String expected = POM_WITH_RHINO_DEPENDENCY.replace('${opt}', '          <optional>true</optional>\n          <scope>test</scope>')
-            assertEquals( expected, pom.toString() )
+        String expected = POM_WITH_RHINO_DEPENDENCY.replace('${opt}', '          <optional>true</optional>\n          <scope>test</scope>')
+        assertEquals( expected, pom.toString() )
     }
     
     @Test
     public void testPatchScopeOptional2() throws Exception {
         def pom = runTest( 'rhino:js:1.7R2:scope=test:optional=false' )
             
-            String expected = POM_WITH_RHINO_DEPENDENCY.replace('${opt}', '          <scope>test</scope>')
-            assertEquals( expected, pom.toString() )
+        String expected = POM_WITH_RHINO_DEPENDENCY.replace('${opt}', '          <scope>test</scope>')
+        assertEquals( expected, pom.toString() )
     }
     
     @Test
     public void testPatch() throws Exception {
         def pom = runTest( 'rhino:js:1.7R2' )
             
-            String expected = POM_WITH_RHINO_DEPENDENCY.replace('${opt}\n', '')
-            assertEquals( expected, pom.toString() )
+        String expected = POM_WITH_RHINO_DEPENDENCY.replace('${opt}\n', '')
+        assertEquals( expected, pom.toString() )
     }
 
     Pom runTest( String replacement ) {
