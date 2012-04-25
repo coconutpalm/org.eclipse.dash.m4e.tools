@@ -11,7 +11,14 @@
 
 package m4e
 
+import groovy.xml.MarkupBuilder
+import java.util.jar.Manifest
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
 import org.codehaus.groovy.runtime.ProcessGroovyMethods;
+import org.eclipse.osgi.util.ManifestElement;
+import org.osgi.framework.Constants;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -19,15 +26,7 @@ class InstallCmd extends AbstractCommand {
 
     final static String DESCRIPTION = '''archives...\n- Extract the specified archives and convert the Eclipse plug-ins inside into Maven artifacts'''
     
-    static final String MVN_VERSION = '3.0.4'
-    def m3archive = "apache-maven-${MVN_VERSION}-bin.zip"
-    def m3home
-    def m3exe
-    def templateRepo
-
     void run( String... args ) {
-        setup()
-        
         // args[1..-1] throws "IndexOutOfBoundsException: toIndex = 2" if array has only one element
         if( args.size() > 1 ) {
             for( String archive in args[1..-1] ) {
@@ -36,15 +35,6 @@ class InstallCmd extends AbstractCommand {
         }
         
         log.info( 'Import complete' )
-    }
-    
-    void setup() {
-        m3home = new File( workDir, "apache-maven-${MVN_VERSION}" )
-        m3exe = new File( new File( m3home, 'bin' ), 'mvn' )
-
-        downloadMaven3()
-        unpackMaven3()
-        loadNecessaryPlugins()
     }
     
     List<File> m2repos = []
@@ -57,135 +47,9 @@ class InstallCmd extends AbstractCommand {
         ImportTool tool = importIntoTmpRepo( path )
         
         File m2repo = tool.m2repo
-        
-        log.info( 'Deleting non-Eclipse artifacts...' )
-        deleteCommonFiles( m2repo, templateRepo )
-        log.info( 'OK' )
-        
-        deleteMavenFiles( m2repo )
-        
         m2repos << m2repo
     }
-    
-    boolean deleteCommonFiles( File path1, File path2 ) {
-        List names = []
-        path1.eachFile { it -> names << it.name }
-        names.sort()
-        
-        Set toDelete = [] as Set
-        path2.eachFile { it -> toDelete << it.name }
-        
-        boolean isEmpty = true
-        
-        for( String name in names ) {
-            if( !toDelete.contains( name ) ) {
-                isEmpty = false
-                continue
-            }
-            
-            File path = new File( path1, name )
-            if( path.isDirectory() ) {
-                boolean empty = deleteCommonFiles( path, new File( path2, name ) )
-                
-                if( empty ) {
-                    log.trace( 'Deleting empty directory {}', path )
-                    path.delete()
-                } else {
-                    isEmpty = false
-                }
-            } else {
-                log.trace( 'Deleting file {}', path )
-                path.delete()
-            }
-        }
-        
-        return isEmpty
-    }
 
-    Set mavenFiles = [ 'maven-metadata-local.xml', '_maven.repositories' ] as Set
-    
-    void deleteMavenFiles( File path ) {
-        path.eachFile() { it ->
-            if( it.isDirectory() ) {
-                deleteMavenFiles( it )
-            } else if( mavenFiles.contains( it.name ) ){
-                it.delete()
-            }
-        }
-    }
-    
-    /** 
-     * We want to avoid downloading the Maven plug-ins all the time.
-     * 
-     * Therefore, we create a template repository which contains the
-     * necessary plug-ins, so we can copy them later.
-     */
-    void loadNecessaryPlugins() {
-        def primingArchive = new File( workDir, 'priming.zip' )
-        extractPrimingArchive( primingArchive )
-        
-        File priming_home = new File( workDir, 'priming_home' )
-        templateRepo = new File( priming_home, 'm2repo' )
-        File failure = new File( priming_home, ImportTool.FAILURE_FILE_NAME )
-
-        if( failure.exists() ) {
-            log.info( 'Last import failed, trying again' )
-        } else if( templateRepo.exists() ) {
-            log.debug( 'Priming repo already exists' )
-            return
-        }
-
-        log.info( 'Caching necessary plug-ins for Maven 3' )
-
-        File archive = downloadArchive( primingArchive.absolutePath )
-        File path = unpackArchive( archive )
-
-        importIntoTmpRepo( path )
-        
-        // Try again if the code below fails
-        failure << 'Cleanup failed'
-        
-        log.info( 'Preparing priming repo' )
-        
-        File orgDir = new File( templateRepo, 'org' )
-        File eclipseDir = new File( orgDir, 'eclipse' )
-        
-        // Save one JAR which the Maven Eclipse Plugin needs
-        File backupDir = new File( templateRepo.parentFile, 'backup' )
-        backupDir = new File( backupDir, 'resources' )
-        
-        File source = new File( new File( eclipseDir, 'core' ), 'resources' )
-        if( !backupDir.exists() ) {
-            source.copy( backupDir )
-        }
-        
-        // Delete everything
-        eclipseDir.deleteDir()
-        
-        // Restore what we saved above
-        backupDir.copy( source )
-        
-        log.info('OK')
-        
-        failure.delete()
-    }
-
-    void extractPrimingArchive( File primingArchive ) {
-        if( primingArchive.exists () ) {
-            return
-        }
-        
-        def resource = 'priming.zip'
-        def url = getClass().getResource( resource )
-        if( !url ) {
-            throw new IOException( "Can't find resource [${resource}] relative to ${getClass().name}" )
-        }
-        
-        url.withInputStream { stream ->
-            primingArchive << stream
-        }
-    }
-    
     ImportTool importIntoTmpRepo( File path ) {
         def tool = new ImportTool( installCmd: this )
         tool.run( path )
@@ -270,38 +134,6 @@ class InstallCmd extends AbstractCommand {
         return path
     }
 
-    /** Unpack the downloaded Maven 3 archive */
-    void unpackMaven3() {
-        def archivePath = new File( workDir, m3archive )
-        def unpackedPath = "apache-maven-${MVN_VERSION}"
-
-        def path = new File( workDir, unpackedPath )
-        if( path.exists() ) {
-            log.debug( 'Maven 3 was already unpacked at {}', path )
-            return
-        }
-
-        log.info('Unpacking Maven 3 archive')
-        archivePath.unzip( workDir )
-        log.info('OK')
-    }
-
-    /** Download Maven 3 if necessary */
-    void downloadMaven3() {
-        def path = new File( workDir, m3archive )
-        if( path.exists() ) {
-            log.debug( "Maven ${MVN_VERSION} was already downloaded at ${path}" )
-            return
-        }
-
-        // TODO Find closer mirror
-        def downloadUrl = 'http://mirror.switch.ch/mirror/apache/dist/maven/binaries/' + m3archive
-
-        log.info( 'Downloading Maven 3...' )
-        download( downloadUrl, path )
-        log.info( 'OK' )
-    }
-
     void download( String url, File path ) {
         path.withOutputStream() {
             def stream = new URL( url ).openStream()
@@ -331,13 +163,10 @@ class ImportTool {
     File m2repo
     File failure
     File m2settings
-    File logFile
 
     void run( File path ) {
         assert path != null
-        assert installCmd.templateRepo != null
-        assert installCmd.m3exe != null
-        assert installCmd.m3home != null
+        assert installCmd != null
         assert installCmd.workDir != null
 
         eclipseFolder = locate( path, 'plugins' )
@@ -349,7 +178,6 @@ class ImportTool {
 
         tmpHome = new File( installCmd.workDir, path.name + '_home' )
         m2repo = new File( tmpHome, 'm2repo' )
-        logFile = new File( tmpHome, 'm2repo.log' )
         failure = new File( tmpHome, FAILURE_FILE_NAME )
         
         log.debug( "Importing plug-ins from ${eclipseFolder} into repo ${m2repo}" )
@@ -365,102 +193,28 @@ class ImportTool {
     }
     
     void doImport() {
-        def cmd = [
-            '/bin/sh',
-            installCmd.m3exe.toString(),
-            'eclipse:make-artifacts',
-            '-DstripQualifier=false',
-            "-DeclipseDir=${eclipseFolder}",
-            "-Dmaven.repo.local=${m2repo}",
-        ]
         
-        if( DEBUG ) {
-            cmd << '-X'
-        }
+        // TODO convert features
         
-        String javaHome = System.getProperty( 'java.home' )
-        Process p = cmd.execute( [ "M2_HOME=${installCmd.m3home.absolutePath}", "JAVA_HOME=${javaHome}" ], null )
-        
-        ProcessGroovyMethods.consumeProcessErrorStream( p, System.err )
-        
-        logFile.withPrintWriter() { it ->
-            processOutput( p.inputStream, it )
-        }
-        
-        int rc = p.waitFor()
-        if( rc != 0 ) {
-            installCmd.error( Error.MAVEN_FAILED, "Invoking Maven with ${cmd} failed with ${rc}. See logfile ${logFile} for details." )
-            throw new RuntimeException( "Importing the plug-ins from ${eclipseFolder} failed with error code ${rc}. See logfile ${logFile} for details." )
+        File pluginsFolder = new File( eclipseFolder, 'plugins' )
+        doImport( pluginsFolder )
+    }
+    
+    void doImport( File folder ) {
+        folder.eachFile { it ->
+            
+            def tool = new BundleConverter( installCmd: installCmd, m2repo: m2repo )
+            
+            if( it.isDirectory() ) {
+                tool.importExplodedBundle( it )
+            } else {
+                tool.importBundle( it )
+            }
+            
+            tool.close()
         }
     }
     
-    void processOutput( InputStream stream, PrintWriter logFile ) {
-        def reader = new BufferedReader( new InputStreamReader( stream, 'UTF-8' ) )
-        
-        def min
-        def max = null
-        
-        int consoleWidth = ConsoleUtils.consoleWidth();
-        String spaces = ' ' * consoleWidth
-        int prefixLength = m2repo.toString().size() + 1
-        
-        def printMsg = { msg ->
-            msg += spaces
-            msg = msg[0..consoleWidth-2] + '\r'
-            
-            System.out.print(msg)
-            System.out.flush()
-        }
-        
-        for( String line in reader ) {
-            logFile.println( line )
-            
-            if( line.startsWith( '[INFO] Processing ' ) ) {
-                def parts = line.split(' ')
-                if( parts[2] != 'file' ) {
-                    min = parts[2]
-                    max = parts[4].trim()
-                }
-                
-                def msg = line.substringAfter( '[INFO] ' )
-                printMsg( msg )
-            } else if( line.startsWith( '[INFO] Installing ') && line.endsWith( '.jar' ) ) {
-                def parts = line.split(' ')
-                def path = parts[-1]
-//                println path
-                path = path[prefixLength..-1]
-                
-                File file = new File( path )
-                File dir = file.parentFile
-                
-                def version = dir.name
-                
-                dir = dir.parentFile
-                
-                def artifactId = dir.name
-                
-                dir = dir.parentFile
-                def groupId = dir.path
-                groupId = groupId.replaceAll( '[/\\\\]', "." )
-                
-                def msg1 = "Installing ${min} of ${max} "
-                def msg2 = "${groupId}:${artifactId}:${version}"
-                
-                if( msg1.size() + msg2.size() > consoleWidth - 1 ) {
-                    def rest = consoleWidth - 1 - msg1.size()
-                    msg2 = msg2[-rest..-1]
-                }
-                
-                def msg = msg1 + msg2
-                printMsg( msg )
-            }
-        }
-        
-        if( max ) {
-            System.out.println()
-        }
-    }
-
     /** Make sure we don't have any leftovers from previous attempts. */
     void clean() {
         if( tmpHome.exists() ) {
@@ -470,11 +224,7 @@ class ImportTool {
 
         tmpHome.makedirs()
 
-        if( installCmd.templateRepo.exists() ) {
-            log.info('Copying template...')
-            installCmd.templateRepo.copy( m2repo )
-        }
-        
+        // This file is deleted after the import succeeds        
         failure << 'Import failed'
     }
 
@@ -490,5 +240,380 @@ class ImportTool {
         }
 
         return null
+    }
+}
+
+class BundleConverter {
+    
+    private final static Logger log = LoggerFactory.getLogger( BundleConverter )
+    
+    InstallCmd installCmd
+    File m2repo
+    
+    Manifest manifest
+    String groupId
+    String artifactId
+    String version
+    
+    File bundle
+    
+    void importBundle( File bundleJar ) {
+        this.bundle = bundleJar
+        
+        manifest = loadManifestFromJar( bundleJar )
+        if( ! manifest ) {
+            return
+        }
+        
+        log.debug( 'Importing {}', bundleJar )
+        
+        examineManifest()
+        
+        if( isSourceBundle() ) {
+            return
+        }
+        
+        String key = "${groupId}:${artifactId}:${version}"
+        log.info( "Importing ${key}" )
+        File jarFile = MavenRepositoryTools.buildPath( m2repo, key, 'jar' )
+        
+        String classPath = manifest.attr.getValue( 'Bundle-ClassPath' )
+        if( classPath && classPath != '.' ) {
+            unpackNestedJar( classPath, jarFile )
+        } else {
+            bundleJar.copy( jarFile )
+        }
+        
+        File pomFile = MavenRepositoryTools.buildPath( m2repo, key, 'pom' )
+        pomFile.withWriter( 'UTF-8' ) {
+            createPom( it )
+        }
+    }
+    
+    boolean isSourceBundle() {
+        ManifestElement[] sourceBundleFor = parseAttribute( 'Eclipse-SourceBundle' )
+        if( !sourceBundleFor ) {
+            return false
+        }
+                    
+        importSourceBundle( manifest, sourceBundleFor )
+        return true
+    }
+    
+    void examineManifest() {
+        //println manifest.entries
+        log.debug( "Attributes of ${bundle}" )
+        manifest.attr.each {
+            log.debug( "    ${it.key}: ${it.value}" )
+        }
+        
+        def attrs = parseAttribute( Constants.BUNDLE_SYMBOLICNAME )
+        assert attrs.size() == 1
+        
+        artifactId = attrs[0].value
+        version = manifest.attr.getValue( Constants.BUNDLE_VERSION )
+        groupId = artifactIdToGroupId( artifactId )
+    }
+    
+    void unpackNestedJar( String nestedJarPath, File jarFile ) {
+        def entry = archive.getEntry( nestedJarPath )
+        if( null == entry ) {
+            throw new RuntimeException( "Can't find [${nestedJarPath}] in ${bundle}" )
+        }
+        
+        jarFile.parentFile?.makedirs()
+        
+        def stream = archive.getInputStream( entry )
+        try {
+            jarFile << stream
+        } finally {
+            stream.close()
+        }
+    }
+    
+    String artifactIdToGroupId( String artifactId ) {
+        def parts = artifactId.split( '\\.', -1 )
+        def n = Math.min( parts.size()-1, 2 )
+        return parts[0..n].join( '.' )
+    }
+    
+    void createPom( Writer writer ) {
+        
+        writer << '<?xml version="1.0" encoding="UTF-8"?>\n'
+        writer << '<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"\n'
+        writer << '    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n'
+        writer << '  <modelVersion>4.0.0</modelVersion>\n'
+
+        writer << '  <groupId>' << groupId << '</groupId>\n'
+        writer << '  <artifactId>' << artifactId << '</artifactId>\n'
+        writer << '  <version>' << version << '</version>\n'
+        
+        String name = manifest.attr.getValue( 'Bundle-Name' )
+        if( name ) {
+            if( name.contains( '%' ) ) {
+                name = expand( name )
+            }
+            
+            writer << '  <name>' << escape( name ) << '</name>\n'
+        }
+        
+        def requiredBundles = parseAttribute( Constants.REQUIRE_BUNDLE )
+        if( requiredBundles ) {
+            addDependencies( writer, requiredBundles )
+        }
+        
+        writer << '</project>\n'
+    }
+    
+    void addDependencies( Writer writer, ManifestElement[] requiredBundles ) {
+        
+        writer << '  <dependencies>\n'
+        
+        requiredBundles.each {
+            addDependency( writer, it )
+        }
+        
+        writer << '  </dependencies>\n'
+    }
+    
+    void addDependency( Writer writer, ManifestElement dep ) {
+        println dep
+        
+        String artifactId = dep.value
+        String version = dep.getAttribute( Constants.BUNDLE_VERSION_ATTRIBUTE )
+        if( !version ) {
+            version = '[0,)'
+        }
+        
+        String groupId = artifactIdToGroupId( artifactId )
+        
+        writer << '    <dependency>\n'
+        writer << '      <groupId>' << groupId <<  '</groupId>\n'
+        writer << '      <artifactId>' << artifactId <<  '</artifactId>\n'
+        writer << '      <version>' << version <<  '</version>\n'
+        writer << '    </dependency>\n'
+    }
+    
+    Properties pluginProperties
+    
+    String expand( String variable ) {
+        loadPluginProperties()
+        
+        if( ! variable.startsWith( '%' ) ) {
+            throw new RuntimeException( 'Expected "%" as the first character in ' + variable )
+        }
+        
+        String value = pluginProperties.getProperty( variable.substring( 1 ) )
+        return value ? value : variable
+    }
+    
+    void loadPluginProperties() {
+        
+        if( null != pluginProperties ) {
+            return
+        }
+        
+        pluginProperties = new Properties()
+        
+        if( archive ) {
+            def entry = archive.getEntry( 'plugin.properties' )
+            if( !entry ) {
+                return
+            }
+            
+            def stream = archive.getInputStream( entry )
+            try {
+                pluginProperties.load( stream )
+            } finally {
+                stream.close()
+            }
+        } else {
+            File file = new File( bundle, 'plugin.properties' )
+            if( file.exists() ) {
+                file.withInputStream { stream ->
+                    pluginProperties.load( stream )
+                }
+            }
+        }
+    }
+    
+    String escape( String text ) {
+        return text.replace( '&', '&amp;' ).replace( '<', '&lt;' ).replace( '>', '&gt;' )
+    }
+    
+    void importSourceBundle( Manifest manifest, ManifestElement[] sourceBundleFor ) {
+        
+        if( sourceBundleFor.size() != 1 ) {
+            throw new RuntimeException( "Expected exactly one element in ${sourceBundleFor}" )
+        }
+        def attr = sourceBundleFor[0]
+        
+        log.debug( "Found source bundle for ${attr.value}" )
+        
+        artifactId = attr.value
+        version = attr.getAttribute( Constants.VERSION_ATTRIBUTE )
+        groupId = artifactIdToGroupId( artifactId )
+        
+        String key = "${groupId}:${artifactId}:${version}"
+        File mavenSourceJar = MavenRepositoryTools.buildPath( m2repo, key, "jar", "sources" )
+        
+        String roots = attr.getDirective( 'roots' )
+        if( !roots ) {
+            assert bundle.isFile()
+            
+            bundle.copy( mavenSourceJar )
+            return
+        }
+        
+        mavenSourceJar.parentFile?.makedirs()
+
+        manifest.entries.clear()
+        
+        roots += '/'
+        mavenSourceJar.withOutputStream { it ->
+            def out = new ZipOutputStream( it )
+            
+            writeManifest( out )
+            
+            filterSourceBundle( out, roots )
+        }
+    }
+    
+    void filterSourceBundle( ZipOutputStream out, String roots ) {
+        assert archive != null
+        
+        for( ZipEntry entry: archive.entries() ) {
+            if( entry.getName().startsWith( 'META-INF/' ) ) {
+                continue
+            }
+            
+            if( !entry.getName().startsWith( roots ) ) {
+                out.putNextEntry( new ZipEntry( entry ) )
+            } else {
+                String name = entry.getName().substring( roots.size() )
+                ZipEntry clone = new ZipEntry( name )
+                clone.setTime( entry.getTime() )
+                clone.setSize( entry.getSize() )
+                clone.setComment( entry.getComment() )
+                clone.setExtra( entry.getExtra() )
+                
+                out.putNextEntry( clone )
+            }
+            
+            def stream = archive.getInputStream( entry )
+            try {
+                out << stream
+            } finally {
+                stream.close()
+            }
+        }
+    }
+    
+    void writeManifest( ZipOutputStream out ) {
+        def entry = new ZipEntry( 'META-INF/MANIFEST.MF' )
+        out.putNextEntry( entry )
+        manifest.write( out )
+    }
+    
+    void close() {
+        if( archive ) {
+            archive.close()
+        }
+    }
+    
+    ZipFile archive
+    
+    Manifest loadManifestFromJar( File file ) {
+        archive = new ZipFile( file )
+        
+        def entry = archive.getEntry( 'META-INF/MANIFEST.MF' )
+        if( !entry ) {
+            installCmd.error( Error.MISSING_MANIFEST, "Can't find manifest in ${file.absolutePath}" )
+            return null
+        }
+        
+        def stream = archive.getInputStream( entry )
+        try {
+            return new Manifest( stream )
+        } finally {
+            stream.close()
+        }
+    }
+
+    void importExplodedBundle( File bundleFolder ) {
+        manifest = loadManifestFromFile( new File( bundleFolder, 'META-INF/MANIFEST.MF' ) )
+        if( !manifest ) {
+            return
+        }
+        
+        log.debug( 'Importing {}', bundleFolder )
+        bundle = bundleFolder
+        
+        examineManifest()
+        
+        if( isSourceBundle() ) {
+            return
+        }
+        
+        String key = "${groupId}:${artifactId}:${version}"
+        log.info( "Importing ${key}" )
+        File jarFile = MavenRepositoryTools.buildPath( m2repo, key, 'jar' )
+        
+        String classPath = manifest.attr.getValue( 'Bundle-ClassPath' )
+        if( classPath ) {
+            File nestedJar = new File( bundleFolder, classPath )
+            
+            nestedJar.copy( jarFile )
+        } else {
+            packBundle( bundleFolder, jarFile )
+        }
+        
+        File pomFile = MavenRepositoryTools.buildPath( m2repo, key, 'pom' )
+        pomFile.withWriter( 'UTF-8' ) {
+            createPom( it )
+        }
+    }
+    
+    void packBundle( File bundleFolder, File jarFile ) {
+        
+        jarFile.parentFile?.makedirs()
+        
+        jarFile.withOutputStream {
+            def out = new ZipOutputStream( it )
+        
+            bundleFolder.eachFileRecurse { File file ->
+                String name = file.pathRelativeTo( bundleFolder )
+                
+                def entry = new ZipEntry( name )
+                entry.setTime( file.lastModified() )
+                
+                out.putNextEntry( entry )
+                
+                out << file
+            }
+        }
+    }
+    
+    Manifest loadManifestFromFile( File file ) {
+        if( !file.exists() ) {
+            installCmd.error( Error.MISSING_MANIFEST, "Can't find manifest ${file.absolutePath}" )
+            return null
+        }
+        
+        def m
+        file.withInputStream {
+            m = new Manifest( it )
+        }
+        
+        return m
+    }
+    
+    ManifestElement[] parseAttribute( String name ) {
+        String text = manifest.attr.getValue( name )
+        if( !text ) {
+            return null
+        }
+        
+        return ManifestElement.parseHeader( name, text )
     }
 }

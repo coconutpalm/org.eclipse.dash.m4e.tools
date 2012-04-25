@@ -45,6 +45,12 @@
 		</dependency>
 	
 		<dependency>
+			<groupId>org.eclipse.tycho</groupId>
+			<artifactId>org.eclipse.osgi</artifactId>
+			<version>3.8.0.v20120123-1419</version>
+		</dependency>
+	
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit-dep</artifactId>
 			<version>4.10</version>
