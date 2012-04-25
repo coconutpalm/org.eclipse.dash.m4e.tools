@@ -12,7 +12,7 @@ class DependencyManagementCmdTest {
         MopSetup.setup()
         
         File source = new File( 'data/input/repo1' )
-        File copy = new File( 'tmp/dmRepo' )
+        File copy = new File( 'tmp-test/dmRepo' )
         
         assert copy.deleteDir()
         source.copy( copy )

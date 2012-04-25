@@ -39,7 +39,7 @@ class AnalyzeCmdTest {
         MopSetup.setup()
         
         File source = new File( 'data/input/repo1' )
-        File copy = new File( 'tmp', source.name )
+        File copy = new File( 'tmp-test', source.name )
         
         assert copy.deleteDir()
         source.copy( copy )
