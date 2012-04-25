@@ -85,11 +85,11 @@ class Pom extends PomElement {
     String source
     
     String key() {
-        return "${groupId()}:${value( ARTIFACT_ID )}:${version()}";
+        return "${groupId()}:${artifactId()}:${version()}";
     }
     
     String shortKey() {
-        return "${groupId()}:${value( ARTIFACT_ID )}";
+        return "${groupId()}:${artifactId()}";
     }
     
     String groupId() {
@@ -101,6 +101,10 @@ class Pom extends PomElement {
         return groupId
     }
     
+    String artifactId() {
+        return value( ARTIFACT_ID )
+    }
+
     String version() {
         String version = value( VERSION )
         if( null == version ) {
@@ -141,7 +145,7 @@ class Pom extends PomElement {
     List<String> files() {
         File dir = new File( source ).parentFile
         
-        String prefix = "${value( ARTIFACT_ID )}-${version()}"
+        String prefix = "${artifactId()}-${version()}"
         
         Set<String> files = new TreeSet()
         dir.eachFile() { File item ->
