@@ -13,9 +13,13 @@ package m4e
 
 class PathUtils {
     
+    static {
+        MopSetup.setup()
+    }
+    
     static String normalize( def path ) {
         if( path instanceof File ) {
-            path = path.toString()
+            path = path.canonicalFile.toString()
         }
 
         return path.replace( '\\', '/' )
@@ -27,18 +31,13 @@ class PathUtils {
         if( pos >= 0 ) {
             path = result.substring( pos + 1 )
         }
-    
+
         return path
     }
     
     static String dirname( def path ) {
         String result = normalize( path )
-        int pos = result.lastIndexOf( '/' )
-        if( pos >= 0 ) {
-            path = result.substring( 0, pos )
-        }
-        
-        return path
+        return result.substringBeforeLast( '/' )
     }
     
 }

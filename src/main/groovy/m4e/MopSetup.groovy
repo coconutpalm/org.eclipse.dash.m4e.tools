@@ -33,16 +33,26 @@ class MopSetup {
     }
     
     static void mopString() {
-        String.metaClass.removeEnd = { String pattern ->
+        String.metaClass.removeStart = { String pattern ->
             String result = delegate
             
-            if( pattern && result.endsWith( pattern ) ) {
-                result = result.substring( 0, result.size() - pattern.size() )
+            if( pattern && result.startsWith( pattern ) ) {
+                result = result.substring( pattern.size() )
             }
             
             return result
         }
         
+        String.metaClass.removeEnd = { String pattern ->
+            String result = delegate
+
+            if( pattern && result.endsWith( pattern ) ) {
+                result = result.substring( 0, result.size() - pattern.size() )
+            }
+
+            return result
+        }
+
         String.metaClass.substringBeforeLast = { String pattern ->
             String result = delegate
             
@@ -61,25 +71,38 @@ class MopSetup {
             
             if( pattern ) {
                 int pos = result.lastIndexOf( pattern )
-                    if( pos >= 0 ) {
-                        return result.substring( pos + pattern.size() )
-                    }
+                if( pos >= 0 ) {
+                    return result.substring( pos + pattern.size() )
+                }
             }
             
             return ""
         }
         
         String.metaClass.substringBefore = { String pattern ->
-        String result = delegate
-        
-        if( pattern ) {
-            int pos = result.indexOf( pattern )
+            String result = delegate
+
+            if( pattern ) {
+                int pos = result.indexOf( pattern )
                 if( pos >= 0 ) {
                     return result[0..<pos]
                 }
+            }
+
+            return result
         }
         
-        return result
+        String.metaClass.substringAfter = { String pattern ->
+            String result = delegate
+
+            if( pattern ) {
+                int pos = result.indexOf( pattern )
+                if( pos >= 0 ) {
+                    return result.substring( pos + 1 )
+                }
+            }
+
+            return result
         }
         
         String.metaClass.endsWithOneOf = { String... patterns ->
@@ -129,7 +152,14 @@ class MopSetup {
         }
         
         File.metaClass.normalize = {
-            return delegate.path.replace( File.separator, '/' )
+            return PathUtils.normalize( delegate )
+        }
+        
+        File.metaClass.pathRelativeTo = { File parent ->
+            String file = delegate.normalize().toString()
+            String parentPath = parent.normalize().toString() + '/'
+            
+            return file.removeStart( parentPath )
         }
     }
     
