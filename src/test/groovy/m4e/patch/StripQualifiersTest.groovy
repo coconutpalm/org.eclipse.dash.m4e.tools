@@ -88,7 +88,7 @@ class StripQualifiersTest {
         def tool = new PatchCmd( target: target )
         tool.init()
         
-        tool.globalPatches.qualifierPatches << new QualifierPatch( 'org.apache.batik:org.apache.batik.util:1.6.0-v201011041432', '1.6.0.1' )
+        tool.globalPatches.qualifierPatches << new QualifierPatch( 'org.apache.batik:org.apache.batik.util:1.6.0.v201011041432', '1.6.0.1' )
         
         tool.loadPatches()
         tool.applyPatches()

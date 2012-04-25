@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.eclipse.swt</groupId>
   <artifactId>org.eclipse.swt.gtk.linux.x86</artifactId>
-  <version>3.7.1-v3738a</version>
+  <version>3.7.1.v3738a</version>
   <name>%fragmentName</name>
   <licenses>
     <license>
@@ -17,7 +17,7 @@
     <dependency>
       <groupId>g</groupId>
       <artifactId>a</artifactId>
-      <version>3.7.1-v3738a</version>
+      <version>3.7.1.v3738a</version>
     </dependency>
   </dependencies>
 </project>
