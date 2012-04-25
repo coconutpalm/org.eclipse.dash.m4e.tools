@@ -36,13 +36,8 @@ class AnalyzeCmdTest {
     @Test
     public void testAnalyzeRepo1() throws Exception {
         
-        MopSetup.setup()
-        
         File source = new File( 'data/input/repo1' )
-        File copy = new File( 'tmp-test', source.name )
-        
-        assert copy.deleteDir()
-        source.copy( copy )
+        File copy = CommonTestCode.prepareRepo( source, source.name )
         
         Calendar cal = Calendar.getInstance( TimeZone.getTimeZone( 'GMT' ) )
         cal.setTimeInMillis( 0L )
