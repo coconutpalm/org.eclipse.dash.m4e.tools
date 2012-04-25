@@ -13,6 +13,7 @@ package m4e.patch;
 import static org.junit.Assert.*;
 import java.io.File;
 import m4e.MopSetup;
+import m4e.PatchCmd
 import m4e.Pom;
 import org.junit.Test;
 
@@ -90,20 +91,22 @@ class StripQualifiersTest {
         
         template.copy( target )
         
-        GlobalPatches globalPatches = new GlobalPatches()
-        def tool = new StripQualifiers( globalPatches: globalPatches, target: target )
+        def tool = new PatchCmd( target: target )
+        tool.init()
+        
+        tool.globalPatches.qualifierPatches << new QualifierPatch( 'org.apache.batik:org.apache.batik.util:1.6.0-v201011041432', '1.6.0.1' )
+        
+        tool.loadPatches()
+        tool.applyPatches()
         
         File dir = new File( target, 'org/eclipse/swt/org.eclipse.swt.gtk.linux.x86' )
-        def pom = Pom.load( new File( dir, '3.7.1-v3738a/org.eclipse.swt.gtk.linux.x86-3.7.1-v3738a.pom' ) )
-        tool.apply( pom )
+        def pom = Pom.load( new File( dir, '3.7.1/org.eclipse.swt.gtk.linux.x86-3.7.1.pom' ) )
         
         assertEquals( '3.7.1', pom.version() )
         
         File newDir = new File( dir, pom.version() )
         assert newDir.exists()
 
-        pom.save( new File( pom.source ) )
-        
         def l = []
         newDir.eachFile { l << it.name }
         l.sort()
@@ -147,19 +150,14 @@ org.eclipse.swt.gtk.linux.x86-3.7.1xxx''',
 ''',
             actual )
 
-        globalPatches.qualifierPatches << new QualifierPatch( 'org.apache.batik:org.apache.batik.util:1.6.0-v201011041432', '1.6.0.1' )
-        
         dir = new File( target, 'org/apache/batik/org.apache.batik.util' )
         
-        pom = Pom.load( new File( dir, '1.6.0-v201011041432/org.apache.batik.util-1.6.0-v201011041432.pom' ) )
-        tool.apply( pom )
-        
+        pom = Pom.load( new File( dir, '1.6.0.1/org.apache.batik.util-1.6.0.1.pom' ) )
         assertEquals( '1.6.0.1', pom.version() )
         
         newDir = new File( dir, pom.version() )
         assert newDir.exists()
         
-        pom.save( new File( pom.source ) )
         actual = new File( newDir, 'org.apache.batik.util-1.6.0.1.pom' ).getText( "UTF-8" )
         assertEquals( '''\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -175,7 +173,6 @@ org.eclipse.swt.gtk.linux.x86-3.7.1xxx''',
       <groupId>org.apache.batik</groupId>
       <artifactId>org.apache.batik.util.gui</artifactId>
       <version>[1.6.0,1.7.0)</version>
-      <optional>false</optional>
     </dependency>
   </dependencies>
 </project>
@@ -184,15 +181,13 @@ org.eclipse.swt.gtk.linux.x86-3.7.1xxx''',
 
         dir = new File( target, 'org/apache/batik/org.apache.batik.dom' )
         
-        pom = Pom.load( new File( dir, '1.6.0-v201011041432/org.apache.batik.dom-1.6.0-v201011041432.pom' ) )
-        tool.apply( pom )
+        pom = Pom.load( new File( dir, '1.6.0/org.apache.batik.dom-1.6.0.pom' ) )
         
         assertEquals( '1.6.0', pom.version() )
         
         newDir = new File( dir, pom.version() )
         assert newDir.exists()
         
-        pom.save( new File( pom.source ) )
         actual = new File( newDir, 'org.apache.batik.dom-1.6.0.pom' ).getText( "UTF-8" )
         assertEquals( '''\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -208,25 +203,21 @@ org.eclipse.swt.gtk.linux.x86-3.7.1xxx''',
       <groupId>org.apache.batik</groupId>
       <artifactId>org.apache.batik.css</artifactId>
       <version>[1.6.0,1.7.0)</version>
-      <optional>false</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.batik</groupId>
       <artifactId>org.apache.batik.util</artifactId>
       <version>[1.6.0,1.7.0)</version>
-      <optional>false</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.batik</groupId>
       <artifactId>org.apache.batik.xml</artifactId>
       <version>[1.6.0,1.7.0)</version>
-      <optional>false</optional>
     </dependency>
     <dependency>
       <groupId>org.w3c.css</groupId>
       <artifactId>org.w3c.css.sac</artifactId>
       <version>[1.3.0,1.4.0)</version>
-      <optional>false</optional>
     </dependency>
   </dependencies>
 </project>
