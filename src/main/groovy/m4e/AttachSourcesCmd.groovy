@@ -28,6 +28,8 @@ class AttachSourcesCmd extends AbstractCommand {
         }
     }
     
+    File target
+    
     void attachSources( File dir ) {
         if( !dir.exists() ) {
             throw new UserError( "${dir} doesn't exist" )
@@ -40,6 +42,7 @@ class AttachSourcesCmd extends AbstractCommand {
         log.info( "Attaching sources in ${dir}..." )
         count = 0
 
+        target = dir
         process( dir )        
         
         log.info( "Found ${count} sources JARs" )
@@ -48,7 +51,7 @@ class AttachSourcesCmd extends AbstractCommand {
     void process( File dir ) {
         dir.eachFile { File it ->
             if( it.isDirectory() ) {
-                if( it.name.endsWith( '.source' ) ) {
+                if( it.name.endsWithOneOf( '.source', '.sources' ) ) {
                     processSourceFolder( it )
                 } else {
                     process( it )
@@ -58,8 +61,8 @@ class AttachSourcesCmd extends AbstractCommand {
     }
     
     void processSourceFolder( File srcPath ) {
-        File binPath = new File( srcPath.absolutePath.removeEnd( '.source' ) )
         
+        File binPath = binPathFromSource( srcPath )
         if( !binPath.exists() ) {
             warn( Warning.MISSING_BINARY_BUNDLE_FOR_SOURCES, "Missing bundle ${binPath} for sources in ${srcPath}" )
             return
@@ -81,6 +84,19 @@ class AttachSourcesCmd extends AbstractCommand {
         } else {
             log.debug( "There were unexpected files in {} -> not deleting it", srcPath )
         }
+    }
+    
+    File binPathFromSource( File srcPath ) {
+        String bundleName = srcPath.name
+        bundleName = bundleName.endsWith( '.source' ) ? bundleName.removeEnd( '.source' ) : bundleName.removeEnd( '.sources' )
+        
+        def parts = bundleName.split( '\\.', -1 )
+        if( parts.size() > 3 ) {
+            parts = parts[0..2]
+        }
+        
+        File binPath = new File( target, parts.join( '/' ) )
+        binPath = new File( binPath, bundleName )
     }
     
     boolean processSourceVersion( File srcPath, File binPath, String version ) {
@@ -115,7 +131,7 @@ class AttachSourcesCmd extends AbstractCommand {
         String version = srcPath.name
         String basename = srcPath.parentFile.name
         
-        if( !basename.endsWith( '.source' ) ) {
+        if( !basename.endsWith( '.source' ) && !basename.endsWith( '.sources' ) ) {
             throw new RuntimeException( "Unexpected file ${new File( srcPath, name)}" )
         }
         

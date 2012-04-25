@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>example.saveuistate</groupId>
+  <artifactId>example.saveuistate</artifactId>
+  <version>1.0.0</version>
+  <name>Save Ui State Plug-in</name>
+  <dependencies>
+    <dependency>
+      <groupId>org.eclipse.core</groupId>
+      <artifactId>org.eclipse.core.resources</artifactId>
+      <version>[0,)</version>
+      <optional>false</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.core</groupId>
+      <artifactId>org.eclipse.core.runtime</artifactId>
+      <version>[0,)</version>
+      <optional>false</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.ui</groupId>
+      <artifactId>org.eclipse.ui</artifactId>
+      <version>[3.3.0,4.0.0)</version>
+      <optional>false</optional>
+    </dependency>
+  </dependencies>
+</project>
