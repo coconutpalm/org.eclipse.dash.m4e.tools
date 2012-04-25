@@ -4,6 +4,6 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mozilla.javascript</groupId>
   <artifactId>org.mozilla.javascript</artifactId>
-  <version>1.7.2-v201005080400</version>
+  <version>1.7.2.v201005080400</version>
   <name>Mozilla Rhino</name>
 </project>

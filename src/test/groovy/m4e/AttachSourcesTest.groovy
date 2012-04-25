@@ -14,7 +14,7 @@ class AttachSourcesTest {
         def tool = new AttachSourcesCmd( workDir: workDir )
         tool.attachSources( repo )
         
-        assert new File( repo, 'org/mozilla/javascript/org.mozilla.javascript/1.7.2-v201005080400/org.mozilla.javascript-1.7.2-v201005080400-sources.jar' ).exists()
+        assert new File( repo, 'org/mozilla/javascript/org.mozilla.javascript/1.7.2.v201005080400/org.mozilla.javascript-1.7.2.v201005080400-sources.jar' ).exists()
         
         assert 3 == tool.count
         assert 0 == tool.errorCount
