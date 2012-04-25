@@ -19,7 +19,7 @@ class OrbitPatch extends Patch {
         
         compilePatterns()
         
-        if( excluded( pom.groupId() ) ) {
+        if( excluded( pom.key() ) ) {
             return
         }
         
@@ -37,7 +37,7 @@ class OrbitPatch extends Patch {
         }
         
         pom.dependencies.each { dep ->
-            if( excluded( dep.value( Dependency.GROUP_ID ) ) ) {
+            if( excluded( dep.key() ) ) {
                 return
             }
             
