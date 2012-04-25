@@ -50,8 +50,7 @@ abstract class AbstractCommand {
             log.error( "There were ${errorCount} errors and ${warningCount} warnings" )
         } else  if( warningCount ) {
             log.warn( "There were no errors but ${warningCount} warnings" )
-        }
-        if( warningCount ) {
+        } else {
             log.info( "There were no errors or warnings" )
         }
     }
