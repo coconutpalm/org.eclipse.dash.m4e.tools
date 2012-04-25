@@ -3,7 +3,8 @@ package m4e;
 public enum Warning {
     MISSING_BINARY_BUNDLE_FOR_SOURCES( 1 ),
     UNEXPECTED_FILE_IN_SOURCE_BUNDLE( 2 ),
-    BINARY_DIFFERENCE( 3 );
+    BINARY_DIFFERENCE( 3 ),
+    MULTIPLE_NESTED_JARS( 4 );
     
     public final static String BASE_URL = "http://wiki.eclipse.org/MT4E_";
     

@@ -34,10 +34,11 @@ class InstallCmd extends AbstractCommand {
             }
         }
         
-        log.info( 'Import complete' )
+        log.info( "Import complete. Imported ${statistics.bundleCount} Eclipse bundles into ${statistics.pomCount} POMs. There are ${statistics.jarCount} new JARs of which ${statistics.sourceCount} have sources" )
     }
     
     List<File> m2repos = []
+    ImportStatistics statistics = new ImportStatistics()
     
     void importArchive( String url ) {
         
@@ -148,6 +149,13 @@ class FileFound extends Exception {
     File file;
 }
 
+class ImportStatistics {
+    int bundleCount = 0
+    int pomCount = 0
+    int jarCount = 0
+    int sourceCount = 0
+}
+
 class ImportTool {
 
     static final Logger log = LoggerFactory.getLogger( ImportTool )
@@ -163,7 +171,7 @@ class ImportTool {
     File m2repo
     File failure
     File m2settings
-
+    
     void run( File path ) {
         assert path != null
         assert installCmd != null
@@ -183,8 +191,6 @@ class ImportTool {
         log.debug( "Importing plug-ins from ${eclipseFolder} into repo ${m2repo}" )
         clean()
 
-        log.info( 'Analyzing Eclipse plugins...' )
-        
         doImport()
         
         log.info( 'OK' )
@@ -203,7 +209,7 @@ class ImportTool {
     void doImport( File folder ) {
         folder.eachFile { it ->
             
-            def tool = new BundleConverter( installCmd: installCmd, m2repo: m2repo )
+            def tool = new BundleConverter( installCmd: installCmd, m2repo: m2repo, statistics: installCmd.statistics )
             
             if( it.isDirectory() ) {
                 tool.importExplodedBundle( it )
@@ -257,6 +263,8 @@ class BundleConverter {
     
     File bundle
     
+    ImportStatistics statistics
+    
     void importBundle( File bundleJar ) {
         this.bundle = bundleJar
         
@@ -264,6 +272,8 @@ class BundleConverter {
         if( ! manifest ) {
             return
         }
+        
+        statistics.bundleCount ++
         
         log.debug( 'Importing {}', bundleJar )
         
@@ -284,6 +294,8 @@ class BundleConverter {
             bundleJar.copy( jarFile )
         }
         
+        statistics.jarCount ++
+        
         File pomFile = MavenRepositoryTools.buildPath( m2repo, key, 'pom' )
         pomFile.withWriter( 'UTF-8' ) {
             createPom( it )
@@ -301,7 +313,8 @@ class BundleConverter {
     }
     
     void examineManifest() {
-        //println manifest.entries
+//        println manifest.entries
+        
         log.debug( "Attributes of ${bundle}" )
         manifest.attr.each {
             log.debug( "    ${it.key}: ${it.value}" )
@@ -316,6 +329,13 @@ class BundleConverter {
     }
     
     void unpackNestedJar( String nestedJarPath, File jarFile ) {
+        
+        if( nestedJarPath.contains( ',' ) ) {
+            installCmd.warn( Warning.MULTIPLE_NESTED_JARS, "Multiple nested JARs are not supported; just copying the original bundle" )
+            bundle.copy( jarFile )
+            return
+        }
+        
         def entry = archive.getEntry( nestedJarPath )
         if( null == entry ) {
             throw new RuntimeException( "Can't find [${nestedJarPath}] in ${bundle}" )
@@ -338,6 +358,8 @@ class BundleConverter {
     }
     
     void createPom( Writer writer ) {
+        
+        statistics.pomCount ++
         
         writer << '<?xml version="1.0" encoding="UTF-8"?>\n'
         writer << '<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"\n'
@@ -377,7 +399,7 @@ class BundleConverter {
     }
     
     void addDependency( Writer writer, ManifestElement dep ) {
-        println dep
+//        println dep
         
         String artifactId = dep.value
         String version = dep.getAttribute( Constants.BUNDLE_VERSION_ATTRIBUTE )
@@ -442,6 +464,8 @@ class BundleConverter {
     }
     
     void importSourceBundle( Manifest manifest, ManifestElement[] sourceBundleFor ) {
+        
+        statistics.sourceCount ++
         
         if( sourceBundleFor.size() != 1 ) {
             throw new RuntimeException( "Expected exactly one element in ${sourceBundleFor}" )
@@ -546,6 +570,8 @@ class BundleConverter {
             return
         }
         
+        statistics.bundleCount ++
+        
         log.debug( 'Importing {}', bundleFolder )
         bundle = bundleFolder
         
@@ -567,6 +593,8 @@ class BundleConverter {
         } else {
             packBundle( bundleFolder, jarFile )
         }
+        
+        statistics.jarCount ++
         
         File pomFile = MavenRepositoryTools.buildPath( m2repo, key, 'pom' )
         pomFile.withWriter( 'UTF-8' ) {
