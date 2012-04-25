@@ -156,8 +156,8 @@ class MopSetup {
         }
         
         File.metaClass.pathRelativeTo = { File parent ->
-            String file = delegate.normalize().toString()
-            String parentPath = parent.normalize().toString() + '/'
+            String file = delegate.canonicalFile.normalize().toString()
+            String parentPath = parent.canonicalFile.normalize().toString() + '/'
             
             return file.removeStart( parentPath )
         }

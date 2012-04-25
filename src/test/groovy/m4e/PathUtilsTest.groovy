@@ -26,13 +26,9 @@ class PathUtilsTest {
     @Test
     public void testNormalizeFile() throws Exception {
         
-        def f = new File( 'a' ).canonicalFile.toString().replace( '\\', '/' )
-        
-        assert f == PathUtils.normalize( new File( 'a' ) )
-        
-        f += '/b'
-        assert f == PathUtils.normalize( new File( 'a/b' ) )
-        assert f == PathUtils.normalize( new File( 'a\\b' ) )
+        assert 'a' == PathUtils.normalize( new File( 'a' ) )
+        assert 'a/b' == PathUtils.normalize( new File( 'a/b' ) )
+        assert 'a/b' == PathUtils.normalize( new File( 'a\\b' ) )
     }
     
     @Test
@@ -55,13 +51,8 @@ class PathUtilsTest {
     
     @Test
     public void testDirname() throws Exception {
-        def f = new File( 'a' ).canonicalFile.parentFile.toString().replace( '\\', '/' )
-        assert f == PathUtils.dirname( new File( 'a' ) )
-        
-        f = new File( 'y' ).canonicalFile.toString().replace( '\\', '/' )
-        assert f == PathUtils.dirname( new File( 'y/b' ) )
-        
-        f = new File( 'x' ).canonicalFile.toString().replace( '\\', '/' )
-        assert f == PathUtils.dirname( new File( 'x\\b' ) )
+        assert 'a' == PathUtils.dirname( new File( 'a' ) )
+        assert 'y' == PathUtils.dirname( new File( 'y/b' ) )
+        assert 'x' == PathUtils.dirname( new File( 'x\\b' ) )
     }
 }

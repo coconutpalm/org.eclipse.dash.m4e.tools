@@ -19,7 +19,7 @@ class PathUtils {
     
     static String normalize( def path ) {
         if( path instanceof File ) {
-            path = path.canonicalFile.toString()
+            path = path.toString()
         }
 
         return path.replace( '\\', '/' )
