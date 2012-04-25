@@ -39,6 +39,12 @@ class DependencyManagementCmdTest {
         // Do some search'n'replace to always get the same order
         actual = actual.replace( '3.5.0 and 3.6.0.', '3.6.0 and 3.5.0.' )
         
-        assertEquals( 'The repository contains (at least) two versions of org.eclipse.core:org.eclipse.core.runtime: 3.6.0 and 3.5.0. Omitting both.', errors.join( '\n' ) )
+        assertEquals( '''\
+The repository contains (at least) two versions of org.eclipse.core:org.eclipse.core.runtime: 3.6.0 and 3.5.0. Omitting both.
+For details, see http://wiki.eclipse.org/MT4E_E0001'''
+            , errors.join( '\n' ) )
+        
+        assertEquals( 1, tool.errorCount )
+        assertEquals( 0, tool.warningCount )
     }
 }
