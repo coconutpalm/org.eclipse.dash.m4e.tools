@@ -34,5 +34,6 @@ ${M2_REPO}/org/slf4j/slf4j-api/1.6.4/slf4j-api-1.6.4.jar:\
 ${M2_REPO}/ch/qos/logback/logback-core/1.0.0/logback-core-1.0.0.jar:\
 ${M2_REPO}/ch/qos/logback/logback-classic/1.0.0/logback-classic-1.0.0.jar:\
 ${M2_REPO}/org/codehaus/groovy/groovy-all/1.8.5/groovy-all-1.8.5.jar:\
+${M2_REPO}/org/eclipse/tycho/org.eclipse.osgi/3.8.0.v20120123-1419/org.eclipse.osgi-3.8.0.v20120123-1419.jar:\
 ${DECENT_XML} \
 m4e.Tool "$@"
