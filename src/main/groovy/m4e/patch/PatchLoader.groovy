@@ -31,7 +31,7 @@ class PatchLoader {
     PatchSet load() {
         def config = new CompilerConfiguration()
         config.setScriptBaseClass( 'm4e.patch.PatchScript' )
-    
+        
         def shell = new GroovyShell(this.class.classLoader, new Binding(), config)
         
         def text = this.text ? this.text : file.getText( 'utf-8' )
