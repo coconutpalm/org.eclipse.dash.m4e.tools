@@ -26,7 +26,13 @@ abstract class PatchScript extends Script {
         replacer.profile = name
     }
     
-    /** Replace a certain dependency with another */
+    /** Replace a certain dependency with another
+     * 
+     *  <p>The original dependency will appear in the default profile, the new one
+     *  in the other/non-default profile.
+     *  
+     *  <p>The main use for this is to map Orbit bundles to official Maven artifacts
+     */
     void replace( String _pattern, String with ) {
         
         PatchDependency pattern = PatchDependency.fromString( _pattern )
