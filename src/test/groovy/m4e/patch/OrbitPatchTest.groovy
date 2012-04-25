@@ -27,7 +27,6 @@ public class OrbitPatchTest {
         tool.init()
         
         tool.globalPatches.renameOrbitBundles = true
-        
         tool.loadPatches()
         
         tool.applyPatches()
@@ -42,6 +41,67 @@ org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x8
 org/eclipse/orbit/orbit.org.apache.batik.dom/1.6.0/orbit.org.apache.batik.dom-1.6.0.pom
 org/eclipse/orbit/orbit.org.apache.batik.util/1.6.0/orbit.org.apache.batik.util-1.6.0.pom''',
             l.join( '\n' ) )
+        
+        assertEquals( 0, tool.errorCount )
+        assertEquals( 0, tool.warningCount )
+
+        def actual = new File( target, 'org/eclipse/orbit/orbit.org.apache.batik.dom/1.6.0/orbit.org.apache.batik.dom-1.6.0.pom' ).getText( 'UTF-8' )
+        assertEquals( '''\
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.eclipse.orbit</groupId>
+  <artifactId>orbit.org.apache.batik.dom</artifactId>
+  <version>1.6.0</version>
+  <name>Apache Batik DOM supplied by Eclipse Orbit</name>
+  <dependencies>
+    <dependency>
+      <groupId>org.eclipse.orbit</groupId>
+      <artifactId>orbit.org.apache.batik.css</artifactId>
+      <version>[1.6.0,1.7.0)</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.orbit</groupId>
+      <artifactId>orbit.org.apache.batik.util</artifactId>
+      <version>[1.6.0,1.7.0)</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.orbit</groupId>
+      <artifactId>orbit.org.apache.batik.xml</artifactId>
+      <version>[1.6.0,1.7.0)</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.orbit</groupId>
+      <artifactId>orbit.org.w3c.css.sac</artifactId>
+      <version>[1.3.0,1.4.0)</version>
+    </dependency>
+  </dependencies>
+</project>
+''',
+            actual )
+
+        actual = new File( target, 'org/eclipse/orbit/orbit.org.apache.batik.util/1.6.0/orbit.org.apache.batik.util-1.6.0.pom' ).getText( 'UTF-8' )
+        assertEquals( '''\
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.eclipse.orbit</groupId>
+  <artifactId>orbit.org.apache.batik.util</artifactId>
+  <version>1.6.0</version>
+  <name>Apache Batik Utilities supplied by Eclipse Orbit</name>
+  <dependencies>
+    <dependency>
+      <groupId>org.eclipse.orbit</groupId>
+      <artifactId>orbit.org.apache.batik.util.gui</artifactId>
+      <version>[1.6.0,1.7.0)</version>
+    </dependency>
+  </dependencies>
+</project>
+''',
+            actual )
+
     }
 
 }
