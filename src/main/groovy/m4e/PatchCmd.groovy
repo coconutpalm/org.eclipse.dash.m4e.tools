@@ -12,7 +12,9 @@ package m4e
 
 import java.util.regex.Pattern;
 import groovy.transform.ToString;
+import m4e.patch.ArtifactRenamer
 import m4e.patch.GlobalPatches
+import m4e.patch.OrbitPatch
 import m4e.patch.PatchLoader
 import m4e.patch.PatchSet
 import m4e.patch.RemoveNonOptional
@@ -49,23 +51,36 @@ target patches...
 		log.debug( "Target: ${target}" )
         
         log.info( "Applying patches to ${target}..." )
+        
+        init()
 
 		loadPatches( patches )
         
         deleteArtifacts()
-        
-        MavenRepositoryTools.eachPom( target ) {
-            patchPom( it )
-        }
+
+        applyPatches()        
         
         log.info( "Patched ${count} POMs")
     }
     
+    void applyPatches() {
+        MavenRepositoryTools.eachPom( target ) {
+            patchPom( it )
+        }
+        
+        for( ArtifactRenamer tool : renamed ) {
+            tool.run()
+        }
+    }
+    
     int count
+    
+    List<ArtifactRenamer> renamed = []
     
     void patchPom( File file ) {
         def pom = Pom.load( file )
         def orig = pom.toString()
+        def oldKey = pom.key()
         
         set.apply( pom )
         
@@ -73,23 +88,36 @@ target patches...
         if( result != orig ) {
             new XmlFormatter( pom: pom ).format()
             
-            file = new File( pom.source )
-            log.debug( "Patched ${file}" )
-            save( pom, file )
+            String newKey = pom.key()
+            boolean needsRename = oldKey != newKey
+            if( needsRename ) {
+                renamed << new ArtifactRenamer( target: target, oldKey: oldKey, newKey: newKey )
+            }
+            
+            save( pom )
             
             count ++
         }
     }
     
-    protected void save( Pom pom, File file ) {
+    protected void save( Pom pom ) {
+        
+        def file = new File( pom.source )
+        log.debug( "Patched ${file}" )
+        
         pom.save( file )
     }
     
     GlobalPatches globalPatches = new GlobalPatches()
     
+    void init() {
+        globalPatches.orbitExclusions << 'org.eclipse.*'
+        
+        set = new PatchSet()
+    }
+    
 	void loadPatches( String... patches ) {
-		set = new PatchSet()
-		
+        
 		set.patches << new RemoveNonOptional()
 		set.patches << new StripQualifiers( globalPatches: globalPatches, target: target )
         
@@ -99,10 +127,14 @@ target patches...
             
             set.patches << patch
         }
+        
+        if( globalPatches.renameOrbitBundles ) {
+            set.patches << new OrbitPatch( globalPatches: globalPatches, target: target )
+        }
 	}
     
     void deleteArtifacts() {
-        for( String pattern in artifactsToDelete ) {
+        for( String pattern in globalPatches.artifactsToDelete ) {
             deleteRecursively( pattern )
         }
     }

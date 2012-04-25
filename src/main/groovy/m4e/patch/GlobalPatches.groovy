@@ -5,11 +5,14 @@ import java.util.List;
 class GlobalPatches {
     List<String> artifactsToDelete = []
     List<QualifierPatch> qualifierPatches = []
-    List<String> orbitExceptions = []
+    List<String> orbitExclusions = []
+    boolean renameOrbitBundles
     
     void merge( GlobalPatches other ) {
         artifactsToDelete.addAll( other.artifactsToDelete )
         qualifierPatches.addAll( other.qualifierPatches )
-        orbitExceptions.addAll( other.orbitExceptions )
+        orbitExclusions.addAll( other.orbitExclusions )
+        
+        renameOrbitBundles |= other.renameOrbitBundles
     }
 }

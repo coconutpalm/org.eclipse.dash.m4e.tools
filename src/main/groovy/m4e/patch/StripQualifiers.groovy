@@ -72,39 +72,8 @@ class StripQualifiers extends Patch {
         
         String oldVersion = e.text
         e.text = newVersion
-        println "${newVersion} ${e.text} ${pom.version()}"
-        
-        renameFiles( pom, oldVersion, newVersion )
     }
     
-    void renameFiles( Pom pom, String oldVersion, String newVersion ) {
-        File oldPomPath = new File( pom.source )
-        File newPomPath = MavenRepositoryTools.buildPath( target, pom.key(), 'pom' )
-        pom.source = newPomPath.absolutePath
-        
-        File oldFolder = oldPomPath.parentFile
-        File newFolder = newPomPath.parentFile
-        newFolder.makedirs()
-        
-        String prefix = pom.value( Pom.ARTIFACT_ID ) + '-' + oldVersion
-        String newPrefix = pom.value( Pom.ARTIFACT_ID ) + '-' + newVersion
-        
-        int extraFileCount = 0
-        oldFolder.eachFile { it ->
-            if( it.name.startsWith( prefix ) ) {
-                String newName = newPrefix + it.name.substring( prefix.size() )
-                File dest = new File( newFolder, newName )
-                assert it.renameTo( dest )
-            } else {
-                extraFileCount ++
-            }
-        }
-        
-        if( extraFileCount == 0 ) {
-            assert oldFolder.delete()
-        }
-    }
-
     String stripQualifier( String version ) {
         if( !version ) {
             return version

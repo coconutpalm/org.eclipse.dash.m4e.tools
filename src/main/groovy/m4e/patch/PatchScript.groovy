@@ -16,14 +16,17 @@ abstract class PatchScript extends Script {
     
     GlobalPatches globalPatches = new GlobalPatches()
     
+    /** The default profile to use */
     void defaultProfile( String name ) {
         replacer.defaultProfile = name
     }
     
+    /** The other/non-default profile */
     void profile( String name ) {
         replacer.profile = name
     }
     
+    /** Replace a certain dependency with another */
     void replace( String _pattern, String with ) {
         
         PatchDependency pattern = PatchDependency.fromString( _pattern )
@@ -33,10 +36,12 @@ abstract class PatchScript extends Script {
         replacer.replacements << rd
     }
     
+    /** A dependency to delete everywhere */
     void deleteDependency( String pattern ) {
         patchSet.patches << new DeleteDependency( key: pattern )
     }
     
+    /** An artifact that should be deleted */
     void deleteArtifact( String pattern ) {
         globalPatches.artifactsToDelete << pattern
     }
@@ -44,5 +49,15 @@ abstract class PatchScript extends Script {
     /** Give some bundles a special version */
     void mapQualifier( String pattern, String version ) {
         globalPatches.qualifierPatches << new QualifierPatch( pattern, version )
+    }
+    
+    /** Rename Orbit bundles */
+    void orbitRename() {
+        globalPatches.renameOrbitBundles = true
+    }
+    
+    /** Exclude this bundle when doing the Orbit rename */
+    void orbitExclusion( String bundleName ) {
+        globalPatches.orbitExclusions << bundleName
     }
 }

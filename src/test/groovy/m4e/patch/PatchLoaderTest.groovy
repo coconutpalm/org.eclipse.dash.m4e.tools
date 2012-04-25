@@ -73,6 +73,8 @@ replace( 'a:b:1', 'x:y:2' )
         MopSetup.setup()
         
         PatchCmd cmd = new PatchCmd()
+        cmd.init()
+        
         cmd.loadPatches( 'patches/eclipse-3.6.2.patches' )
         
         def file = new File( 'data/input', fileName )
