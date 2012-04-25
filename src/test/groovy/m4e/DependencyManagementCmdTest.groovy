@@ -25,7 +25,7 @@ class DependencyManagementCmdTest {
         
         tool.run([ 'dm', copy.path, 'org.eclipse.dash:dependency-management:3.7.0' ])
         
-        File expectedDmFile = new File( 'tmp/dmRepo/org/eclipse/dash/dependency-management/3.7.0/dependency-management-3.7.0.pom' )
+        File expectedDmFile = new File( 'tmp-test/dmRepo/org/eclipse/dash/dependency-management/3.7.0/dependency-management-3.7.0.pom' )
         assertTrue( "Missing file ${expectedDmFile}", expectedDmFile.exists() )
         
         String expected = new File( 'data/expected/dependency-management-3.7.0.pom' ).getText( 'utf-8' ).normalize().trim()
