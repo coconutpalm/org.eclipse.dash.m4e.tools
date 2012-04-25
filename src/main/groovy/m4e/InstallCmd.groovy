@@ -187,7 +187,7 @@ class InstallCmd extends AbstractCommand {
     }
     
     ImportTool importIntoTmpRepo( File path ) {
-        def tool = new ImportTool( templateRepo: templateRepo, m3exe: m3exe, m3home: m3home )
+        def tool = new ImportTool( templateRepo: templateRepo, m3exe: m3exe, m3home: m3home, workDir: workDir )
         tool.run( path )
         return tool
     }
@@ -327,6 +327,7 @@ class ImportTool {
     File templateRepo
     File m3exe
     File m3home
+    File workDir
 
     File eclipseFolder
     File tmpHome
@@ -348,17 +349,19 @@ class ImportTool {
         eclipseFolder = eclipseFolder.parentFile
         assert eclipseFolder != null
 
-        tmpHome = new File( path.absolutePath + '_home' )
-        m2repo = new File(tmpHome, 'm2repo')
-        logFile = new File(tmpHome, 'm2repo.log')
-        failure = new File(tmpHome, FAILURE_FILE_NAME)
+        tmpHome = new File( workDir, path.name + '_home' )
+        m2repo = new File( tmpHome, 'm2repo' )
+        logFile = new File( tmpHome, 'm2repo.log' )
+        failure = new File( tmpHome, FAILURE_FILE_NAME )
         
         log.debug( "Importing plug-ins from ${eclipseFolder} into repo ${m2repo}" )
         clean()
 
-        log.info('Analyzing Eclipse plugins...')
+        log.info( 'Analyzing Eclipse plugins...' )
+        
         doImport()
-        log.info('OK')
+        
+        log.info( 'OK' )
         
         failure.delete()
     }
@@ -403,6 +406,14 @@ class ImportTool {
         String spaces = ' ' * consoleWidth
         int prefixLength = m2repo.toString().size() + 1
         
+        def printMsg = { msg ->
+            msg += spaces
+            msg = msg[0..consoleWidth-2] + '\r'
+            
+            System.out.print(msg)
+            System.out.flush()
+        }
+        
         for( String line in reader ) {
             logFile.println( line )
             
@@ -412,6 +423,9 @@ class ImportTool {
                     min = parts[2]
                     max = parts[4].trim()
                 }
+                
+                def msg = line.substringAfter( '[INFO] ' )
+                printMsg( msg )
             } else if( line.startsWith( '[INFO] Installing ') && line.endsWith( '.jar' ) ) {
                 def parts = line.split(' ')
                 def path = parts[-1]
@@ -439,11 +453,8 @@ class ImportTool {
                     msg2 = msg2[-rest..-1]
                 }
                 
-                def msg = msg1 + msg2 + spaces
-                msg = msg[0..consoleWidth-2] + '\r'
-                
-                System.out.print(msg)
-                System.out.flush()
+                def msg = msg1 + msg2
+                printMsg( msg )
             }
         }
         
