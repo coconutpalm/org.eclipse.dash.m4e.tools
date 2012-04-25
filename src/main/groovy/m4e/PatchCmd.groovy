@@ -13,6 +13,7 @@ package m4e
 import java.util.regex.Pattern;
 import groovy.transform.ToString;
 import m4e.patch.ArtifactRenamer
+import m4e.patch.DeleteEmptyDirectories
 import m4e.patch.GlobalPatches
 import m4e.patch.OrbitPatch
 import m4e.patch.PatchLoader
@@ -71,6 +72,15 @@ target patches...
         for( ArtifactRenamer tool : renamed ) {
             tool.run()
         }
+        
+        deleteEmptyDirectories()
+    }
+    
+    void deleteEmptyDirectories() {
+        def tool = new DeleteEmptyDirectories()
+        tool.delete( target )
+        
+        log.info( 'Deleted {} empty directories', tool.counter )
     }
     
     int count
