@@ -21,6 +21,12 @@ DECENT_XML="${M2_REPO}/de/pdark/decentxml/1.4-SNAPSHOT/decentxml-1.4-SNAPSHOT.ja
 
 [[ -e "$DECENT_XML" ]] || { echo "Missing JARs; did you compile?" ; exit 1 ; }
 
+if [[ -z "$COLUMNS" ]]; then
+    COLUMNS=$(tput cols)
+fi
+
+export COLUMNS
+
 java -Dfile.encoding=UTF-8 \
 -classpath \
 $PWD/${target}/classes:\
