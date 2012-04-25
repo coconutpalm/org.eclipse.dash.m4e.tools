@@ -72,6 +72,8 @@ The first argument is used to create a POM file with a dependencyManagement elem
             def cmd = new InstallCmd( workDir: workDir )
             cmd.run( 'import', file.absolutePath )
             
+            mergeCounters( cmd )
+            
             m2repos.addAll( cmd.m2repos )
         }
     }
@@ -93,11 +95,13 @@ The first argument is used to create a POM file with a dependencyManagement elem
         args << targetRepo.absolutePath
         
         cmd.run( args )
+        mergeCounters( cmd )
     }
     
     void attachSources() {
         def cmd = new AttachSourcesCmd( workDir: workDir )
         cmd.run( 'as', targetRepo.absolutePath )
+        mergeCounters( cmd )
     }
     
     void applyPatches( List<String> patches ) {
@@ -106,15 +110,18 @@ The first argument is used to create a POM file with a dependencyManagement elem
         
         def cmd = new PatchCmd( workDir: workDir )
         cmd.run( args as String[] )
+        mergeCounters( cmd )
     }
     
     void analyze() {
         def cmd = new AnalyzeCmd( workDir: workDir )
         cmd.run( 'an', targetRepo.absolutePath )
+        mergeCounters( cmd )
     }
     
     void createDependencyManagement() {
         def cmd = new DependencyManagementCmd( workDir: workDir )
         cmd.run( 'dm',  targetRepo.absolutePath, dmInfo )
+        mergeCounters( cmd )
     }
 }

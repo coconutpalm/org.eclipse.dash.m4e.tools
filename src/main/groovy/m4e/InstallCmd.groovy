@@ -187,7 +187,7 @@ class InstallCmd extends AbstractCommand {
     }
     
     ImportTool importIntoTmpRepo( File path ) {
-        def tool = new ImportTool( templateRepo: templateRepo, m3exe: m3exe, m3home: m3home, workDir: workDir )
+        def tool = new ImportTool( installCmd: this )
         tool.run( path )
         return tool
     }
@@ -324,10 +324,7 @@ class ImportTool {
     
     static final String FAILURE_FILE_NAME = 'failure'
 
-    File templateRepo
-    File m3exe
-    File m3home
-    File workDir
+    InstallCmd installCmd
 
     File eclipseFolder
     File tmpHome
@@ -338,9 +335,10 @@ class ImportTool {
 
     void run( File path ) {
         assert path != null
-        assert templateRepo != null
-        assert m3exe != null
-        assert m3home != null
+        assert installCmd.templateRepo != null
+        assert installCmd.m3exe != null
+        assert installCmd.m3home != null
+        assert installCmd.workDir != null
 
         eclipseFolder = locate( path, 'plugins' )
         if( !eclipseFolder ) {
@@ -349,7 +347,7 @@ class ImportTool {
         eclipseFolder = eclipseFolder.parentFile
         assert eclipseFolder != null
 
-        tmpHome = new File( workDir, path.name + '_home' )
+        tmpHome = new File( installCmd.workDir, path.name + '_home' )
         m2repo = new File( tmpHome, 'm2repo' )
         logFile = new File( tmpHome, 'm2repo.log' )
         failure = new File( tmpHome, FAILURE_FILE_NAME )
@@ -369,7 +367,7 @@ class ImportTool {
     void doImport() {
         def cmd = [
             '/bin/sh',
-            m3exe.toString(),
+            installCmd.m3exe.toString(),
             'eclipse:make-artifacts',
             '-DstripQualifier=false',
             "-DeclipseDir=${eclipseFolder}",
@@ -381,7 +379,7 @@ class ImportTool {
         }
         
         String javaHome = System.getProperty( 'java.home' )
-        Process p = cmd.execute( [ "M2_HOME=${m3home.absolutePath}", "JAVA_HOME=${javaHome}" ], null )
+        Process p = cmd.execute( [ "M2_HOME=${installCmd.m3home.absolutePath}", "JAVA_HOME=${javaHome}" ], null )
         
         ProcessGroovyMethods.consumeProcessErrorStream( p, System.err )
         
@@ -391,7 +389,7 @@ class ImportTool {
         
         int rc = p.waitFor()
         if( rc != 0 ) {
-            log.error( "Invoking Maven with ${cmd} failed with ${rc}. See logfile ${logFile} for details." )
+            installCmd.error( Error.MAVEN_FAILED, "Invoking Maven with ${cmd} failed with ${rc}. See logfile ${logFile} for details." )
             throw new RuntimeException( "Importing the plug-ins from ${eclipseFolder} failed with error code ${rc}. See logfile ${logFile} for details." )
         }
     }
@@ -472,9 +470,9 @@ class ImportTool {
 
         tmpHome.makedirs()
 
-        if( templateRepo.exists() ) {
+        if( installCmd.templateRepo.exists() ) {
             log.info('Copying template...')
-            templateRepo.copy( m2repo )
+            installCmd.templateRepo.copy( m2repo )
         }
         
         failure << 'Import failed'

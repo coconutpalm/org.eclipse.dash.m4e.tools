@@ -61,7 +61,7 @@ class MergeCmd extends AbstractCommand {
                 
                 if( targetPath.exists() ) {
                     if( !filesAreEqual( srcPath, targetPath ) ) {
-                        log.warn( "File ${srcPath} differs from ${targetPath}" )
+                        warn( Warning.BINARY_DIFFERENCE, "File ${srcPath} differs from ${targetPath}" )
                     }
                 } else {
                     srcPath.copy( targetPath )

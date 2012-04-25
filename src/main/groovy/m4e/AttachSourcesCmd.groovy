@@ -61,7 +61,7 @@ class AttachSourcesCmd extends AbstractCommand {
         File binPath = new File( srcPath.absolutePath.removeEnd( '.source' ) )
         
         if( !binPath.exists() ) {
-            log.warn( "Missing ${binPath}" )
+            warn( Warning.MISSING_BINARY_BUNDLE_FOR_SOURCES, "Missing bundle ${binPath} for sources in ${srcPath}" )
             return
         }
         
@@ -88,7 +88,7 @@ class AttachSourcesCmd extends AbstractCommand {
         binPath = new File( binPath, version )
         
         if( !binPath.exists() ) {
-            log.warn( "Missing ${binPath}" )
+            warn( Warning.MISSING_BINARY_BUNDLE_FOR_SOURCES, "Missing bundle ${binPath} for sources in ${srcPath}" )
             return
         }
         
@@ -102,7 +102,7 @@ class AttachSourcesCmd extends AbstractCommand {
             } else if( name.endsWith( '.jar' ) ) {
                 moveSource( srcPath, binPath, name )
             } else {
-                log.warn( "Unexpected file {}", it )
+                warn( Warning.UNEXPECTED_FILE_IN_SOURCE_BUNDLE, "Unexpected file ${it} in source bundle ${srcPath}" )
                 canDelete = false
             }
         }

@@ -91,7 +91,7 @@ repository groupId:artifactId:version
     }
 
     void twoVersionsError( Pom pom, String oldVersion ) {
-        log.error( "The repository contains (at least) two versions of ${pom.shortKey()}: ${pom.version()} and ${oldVersion}. Omitting both." )
+        error( Error.TWO_VERSIONS, "The repository contains (at least) two versions of ${pom.shortKey()}: ${pom.version()} and ${oldVersion}. Omitting both." )
     }
 
     void createPom() {

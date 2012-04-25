@@ -26,4 +26,33 @@ abstract class AbstractCommand {
     }
     
     abstract void run( String... args );
+    
+    int errorCount = 0
+    int warningCount = 0
+    
+    void warn( Warning warning, String msg ) {
+        warningCount ++
+        log.warn( msg + '\nFor details, see ' + warning.url() )
+    }
+    
+    void error( Error error, String msg ) {
+        errorCount ++
+        log.error( msg + '\nFor details, see ' + error.url() )
+    }
+    
+    void mergeCounters( AbstractCommand other ) {
+        warningCount += other.warningCount
+        errorCount += other.errorCount
+    }
+    
+    void logSummary() {
+        if( errorCount ) {
+            log.error( "There were ${errorCount} errors and ${warningCount} warnings" )
+        } else  if( warningCount ) {
+            log.warn( "There were no errors but ${warningCount} warnings" )
+        }
+        if( warningCount ) {
+            log.info( "There were no errors or warnings" )
+        }
+    }
 }

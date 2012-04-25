@@ -50,13 +50,13 @@ class Tool {
             return
         }
         
-        def cmd;
+        AbstractCommand cmd
         
         outer: for( def ci in commands ) {
             for( name in ci.names ) {
                 if( name == args[0] ) {
-                    cmd = ci.impl.newInstance();
-                    break outer;
+                    cmd = ci.impl.newInstance()
+                    break outer
                 }
             }
         }
@@ -69,6 +69,7 @@ class Tool {
         
         cmd.workDir = workDir
         cmd.run( args )
+        cmd.logSummary()
         
         log.debug( 'Done.' )
     }
