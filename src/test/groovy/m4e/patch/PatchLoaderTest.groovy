@@ -94,6 +94,9 @@ replace( 'a:b:1', 'x:y:2' )
         String expected = expectedFile.getText( 'utf-8' )
         
         assertEquals( expected, actual )
+        
+        assertEquals( 0, cmd.errorCount )
+        assertEquals( 0, cmd.warningCount )
     }
 
 }

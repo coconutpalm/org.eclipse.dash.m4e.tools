@@ -57,6 +57,9 @@ class InstallCmdTest {
         
         assertEquals 80, pomCount
         assertEquals 80, jarCount
+        
+        assertEquals( 0, cmd.errorCount )
+        assertEquals( 0, cmd.warningCount )
     }
 
     void downloadDeltaPack() {
