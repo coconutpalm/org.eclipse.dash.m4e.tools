@@ -45,7 +45,7 @@ class PomTest {
 </project>
 ''' )
             
-            assertEquals( 'a:b:13', pom.key() )
+        assertEquals( 'a:b:13', pom.key() )
     }
     
     @Test
