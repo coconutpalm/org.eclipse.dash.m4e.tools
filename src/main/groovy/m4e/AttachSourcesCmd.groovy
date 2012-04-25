@@ -111,12 +111,9 @@ class AttachSourcesCmd extends AbstractCommand {
     }
     
     void moveSource( File srcPath, File binPath, String name ) {
-        // name = org.eclipse.core.runtime.source-3.6.0.jar
-        int pos1 = name.lastIndexOf( '-' )
-        int pos2 = name.lastIndexOf( '.' )
         
-        String version = name[pos1+1..<pos2]
-        String basename = name[0..<pos1]
+        String version = srcPath.name
+        String basename = srcPath.parentFile.name
         
         if( !basename.endsWith( '.source' ) ) {
             throw new RuntimeException( "Unexpected file ${new File( srcPath, name)}" )
