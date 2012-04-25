@@ -356,7 +356,7 @@ class ImportTool {
         log.debug( "Importing plug-ins from ${eclipseFolder} into repo ${m2repo}" )
         clean()
 
-        log.info('Analysing Eclipse plugins...')
+        log.info('Analyzing Eclipse plugins...')
         doImport()
         log.info('OK')
         
