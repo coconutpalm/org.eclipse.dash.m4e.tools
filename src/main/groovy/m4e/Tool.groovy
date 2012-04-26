@@ -34,6 +34,7 @@ class Tool {
         new CmdInfo( names: ['dependency-management', 'dm'], impl: DependencyManagementCmd ),
         new CmdInfo( names: ['clean'], impl: CleanCmd ),
         new CmdInfo( names: ['p2list', 'p2ls'], impl: P2ListCmd ),
+        new CmdInfo( names: ['show'], impl: ShowRepoCmd ),
     ]
     
     void run( String... args ) {
