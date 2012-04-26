@@ -55,6 +55,7 @@ class M2RepoView {
                 hbox( constraints: BL.NORTH ) {
                     label( text: 'Filter:', labelFor: filterText, displayedMnemonic: 'F' )
                     widget( filterText )
+                    button( action: action( name: 'Reload', mnemonic: 'R', closure: { reload() } ) )
                 }
                 splitPane( orientation: JSplitPane.VERTICAL_SPLIT, dividerLocation: 400, constraints: BL.CENTER ) {
                     scrollPane( constraints: 'top' ) {
@@ -71,38 +72,53 @@ class M2RepoView {
                     }
                 }
             }
-            
-            doOutside {
-                loadPoms()
-            }
         }
         
         
         xmlContext.defineStyles( pomView.document )
-        
+
+        initTable()
+        initFilter()        
+
+        reload()
+    }
+    
+    void initFilter() {
+        def l = new FilterChangeListener() {
+            void filterChanged( String value ) {
+                applyFilter( value )
+            }
+        }
+        filterText.document.addDocumentListener( l )
+    }
+    
+    void initTable() {
         sorter = new TableRowSorter<DefaultTableModel>( artifactsWidget.model )
         artifactsWidget.rowSorter = sorter
         
         artifactsWidget.selectionMode = ListSelectionModel.SINGLE_SELECTION
         artifactsWidget.rowSelectionAllowed = true
+        
         def l = { ListSelectionEvent e ->
             int[] selectedRows = artifactsWidget.selectedRows
             if( !selectedRows ) {
                 return
             }
             
-            PomTableEntry value = artifactsWidget.model.rows.get( selectedRows[0] )
+            int index = selectedRows[0]
+            index = artifactsWidget.convertRowIndexToModel( index )
+            PomTableEntry value = artifactsWidget.model.rows.get( index )
             selectPom( value.key() )
         } as ListSelectionListener
         artifactsWidget.selectionModel.addListSelectionListener( l )
-        
-        l = new FilterChangeListener() {
-            void filterChanged( String value ) {
-                applyFilter( value )
+    }
+    
+    void reload() {
+        new SwingBuilder().build {
+            doOutside {
+                loadPoms()
             }
         }
-        filterText.document.addDocumentListener( l )
-
     }
     
     void applyFilter( String value ) {
