@@ -395,8 +395,10 @@ tr:hover { background-color: #D0E0FF; }
             list << pom
             
             version = d.value( Dependency.VERSION )
-            if( !version || '[0,)' == version ) {
+            if( !version ) {
                 problems << new DependencyWithoutVersion( pom, d )
+            } else if( '[0,)' == version ) {
+                // Ignore
             } else if( isVersionRange( version ) ) {
                 // This is no longer a problem because the version ranges are overwritten by dependency management
                 // problems << new ProblemVersionRange( pom, d )
