@@ -248,7 +248,7 @@ class UnitList extends LazyNode {
 class SwingBundle extends LazyNode {
     RepoTreeModel model
     P2Bundle bundle
-    boolean hasSource
+    P2Bundle source
     
     SwingBundle( RepoTreeModel model, P2Bundle bundle ) {
         super( bundle.dependencies.findAll { it.id != bundle.id && model.matches( "${it.id}" ) } )
@@ -264,7 +264,7 @@ class SwingBundle extends LazyNode {
     
     @Override
     String toString() {
-        String source = hasSource ? ' (+Source)' : ''
+        String source = source ? ' (+Source)' : ''
         
         if( bundle.name ) {
             if( bundle.name == bundle.id ) {
@@ -347,11 +347,16 @@ class BundleList extends LazyNode {
     
     @Override
     public List createSwingChildren () {
-        Set<String> sourceBundles = new HashSet( bundles.findAll { it.isSourceBundle() }.collect { it.id.removeEnd( '.source' ) } )
+        Map<String, P2Bundle> sourceBundles = [:]
+        bundles.findAll {
+            it.isSourceBundle()
+        }.each {
+            sourceBundles[ it.id.removeEnd( '.source' ) ] = it
+        }
         
         return children.collect {
             def swing = new SwingBundle( model, it )
-            swing.hasSource = sourceBundles.contains( it.id )
+            swing.source = sourceBundles[ it.id ]
             return swing
         }.sort { it.toString() }
     }
