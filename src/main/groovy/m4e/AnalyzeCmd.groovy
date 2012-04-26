@@ -13,18 +13,19 @@ package m4e
 import groovy.xml.MarkupBuilder;
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class AnalyzeCmd extends AbstractCommand {
         
     static final String DESCRIPTION = '''\
-repository
+repository [ ignore ]
 - Check a converted Maven 2 repository for various problems
 '''
         
     void run( String... args ) {
-        if( args.size() == 1 ) {
+        if( args.size() <= 1 ) {
             throw new UserError( 'Missing path to repository to analyze' )
         }
         
@@ -32,8 +33,22 @@ repository
         if( !repo.exists() ) {
             throw new UserError( "Directory ${repo} doesn't exist" )
         }
-
-        new Analyzer( repo, Calendar.getInstance() ).run()
+        
+        File ignoreList = null
+        if( args.size() >= 3 ) {
+            ignoreList = new File( args[2] ).absoluteFile
+            if( !ignoreList.exists() ) {
+                throw new UserError( "File with ignore options ${ignoreList} doesn't exist" )
+            }
+        }
+        
+        def tool = new Analyzer( repo, Calendar.getInstance() )
+        
+        if( ignoreList ) {
+            tool.loadIgnores( ignoreList )
+        }
+        
+        tool.run()
     }
 }
 
@@ -44,6 +59,7 @@ class Analyzer {
     File repo
     File reportFile
     Calendar timestamp
+    Set<Pattern> ignores = new HashSet()
     
     Analyzer( File repo, Calendar timestamp ) {
         this.repo = repo.canonicalFile
@@ -54,6 +70,18 @@ class Analyzer {
         
         String now = formatter.format( timestamp.getTime() )
         reportFile = new File( repo.absolutePath + "-analysis-${now}.html" )
+    }
+    
+    void loadIgnores( File file ) {
+        file.eachLine {
+            String line = it.substringBefore( '#' ).trim()
+            
+            line = line.replace( '.', '\\.' ).replace( '*', '[^ :]*' )
+            
+            if( line ) {
+                ignores << Pattern.compile( line )
+            }
+        }
     }
     
     void run() {
@@ -124,6 +152,7 @@ tr:hover { background-color: #D0E0FF; }
 .error { font-weight: bold; color: red; }
 .problem { border-left: 3px solid white; border-bottom: 1px solid #ccc; padding-left: 3px; }
 .problem:hover { border-left-color: #cccccc; }
+.ignoreKey { color: #ccc; }
 '''
                 )
                 
@@ -273,6 +302,34 @@ tr:hover { background-color: #D0E0FF; }
         checkMissingDependencies()
         
         postProcessProblemSameKeyDifferentVersion()
+        
+        applyIgnores()
+    }
+    
+    void applyIgnores() {
+        Set<Pattern> unused = new HashSet( ignores )
+        
+        problems = problems.findResults {
+            String key = it.key()
+            
+            for( Pattern p : ignores ) {
+                if( p.matcher( key ).matches() ) {
+                    unused.remove( p )
+                    return null
+                }
+            }
+            
+            return it
+        }
+        
+        
+        if( unused ) {
+            log.warn( "Not all ignores were necessary:" )
+            unused.each {
+                log.warn( '    {}', it )
+            }
+        }
+
     }
     
     void postProcessProblemSameKeyDifferentVersion() {
@@ -373,7 +430,9 @@ tr:hover { background-color: #D0E0FF; }
         String shortKey = pom.shortKey()
         Pom other = pomByShortKey[shortKey]
         if( other ) {
-            problems << new ProblemSameKeyDifferentVersion( pom, other )
+            def poms = [ pom, other ].sort { it.key() }
+            
+            problems << new ProblemSameKeyDifferentVersion( poms[0], poms[1] )
         }
         
         String version = pom.version()
@@ -434,7 +493,7 @@ class Problem {
     
     @Override
     public String toString() {
-        return "POM ${pom.key()}: ${message}";
+        return "POM ${pom?.key()}: ${message}";
     }
     
     void render( MarkupBuilder builder ) {
@@ -444,6 +503,10 @@ class Problem {
             yield( ' ', true )
             span( 'class': 'message',  message )
         }
+    }
+    
+    String key() {
+        return "${getClass().simpleName} ${pom?.key()}"
     }
     
     String sortKey() {
@@ -464,6 +527,11 @@ class ProblemVersionRange extends Problem {
     @Override
     public String toString() {
         return "POM ${pom.key()}: ${message}";
+    }
+    
+    @Override
+    String key() {
+        return "${super.key()} ${dependency.key()}"
     }
     
     void render( MarkupBuilder builder ) {
@@ -596,12 +664,20 @@ class ProblemSameKeyDifferentVersion extends Problem {
     }
     
     @Override
+    String key() {
+        return "${super.key()} ${other.key()}"
+    }
+    
+    @Override
     public String toString() {
-        return "POM ${pom.key()}: ${message}: ${other.key()}";
+        return "POM ${pom.key()}: ${message}: ${other.key()}"
     }
     
     void render( MarkupBuilder builder ) {
         builder.div( 'class': 'problem' ) {
+            div( 'class': 'ignoreKey' ) {
+                yield( key(), true )
+            }
             yield( 'There are two POMs with the same ID but different version:', true )
             ul {
                 li {
@@ -637,6 +713,11 @@ class DependencyWithoutVersion extends Problem {
     }
     
     @Override
+    String key() {
+        return "${super.key()} ${dependency.key()}"
+    }
+
+    @Override
     public String toString() {
         return "POM ${pom.key()}: ${message} ${dependency.key()}";
     }
@@ -665,6 +746,11 @@ class ProblemDifferentVersions extends Problem {
         this.versionBackRefs = versionBackRefs
     }
     
+    @Override
+    String key() {
+        return "${super.key()} ${dependency}"
+    }
+
     @Override
     String sortKey() {
         return dependency
@@ -695,6 +781,9 @@ class ProblemDifferentVersions extends Problem {
         Collections.sort( versions )
         
         builder.div( 'class': 'problem' ) {
+            div( 'class': 'ignoreKey' ) {
+                yield( key(), true )
+            }
             yield( 'The dependency ', true )
             span( 'class': 'dependency', dependency )
             yield( " is referenced with ${versions.size()} different versions:", true )
@@ -741,8 +830,14 @@ class MissingDependency extends Problem {
         this.poms = poms
     }
 
+    @Override
     String sortKey() {
-	return key
+        return key
+    }
+    
+    @Override
+    String key() {
+        return "${getClass().simpleName} ${key}"
     }
     
     @Override
@@ -759,6 +854,9 @@ class MissingDependency extends Problem {
     
     void render(MarkupBuilder builder) {
         builder.div( 'class': 'problem' ) {
+            div( 'class': 'ignoreKey' ) {
+                yield( key(), true )
+            }
             yield( 'The dependency ', true )
             span( 'class':'dependency', key )
             yield( " is used in ${poms.size} POMs:", true )
