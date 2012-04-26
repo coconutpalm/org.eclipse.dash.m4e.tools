@@ -45,11 +45,13 @@ class M2RepoView {
     TableRowSorter sorter
     JTextField filterText = new JTextField()
     
+    String title = 'Maven 2 Repository View'
+    
     void show() {
         def swing = new SwingBuilder()
         
         swing.edt {
-            mainFrame = frame( title: 'P2 Repository View', defaultCloseOperation: JFrame.EXIT_ON_CLOSE, size: [ 800, 800 ], show: true) {
+            mainFrame = frame( title: title, defaultCloseOperation: JFrame.EXIT_ON_CLOSE, size: [ 800, 800 ], show: true) {
                 lookAndFeel( "system" )
                 borderLayout()
                 hbox( constraints: BL.NORTH ) {
@@ -147,7 +149,7 @@ class M2RepoView {
     
     void loadPoms() {
         
-        println "Loading POMs from ${repo}..."
+        println "Loading artifacts from ${repo}..."
         
         def list = []
         
@@ -168,10 +170,12 @@ class M2RepoView {
         
         list.sort { it.key() }
         
-        println "Loaded ${list.size()} POMs"
+        println "Loaded ${list.size()} artifacts"
         
         new SwingBuilder().build {
             doLater {
+                mainFrame.title = "${title} - ${list.size} artifacts"
+                
                 artifactsWidget.model.rowsModel.value = list
                 artifactsWidget.model.fireTableDataChanged()
             }
