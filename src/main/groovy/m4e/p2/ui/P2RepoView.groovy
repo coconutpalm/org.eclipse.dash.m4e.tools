@@ -92,7 +92,7 @@ class P2RepoView {
     }
     
     void selectionChanged( Object node ) {
-        println node
+//        println node
         if( node instanceof LabelNode ) {
             def data = node.data
             println data
@@ -147,11 +147,17 @@ class PopupAdapter extends MouseAdapter {
             }
         }
         
-        println repo
+//        println repo
         
         def result = []
         if( repo ) {
-            result << new DownloadAction( repo, bundle, workDir )
+            result << new DownloadAction( repo, selection, workDir, true, false )
+            
+            if( selection.source ) {
+                result << new DownloadAction( repo, selection, workDir, false, true )
+                result << new DownloadAction( repo, selection, workDir, true, true )
+            }
+            
             result << new DownloadWithDependenciesAction( repo, bundle, workDir, mainFrame )
         }
         
@@ -166,25 +172,36 @@ class PopupAdapter extends MouseAdapter {
 class DownloadAction extends AbstractAction {
     
     IP2Repo repo
-    P2Bundle bundle
+    SwingBundle bundle
     File workDir
+    boolean downloadBundle
+    boolean downloadSources
     
-    DownloadAction( IP2Repo repo, P2Bundle bundle, File workDir ) {
-        super( 'Download' )
+    DownloadAction( IP2Repo repo, SwingBundle bundle, File workDir, boolean downloadBundle, boolean downloadSources ) {
+        super(
+            downloadBundle ? (
+                downloadSources ? 'Download with source' : 'Download this'
+            ) : 'Download source for this' )
         
         this.repo = repo
         this.bundle = bundle
         this.workDir = workDir
+        this.downloadBundle = downloadBundle
+        this.downloadSources = downloadSources
     }
 
     void actionPerformed( ActionEvent e ) {
         def deps = new DependencySet( repo: repo )
-        deps.add( bundle )
+        if( downloadBundle ) {
+            deps.add( bundle.bundle )
+        }
+        if( downloadSources ) {
+            deps.add( bundle.source )
+        }
+//        println deps.bundles
         
-        SwingBuilder.build {
-            doOutside {
-                deps.download( workDir )
-            }
+        Thread.start {
+            deps.download( workDir )
         }
     }
 }
@@ -292,10 +309,8 @@ class DownloadDialog extends JDialog implements PropertyChangeListener {
     }
     
     void startDownload() {
-        SwingBuilder.build {
-            doOutside {
-                deps.download( workDir )
-            }
+        Thread.start {
+            deps.download( workDir )
         }
     }
     
@@ -360,7 +375,7 @@ class SavedExpandedState {
             segments << path.getPathComponent (i).id()
         }
         
-        println segments
+//        println segments
         openNodes << segments.toArray()
     }
     
