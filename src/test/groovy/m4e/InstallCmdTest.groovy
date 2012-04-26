@@ -144,6 +144,44 @@ class InstallCmdTest {
 '''
             , actual)
 
+        assert new File( repo, 'org/eclipse/m2e/org.eclipse.m2e.logback.configuration/1.0.200.20111228-1245/org.eclipse.m2e.logback.configuration-1.0.200.20111228-1245.jar' ).exists()
+        
+        actual = new File( repo, 'org/eclipse/m2e/org.eclipse.m2e.logback.configuration/1.0.200.20111228-1245/org.eclipse.m2e.logback.configuration-1.0.200.20111228-1245.pom' ).getText( 'UTF-8' )
+        assertEquals( '''\
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.eclipse.m2e</groupId>
+  <artifactId>org.eclipse.m2e.logback.configuration</artifactId>
+  <version>1.0.200.20111228-1245</version>
+  <name>m2e logback configuration</name>
+  <dependencies>
+    <dependency>
+      <groupId>org.eclipse.core</groupId>
+      <artifactId>org.eclipse.core.runtime</artifactId>
+      <version>3.5.0</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>ch.qos.logback.classic</artifactId>
+      <version>0.9.24</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>ch.qos.logback.core</artifactId>
+      <version>0.9.24</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j.api</groupId>
+      <artifactId>org.slf4j.api</artifactId>
+      <version>1.6.1</version>
+    </dependency>
+  </dependencies>
+</project>
+'''
+            , actual)
+            
     }
 
     void downloadDeltaPack() {
