@@ -14,49 +14,52 @@ tr:hover { background-color: #D0E0FF; }
 .error { font-weight: bold; color: red; }
 .problem { border-left: 3px solid white; border-bottom: 1px solid #ccc; padding-left: 3px; }
 .problem:hover { border-left-color: #cccccc; }
+.ignoreKey { color: #ccc; }
 </style>
   </head>
   <body>
     <h1>Analysis of ${repo} (1970.01.01 00:00:00)</h1>
     <p>Found 6 POM files</p>
-    <p>Found 22 problems</p>
+    <p>Found 21 problems</p>
     <h2>Table of Contents</h2>
     <ul class='toc'>
       <li>
-        <a href='#toc1'>POMs with same ID but different version</a>
+        <a href='#toc1'>POMs with same ID but different version (1)</a>
       </li>
       <li>
-        <a href='#toc2'>Problems With Dependencies</a>
+        <a href='#toc2'>Problems With Dependencies (1)</a>
       </li>
       <li>
-        <a href='#toc3'>Dependencies With Different Versions</a>
+        <a href='#toc3'>Dependencies With Different Versions (2)</a>
       </li>
       <li>
-        <a href='#toc4'>Missing Dependencies</a>
+        <a href='#toc4'>Missing Dependencies (13)</a>
       </li>
       <li>
-        <a href='#toc5'>Snapshot Versions</a>
+        <a href='#toc5'>Snapshot Versions (2)</a>
       </li>
       <li>
-        <a href='#toc6'>Path Problems</a>
+        <a href='#toc6'>Path Problems (1)</a>
       </li>
       <li>
-        <a href='#toc7'>Missing Sources</a>
+        <a href='#toc7'>Missing Sources (1)</a>
       </li>
       <li>
-        <a href='#poms'>POMs in the repository</a>
+        <a href='#poms'>6 POMs in the repository</a>
       </li>
     </ul>
     <h2>
       <a name='toc1'>POMs with same ID but different version</a>
     </h2>
-    <div class='problem'>There are two POMs with the same ID but different version:
+    <p>1 time</p>
+    <div class='problem'>
+      <div class='ignoreKey'>ProblemSameKeyDifferentVersion org.eclipse.core:org.eclipse.core.runtime:3.5.0 org.eclipse.core:org.eclipse.core.runtime:3.6.0</div>There are two POMs with the same ID but different version:
       <ul>
         <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.6.0</span>
+          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.5.0</span>
         </li>
         <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.5.0</span>
+          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.6.0</span>
         </li>
       </ul>These POMs are used in:
       <ul>
@@ -68,20 +71,18 @@ tr:hover { background-color: #D0E0FF; }
     <h2>
       <a name='toc2'>Problems With Dependencies</a>
     </h2>
+    <p>1 time</p>
     <div class='problem'>POM 
       <span class='pom'>junit.test:missing-version:1.0</span> 
       <span class='message'>Missing version in dependency</span> 
       <span class='dependency'>org.slf4j:slf4j-api:null</span>
     </div>
-    <div class='problem'>POM 
-      <span class='pom'>junit.test:missing-version:1.0</span> 
-      <span class='message'>Missing version in dependency</span> 
-      <span class='dependency'>ch.qos.logback:logback-classic:[0,)</span>
-    </div>
     <h2>
       <a name='toc3'>Dependencies With Different Versions</a>
     </h2>
-    <div class='problem'>The dependency 
+    <p>2 times</p>
+    <div class='problem'>
+      <div class='ignoreKey'>ProblemDifferentVersions null org.eclipse.equinox:org.eclipse.equinox.preferences</div>The dependency 
       <span class='dependency'>org.eclipse.equinox:org.eclipse.equinox.preferences</span> is referenced with 2 different versions:
       <ul>
         <li>Version "
@@ -104,7 +105,8 @@ tr:hover { background-color: #D0E0FF; }
         </ul>
       </ul>
     </div>
-    <div class='problem'>The dependency 
+    <div class='problem'>
+      <div class='ignoreKey'>ProblemDifferentVersions null junit:junit</div>The dependency 
       <span class='dependency'>junit:junit</span> is referenced with 2 different versions:
       <ul>
         <li>Version "
@@ -135,7 +137,9 @@ tr:hover { background-color: #D0E0FF; }
       <a name='toc4'>Missing Dependencies</a>
     </h2>
     <p>The following dependencies are used in POMs in the repository but they couldn't be found in it.</p>
-    <div class='problem'>The dependency 
+    <p>13 times</p>
+    <div class='problem'>
+      <div class='ignoreKey'>MissingDependency ch.qos.logback:logback-classic</div>The dependency 
       <span class='dependency'>ch.qos.logback:logback-classic</span> is used in 1 POMs:
       <ul>
         <li>
@@ -143,7 +147,8 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <div class='problem'>The dependency 
+    <div class='problem'>
+      <div class='ignoreKey'>MissingDependency de.pdark:decentxml</div>The dependency 
       <span class='dependency'>de.pdark:decentxml</span> is used in 1 POMs:
       <ul>
         <li>
@@ -151,7 +156,8 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <div class='problem'>The dependency 
+    <div class='problem'>
+      <div class='ignoreKey'>MissingDependency junit:junit</div>The dependency 
       <span class='dependency'>junit:junit</span> is used in 3 POMs:
       <ul>
         <li>
@@ -165,7 +171,8 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <div class='problem'>The dependency 
+    <div class='problem'>
+      <div class='ignoreKey'>MissingDependency org.eclipse.core:org.eclipse.core.contenttype</div>The dependency 
       <span class='dependency'>org.eclipse.core:org.eclipse.core.contenttype</span> is used in 2 POMs:
       <ul>
         <li>
@@ -176,7 +183,8 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <div class='problem'>The dependency 
+    <div class='problem'>
+      <div class='ignoreKey'>MissingDependency org.eclipse.core:org.eclipse.core.jobs</div>The dependency 
       <span class='dependency'>org.eclipse.core:org.eclipse.core.jobs</span> is used in 2 POMs:
       <ul>
         <li>
@@ -187,7 +195,8 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <div class='problem'>The dependency 
+    <div class='problem'>
+      <div class='ignoreKey'>MissingDependency org.eclipse.core:org.eclipse.core.runtime.compatibility.auth</div>The dependency 
       <span class='dependency'>org.eclipse.core:org.eclipse.core.runtime.compatibility.auth</span> is used in 2 POMs:
       <ul>
         <li>
@@ -198,7 +207,8 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <div class='problem'>The dependency 
+    <div class='problem'>
+      <div class='ignoreKey'>MissingDependency org.eclipse.equinox:org.eclipse.equinox.app</div>The dependency 
       <span class='dependency'>org.eclipse.equinox:org.eclipse.equinox.app</span> is used in 2 POMs:
       <ul>
         <li>
@@ -209,7 +219,8 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <div class='problem'>The dependency 
+    <div class='problem'>
+      <div class='ignoreKey'>MissingDependency org.eclipse.equinox:org.eclipse.equinox.common</div>The dependency 
       <span class='dependency'>org.eclipse.equinox:org.eclipse.equinox.common</span> is used in 2 POMs:
       <ul>
         <li>
@@ -220,7 +231,8 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <div class='problem'>The dependency 
+    <div class='problem'>
+      <div class='ignoreKey'>MissingDependency org.eclipse.equinox:org.eclipse.equinox.preferences</div>The dependency 
       <span class='dependency'>org.eclipse.equinox:org.eclipse.equinox.preferences</span> is used in 2 POMs:
       <ul>
         <li>
@@ -231,7 +243,8 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <div class='problem'>The dependency 
+    <div class='problem'>
+      <div class='ignoreKey'>MissingDependency org.eclipse.equinox:org.eclipse.equinox.registry</div>The dependency 
       <span class='dependency'>org.eclipse.equinox:org.eclipse.equinox.registry</span> is used in 2 POMs:
       <ul>
         <li>
@@ -242,7 +255,8 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <div class='problem'>The dependency 
+    <div class='problem'>
+      <div class='ignoreKey'>MissingDependency org.eclipse.osgi:org.eclipse.osgi</div>The dependency 
       <span class='dependency'>org.eclipse.osgi:org.eclipse.osgi</span> is used in 2 POMs:
       <ul>
         <li>
@@ -253,7 +267,8 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <div class='problem'>The dependency 
+    <div class='problem'>
+      <div class='ignoreKey'>MissingDependency org.mozilla.javascript:org.mozilla.javascript</div>The dependency 
       <span class='dependency'>org.mozilla.javascript:org.mozilla.javascript</span> is used in 1 POMs:
       <ul>
         <li>
@@ -261,7 +276,8 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <div class='problem'>The dependency 
+    <div class='problem'>
+      <div class='ignoreKey'>MissingDependency org.slf4j:slf4j-api</div>The dependency 
       <span class='dependency'>org.slf4j:slf4j-api</span> is used in 1 POMs:
       <ul>
         <li>
@@ -273,6 +289,7 @@ tr:hover { background-color: #D0E0FF; }
       <a name='toc5'>Snapshot Versions</a>
     </h2>
     <p>Release Repositories should not contain SNAPSHOTs</p>
+    <p>2 times</p>
     <div class='problem'>
       <yield>The POM </yield>
       <span class='pom'>junit.test:snapshot-version:0.3.0-SNAPSHOT</span>
@@ -288,6 +305,7 @@ tr:hover { background-color: #D0E0FF; }
       <a name='toc6'>Path Problems</a>
     </h2>
     <p>These POMs are not where they should be</p>
+    <p>1 time</p>
     <div class='problem'>The path for the POM 
       <span class='pom'>junit.test:different-version:1.0</span>
       <yield> should be</yield>
@@ -298,22 +316,26 @@ tr:hover { background-color: #D0E0FF; }
     <h2>
       <a name='toc7'>Missing Sources</a>
     </h2>
+    <p>1 time</p>
     <div class='problem'>
       <p>Missing sources for 3 artifacts</p>
       <ul>
         <li>
+          <span class='ignoreKey'>MissingSources </span>
           <span class='pom'>junit.test:missing-version:1.0</span>
         </li>
         <li>
+          <span class='ignoreKey'>MissingSources </span>
           <span class='pom'>junit.test:snapshot-version:0.3.0-SNAPSHOT</span>
         </li>
         <li>
+          <span class='ignoreKey'>MissingSources </span>
           <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.5.0</span>
         </li>
       </ul>
     </div>
     <h2>
-      <a name='poms'>POMs in the repository</a>
+      <a name='poms'>6 POMs in the repository</a>
     </h2>
     <table border='0' cellspacing='0' cellpadding='0'>
       <tr>
