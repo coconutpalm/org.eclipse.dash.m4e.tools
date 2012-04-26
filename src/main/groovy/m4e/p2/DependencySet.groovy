@@ -90,7 +90,7 @@ class DependencySet {
                     File tmp = new File( cacheDir, 'download.tmp' )
                     unpack( packedFile, tmp )
                 
-                    tmp.renameTo( cached )
+                    assert tmp.renameTo( cached )
                 }
             } catch( FileNotFoundException e ) {
                 cached = repo.downloader.download( url )
