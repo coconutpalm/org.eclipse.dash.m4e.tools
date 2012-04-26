@@ -209,15 +209,19 @@ class ImportTool {
     void doImport( File folder ) {
         folder.eachFile { it ->
             
-            def tool = new BundleConverter( installCmd: installCmd, m2repo: m2repo, statistics: installCmd.statistics )
-            
-            if( it.isDirectory() ) {
-                tool.importExplodedBundle( it )
-            } else {
-                tool.importBundle( it )
+            try {
+                def tool = new BundleConverter( installCmd: installCmd, m2repo: m2repo, statistics: installCmd.statistics )
+                
+                if( it.isDirectory() ) {
+                    tool.importExplodedBundle( it )
+                } else {
+                    tool.importBundle( it )
+                }
+                
+                tool.close()
+            } catch( Exception e ) {
+                throw new RuntimeException( "Error processing ${it.absolutePath}: ${e}", e )
             }
-            
-            tool.close()
         }
     }
     
@@ -526,18 +530,18 @@ class BundleConverter {
                 continue
             }
             
-            if( !entry.getName().startsWith( roots ) ) {
-                out.putNextEntry( new ZipEntry( entry ) )
-            } else {
-                String name = entry.getName().substring( roots.size() )
-                ZipEntry clone = new ZipEntry( name )
-                clone.setTime( entry.getTime() )
-                clone.setSize( entry.getSize() )
-                clone.setComment( entry.getComment() )
-                clone.setExtra( entry.getExtra() )
-                
-                out.putNextEntry( clone )
+            String name = entry.getName()
+            
+            if( name.startsWith( roots ) ) {
+                name = name.substring( roots.size() )
             }
+            
+            ZipEntry clone = new ZipEntry( name )
+            clone.setTime( entry.getTime() )
+            clone.setComment( entry.getComment() )
+            clone.setExtra( entry.getExtra() )
+            
+            out.putNextEntry( clone )
             
             def stream = archive.getInputStream( entry )
             try {
