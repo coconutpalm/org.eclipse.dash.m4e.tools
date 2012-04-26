@@ -41,7 +41,7 @@ convert groupId:artifactId:version patches...
 [ apply-patches | patch | ap ] target patches...
     - Apply the patches to the target repository. Patches can be scripts or
     directories with scripts.
-[ analyze | an ] repository
+[ analyze | an ] repository [ ignore ]
     - Check a converted Maven 2 repository for various problems
 [ dependency-management | dm ] repository groupId:artifactId:version
     - Create a POM with a huge dependencyManagement element that contains all
@@ -49,7 +49,9 @@ convert groupId:artifactId:version patches...
 clean
     - Clean the work directory
 [ p2list | p2ls ] URL
-    - List the content of a P2 repository.''' 
+    - List the content of a P2 repository.
+[ show | view ] repository
+    - Show the content of an Maven 2 repository in a Swing UI''' 
     
     @Test
     public void testNoArguments() throws Exception {
