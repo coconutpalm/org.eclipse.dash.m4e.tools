@@ -439,16 +439,25 @@ class BundleConverter {
         
         if( archive ) {
             def entry = archive.getEntry( 'plugin.properties' )
-            if( !entry ) {
-                return
+            if( entry ) {
+                def stream = archive.getInputStream( entry )
+                try {
+                    pluginProperties.load( stream )
+                } finally {
+                    stream.close()
+                }
             }
             
-            def stream = archive.getInputStream( entry )
-            try {
-                pluginProperties.load( stream )
-            } finally {
-                stream.close()
+            entry = archive.getEntry( 'OSGI-INF/l10n/bundle.properties' )
+            if( entry ) {
+                def stream = archive.getInputStream( entry )
+                try {
+                    pluginProperties.load( stream )
+                } finally {
+                    stream.close()
+                }
             }
+            
         } else {
             File file = new File( bundle, 'plugin.properties' )
             if( file.exists() ) {
