@@ -101,8 +101,10 @@ class Tool {
             new Tool().run( args )
         } catch( UserError t ) {
             t.print()
+            System.exit( 1 )
         } catch( Throwable t ) {
             t.printStackTrace()
+            System.exit( 1 )
         }
     }
 }
