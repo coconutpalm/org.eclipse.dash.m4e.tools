@@ -60,6 +60,7 @@ class Analyzer {
     File reportFile
     Calendar timestamp
     Set<Pattern> ignores = new HashSet()
+    Set<Pattern> ignoreMissingSources = new HashSet()
     
     Analyzer( File repo, Calendar timestamp ) {
         this.repo = repo.canonicalFile
@@ -76,9 +77,16 @@ class Analyzer {
         file.eachLine {
             String line = it.substringBefore( '#' ).trim()
             
-            line = line.replace( '.', '\\.' ).replace( '*', '[^ :]*' )
+            if( !line ) {
+                return
+            }
             
-            if( line ) {
+            line = line.replace( '.', '\\.' ).replace( '*', '[^ :]*' ).replaceAll( '\\s+', ' ' )
+            
+            if( line.startsWith( 'MissingSources ' ) ) {
+                line = line.substringAfter( ' ' )
+                ignoreMissingSources << Pattern.compile( line )
+            } else {
                 ignores << Pattern.compile( line )
             }
         }
@@ -93,7 +101,19 @@ class Analyzer {
         sortEverything()
         
         if( missingSource ) {
-            problems << new MissingSources( missingSource )
+            def l = missingSource.findResults {
+                def key = it.key()
+                
+                for( Pattern p : ignoreMissingSources ) {
+                    if( p.matcher( key ).matches() ) {
+                        return null
+                    }
+                }
+                
+                return it
+            }
+            
+            problems << new MissingSources( l )
         }
         
         log.info( 'Found {} POM files. Looking for problems...', poms.size() )
@@ -175,7 +195,7 @@ tr:hover { background-color: #D0E0FF; }
         }
     }
     
-    Map<String, String> renderToc( MarkupBuilder builder, List<ProblemType> keys ) {
+    Map<String, String> renderToc( MarkupBuilder builder, List<ProblemType> keys, Map<ProblemType, List<Problem>> map ) {
         
         Map<ProblemType, String> problemTitle2Anchor = [:]
         
@@ -191,12 +211,12 @@ tr:hover { background-color: #D0E0FF; }
                 problemTitle2Anchor[key] = anchor
                 
                 li {
-                    a( href: "#${anchor}", key.title )
+                    a( href: "#${anchor}", "${key.title} (${map[key].size()})" )
                 }
             }
             
             li {
-                a( href: "#poms", 'POMs in the repository' )
+                a( href: "#poms", "${poms.size()} POMs in the repository" )
             }
         }
         
@@ -215,7 +235,7 @@ tr:hover { background-color: #D0E0FF; }
         List<ProblemType> keys = new ArrayList( map.keySet() )
         keys.sort()
         
-        def problemTitle2Anchor = renderToc( builder, keys )
+        def problemTitle2Anchor = renderToc( builder, keys, map )
         
         for( def key in keys ) {
             def list = map[key]
@@ -228,6 +248,9 @@ tr:hover { background-color: #D0E0FF; }
                 builder.p key.description
             }
             
+            String s = list.size() == 1 ? '' : 's'
+            builder.p "${list.size()} time${s}"
+            
             for( def p in list ) {
                 p.render( builder )
             }
@@ -236,7 +259,7 @@ tr:hover { background-color: #D0E0FF; }
     
     void renderRepoAsHtml( MarkupBuilder builder ) {
         builder.h2 {
-            a( name: 'poms', 'POMs in the repository' )
+            a( name: 'poms', "${poms.size()} POMs in the repository" )
         }
         
         def pomShortKeys = new ArrayList( pomByShortKey.keySet() )
@@ -579,6 +602,7 @@ class MissingSources extends Problem {
             ul {
                 for( def pom in poms ) {
                     li {
+                        span( 'class': 'ignoreKey', 'MissingSources ' )
                         span( 'class': 'pom', pom.key() )
                     }
                 }
