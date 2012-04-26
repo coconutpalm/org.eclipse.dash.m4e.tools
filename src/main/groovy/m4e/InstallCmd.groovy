@@ -413,6 +413,12 @@ class BundleConverter {
         writer << '      <groupId>' << groupId <<  '</groupId>\n'
         writer << '      <artifactId>' << artifactId <<  '</artifactId>\n'
         writer << '      <version>' << version <<  '</version>\n'
+        
+        String resolution = dep.getDirective( Constants.RESOLUTION_DIRECTIVE )
+        if( Constants.RESOLUTION_OPTIONAL == resolution ) {
+            writer << '      <optional>true</optional>\n'
+        }
+        
         writer << '    </dependency>\n'
     }
     
