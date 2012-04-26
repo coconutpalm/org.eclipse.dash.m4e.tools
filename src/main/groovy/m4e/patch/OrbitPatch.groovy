@@ -19,10 +19,22 @@ class OrbitPatch extends Patch {
         
         compilePatterns()
         
-        if( excluded( pom.key() ) ) {
-            return
+        if( !excluded( pom.key() ) ) {
+            patchPom( pom )
         }
         
+        pom.dependencies.each { dep ->
+            if( excluded( dep.key() ) ) {
+                return
+            }
+            
+            dep.value( Dependency.GROUP_ID, ORBIT_GROUP_ID )
+            String artifactId = ORBIT_ARTIFACT_ID_PREFIX + dep.value( Dependency.ARTIFACT_ID )
+            dep.value( Dependency.ARTIFACT_ID, artifactId )
+        }
+    }
+    
+    void patchPom( Pom pom ) {
         Element parent = pom.xml( Pom.PARENT )
         if( parent ) {
             throw new RuntimeException( "Unable to patch ${pom.source}: <parent> element not supported" )
@@ -34,16 +46,6 @@ class OrbitPatch extends Patch {
         def name = pom.element( 'name' )
         if( name ) {
             name.xml.text = name.xml.text + ' supplied by Eclipse Orbit'
-        }
-        
-        pom.dependencies.each { dep ->
-            if( excluded( dep.key() ) ) {
-                return
-            }
-            
-            dep.value( Dependency.GROUP_ID, ORBIT_GROUP_ID )
-            String artifactId = ORBIT_ARTIFACT_ID_PREFIX + dep.value( Dependency.ARTIFACT_ID )
-            dep.value( Dependency.ARTIFACT_ID, artifactId )
         }
     }
     
