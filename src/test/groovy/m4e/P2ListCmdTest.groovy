@@ -30,7 +30,7 @@ class P2ListCmdTest {
 
         def cmd = new P2ListCmd( workDir: workDir )
         
-        cmd.run([ 'p2ls', 'http://download.eclipse.org/technology/m2e/releases/1.0/1.0.200.20111228-1245' ])
+        cmd.run([ 'p2ls', '--ui', 'text', 'http://download.eclipse.org/technology/m2e/releases/1.0/1.0.200.20111228-1245' ])
         
         assertEquals( 0, cmd.errorCount )
         assertEquals( 0, cmd.warningCount )
