@@ -32,3 +32,8 @@ currentType( subType( 'java.lang.String' ) ).accept {
     method name: 'substringBeforeLast', type: String, params: [pattern: String], provider: 'MopSetup', doc: 'Return the part of a String before the last occurrence of a pattern'
     method name: 'endsWithOneOf', type: String, params: [pattern: String[]], provider: 'MopSetup', doc: 'True if the string ends with one of the supplied patterns. If no patterns are supplied, return false'
 }
+
+currentType( subType( 'java.util.zip.ZipFile' ) ).accept {
+    method name: 'eachEntry', type: java.util.zip.ZipEntry, params: [c: Closure], provider: 'MopSetup', doc: 'Invoke closure for each entry in the ZIP archive'
+    method name: 'withInputStream', type: InputStream, params: [entry: java.util.zip.ZipEntry, c: Closure], provider: 'MopSetup', doc: 'Invoke closure with the input stream for the entry. Afterwards, the stream will be closed'
+}

@@ -10,6 +10,8 @@
  *******************************************************************************/
 package m4e
 
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import org.codehaus.groovy.runtime.ProcessGroovyMethods;
 import org.slf4j.Logger;
@@ -32,6 +34,7 @@ class MopSetup {
 
         mopString()
         mopFile()
+        mopZipFile()
     }
 
     static void mopString() {
@@ -296,4 +299,30 @@ class MopSetup {
         }
     }
 
+    static void mopZipFile() {
+        ZipFile.metaClass.getAt = { String path ->
+            ZipFile that = delegate
+            
+            return that.getEntry( path )
+        }
+        
+        ZipFile.metaClass.eachEntry = { Closure c ->
+            ZipFile that = delegate
+            
+            for( ZipEntry entry : that.entries() ) {
+                c.call( entry )
+            }
+        }
+        
+        ZipFile.metaClass.withInputStream = { ZipEntry entry, Closure c ->
+            ZipFile that = delegate
+            
+            def stream = that.getInputStream( entry )
+            try {
+                c.call( stream )
+            } finally {
+                stream.close()
+            }
+        }
+    }
 }
