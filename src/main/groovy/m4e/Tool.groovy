@@ -35,6 +35,7 @@ class Tool {
         new CmdInfo( names: ['clean'], impl: CleanCmd ),
         new CmdInfo( names: ['p2list', 'p2ls'], impl: P2ListCmd ),
         new CmdInfo( names: ['show', 'view'], impl: ShowRepoCmd ),
+        new CmdInfo( names: ['download', 'dl'], impl: DownloadCmd ),
     ]
     
     void run( String... args ) {
