@@ -51,7 +51,10 @@ clean
 [ p2list | p2ls ] URL
     - List the content of a P2 repository.
 [ show | view ] repository
-    - Show the content of an Maven 2 repository in a Swing UI''' 
+    - Show the content of an Maven 2 repository in a Swing UI
+[ download | dl ] url...
+    - Download one or more URLs from eclipse.org and put them into
+    tmp/downloads/''' 
     
     @Test
     public void testNoArguments() throws Exception {
