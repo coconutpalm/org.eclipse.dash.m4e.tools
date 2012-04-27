@@ -13,6 +13,8 @@ package m4e.patch
 
 import java.io.File;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import m4e.Dependency;
 import m4e.MavenRepositoryTools;
 import m4e.Pom;
@@ -23,6 +25,8 @@ import m4e.Pom;
  *  Eclipse versions (three numbers plus optional qualifier)
  */
 class StripQualifiers extends Patch {
+    
+    static final Logger log = LoggerFactory.getLogger( StripQualifiers )
     
     // ~/.../ isn't supported by the Eclipse Groovy editor
     Pattern versionRangePattern = Pattern.compile( '^([\\[\\]()])([^,]*),([^,]*?)([\\[\\]()])$' );
@@ -38,13 +42,17 @@ class StripQualifiers extends Patch {
             String version = it.value( Dependency.VERSION )
             
             QualifierPatch p = findQualifierPatch( it.key() )
+            String newVersion
             if( p ) {
-                version = p.version
+                newVersion = p.version
             } else {
-                version = stripQualifier( version )
+                newVersion = stripQualifier( version )
             }
             
-            it.value( Dependency.VERSION, version )
+            if( version != newVersion ) {
+                log.debug( 'Setting version of dependency {} to {}', it.shortKey(), newVersion )
+                it.value( Dependency.VERSION, newVersion )
+            }
         }
     }
     
@@ -83,6 +91,8 @@ class StripQualifiers extends Patch {
         
         String oldVersion = e.text
         e.text = newVersion
+        
+        log.debug( 'Setting POM version to {}', newVersion )
     }
     
     String stripQualifier( String version ) {
