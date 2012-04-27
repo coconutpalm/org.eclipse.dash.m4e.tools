@@ -81,21 +81,21 @@ tr:hover { background-color: #D0E0FF; }
       <ul>
         <li>Version "
           <span class='version'>[3.2.0,4.0.0)</span>" is used in:
-        <ul>
-          <li>
-            <span class='pom'>org.eclipse.core:org.eclipse.core.runtime</span>:
-            <span class='version'>3.5.0</span>
-          </li>
-        </ul>
+          <ul>
+            <li>
+              <span class='pom'>org.eclipse.core:org.eclipse.core.runtime</span>:
+              <span class='version'>3.5.0</span>
+            </li>
+          </ul>
         </li>
         <li>Version "
           <span class='version'>[3.3.0,4.0.0)</span>" is used in:
-        <ul>
-          <li>
-            <span class='pom'>org.eclipse.core:org.eclipse.core.runtime</span>:
-            <span class='version'>3.6.0</span>
-          </li>
-        </ul>
+          <ul>
+            <li>
+              <span class='pom'>org.eclipse.core:org.eclipse.core.runtime</span>:
+              <span class='version'>3.6.0</span>
+            </li>
+          </ul>
         </li>
       </ul>
     </div>
@@ -105,26 +105,26 @@ tr:hover { background-color: #D0E0FF; }
       <ul>
         <li>Version "
           <span class='version'>4.8.1</span>" is used in:
+          <ul>
+            <li>
+              <span class='pom'>junit.test:different-version</span>:
+              <span class='version'>1.0</span>
+            </li>
+          </ul>
         </li>
-        <ul>
-          <li>
-            <span class='pom'>junit.test:different-version</span>:
-            <span class='version'>1.0</span>
-          </li>
-        </ul>
         <li>Version "
           <span class='version'>4.8.2</span>" is used in:
+          <ul>
+            <li>
+              <span class='pom'>junit.test:missing-version</span>:
+              <span class='version'>1.0</span>
+            </li>
+            <li>
+              <span class='pom'>junit.test:snapshot-version</span>:
+              <span class='version'>0.3.0-SNAPSHOT</span>
+            </li>
+          </ul>
         </li>
-        <ul>
-          <li>
-            <span class='pom'>junit.test:missing-version</span>:
-            <span class='version'>1.0</span>
-          </li>
-          <li>
-            <span class='pom'>junit.test:snapshot-version</span>:
-            <span class='version'>0.3.0-SNAPSHOT</span>
-          </li>
-        </ul>
       </ul>
     </div>
     <h2 id='toc4'>Missing Dependencies</h2>
@@ -268,25 +268,19 @@ tr:hover { background-color: #D0E0FF; }
     <h2 id='toc5'>Snapshot Versions</h2>
     <p>Release Repositories should not contain SNAPSHOTs</p>
     <p>2 times</p>
-    <div class='problem'>
-      <yield>The POM </yield>
-      <span class='pom'>junit.test:snapshot-version:0.3.0-SNAPSHOT</span>
-      <yield> uses a snapshot version</yield>
+    <div class='problem'>The POM 
+      <span class='pom'>junit.test:snapshot-version:0.3.0-SNAPSHOT</span> uses a snapshot version
     </div>
     <div class='problem'>The dependency 
-      <span class='dependency'>de.pdark:decentxml:1.4-SNAPSHOT</span>
-      <yield> in POM </yield>
-      <span class='pom'>junit.test:snapshot-version:0.3.0-SNAPSHOT</span>
-      <yield> uses a snapshot version</yield>
+      <span class='dependency'>de.pdark:decentxml:1.4-SNAPSHOT</span> in POM 
+      <span class='pom'>junit.test:snapshot-version:0.3.0-SNAPSHOT</span> uses a snapshot version
     </div>
     <h2 id='toc6'>Path Problems</h2>
     <p>These POMs are not where they should be</p>
     <p>1 time</p>
     <div class='problem'>The path for the POM 
-      <span class='pom'>junit.test:different-version:1.0</span>
-      <yield> should be</yield>
-      <span class='file'>${repo}/junit/test/different-version/1.0/different-version-1.0.pom</span>
-      <yield> but was </yield>
+      <span class='pom'>junit.test:different-version:1.0</span> should be
+      <span class='file'>${repo}/junit/test/different-version/1.0/different-version-1.0.pom</span> but was 
       <span class='file'>${repo}/junit/test/different-versions/1.0/different-versions-1.0.pom</span>
     </div>
     <h2 id='toc7'>Missing Sources</h2>

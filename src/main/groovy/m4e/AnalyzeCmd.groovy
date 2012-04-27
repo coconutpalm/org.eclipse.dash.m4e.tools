@@ -564,9 +564,9 @@ class ProblemVersionRange extends Problem {
         builder.div( 'class': 'problem' ) {
             yield( 'The dependency ', true )
             span( 'class': 'dependency', dependency.key() )
-            yield( ' in POM ' )
+            yield( ' in POM ', true )
             span( 'class': 'pom', pom.key() )
-            yield( ' uses a version range' )
+            yield( ' uses a version range', true )
         }
     }
 }
@@ -635,9 +635,9 @@ class PathProblem extends Problem {
         builder.div( 'class': 'problem' ) {
             yield( 'The path for the POM ', true )
             span( 'class': 'pom', pom.key() )
-            yield( ' should be' )
+            yield( ' should be', true )
             span( 'class': 'file', expected )
-            yield( ' but was ' )
+            yield( ' but was ', true )
             span( 'class': 'file', actual )
         }
     }
@@ -663,17 +663,17 @@ class ProblemSnaphotVersion extends Problem {
     }
     
     void render( MarkupBuilder builder ) {
-        builder.div( 'class': 'problem' ) {
-            if( dependency ) {
-                yield( 'The dependency ', true )
+        if( dependency ) {
+            builder.div( 'class': 'problem', 'The dependency ' ) {
                 span( 'class': 'dependency', dependency.key() )
-                yield( ' in POM ' )
+                yield( ' in POM ', true )
                 span( 'class': 'pom', pom.key() )
-                yield( ' uses a snapshot version' )
-            } else {
-                yield( 'The POM ' )
+                yield( ' uses a snapshot version', true )
+            }
+        } else {
+            builder.div( 'class': 'problem', 'The POM ' ) {
                 span( 'class': 'pom', pom.key() )
-                yield( ' uses a snapshot version' )
+                yield( ' uses a snapshot version', true )
             }
         }
     }
@@ -817,27 +817,32 @@ class ProblemDifferentVersions extends Problem {
             
             ul() {
                 for( String version in versions ) {
-                    li() {
-                        yield( 'Version "', true )
-                        span('class': 'version', version)
-                        yield( '" is used in:', true )
-                    }
+                    renderVersion( builder, version )
+                }
+            }
+        }
+    }
+    
+    void renderVersion( MarkupBuilder builder, String version ) {
+        
+        def backRefs = versionBackRefs[version]
+        backRefs.sort(true) {
+            it.key()
+        }
+        
+        builder.li() {
+            yield( 'Version "', true )
+            span('class': 'version', version)
+            yield( '" is used in:', true )
+        
+            ul() {
+                for( def pom in backRefs ) {
+                    def parts = pom.key().split(':', -1)
                     
-                    def backRefs = versionBackRefs[version]
-                    backRefs.sort(true) {
-                        it.key()
-                    }
-                    
-                    ul() {
-                        for( def pom in backRefs ) {
-                            def parts = pom.key().split(':', -1)
-                            
-                            li {
-                                span('class': 'pom', "${parts[0]}:${parts[1]}")
-                                yield( ':', true )
-                                span('class': 'version', "${parts[2]}")
-                            }
-                        }
+                    li {
+                        span('class': 'pom', "${parts[0]}:${parts[1]}")
+                        yield( ':', true )
+                        span('class': 'version', "${parts[2]}")
                     }
                 }
             }
