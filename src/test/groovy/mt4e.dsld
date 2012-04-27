@@ -1,11 +1,15 @@
+/*******************************************************************************
+* Copyright (c) 30.03.2012 Aaron Digulla.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v1.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v10.html
+*
+* Contributors:
+*    Aaron Digulla - initial API and implementation and/or initial documentation
+*******************************************************************************/
 
-// this is a DSLD file
-// start off creating a custom DSL Descriptor for your Groovy DSL
-
-// The following snippet adds the 'newProp' to all types that are a subtype of GroovyObjects
-// currentType(subType('groovy.lang.GroovyObject')).accept {
-//   property name : 'newProp', type : String, provider : 'Sample DSL', doc : 'This is a sample.  You should see this in content assist for GroovyObjects: <pre>newProp</pre>'
-// }
+// Custom DSL Descriptor for your MT4E
 
 currentType( subType( 'java.io.File' ) ).accept {
     method name: 'makedirs', type: Void, provider: 'MopSetup', doc: 'Create directories recursively unless they already exist'
