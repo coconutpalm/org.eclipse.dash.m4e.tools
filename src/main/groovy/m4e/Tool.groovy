@@ -40,7 +40,7 @@ class Tool {
     void run( String... args ) {
         log.info( "mt4e ${VERSION}" )
         log.debug( "workDir={}", workDir )
-        log.debug( "args[${args.size()}]: {}", args )
+        log.debug( "args[${args.size()}]: {}", Arrays.toString( args ) )
         
         if( args.size() == 0 ) {
             throw new UserError( "Missing command. Valid commands are:\n${help()}" )
