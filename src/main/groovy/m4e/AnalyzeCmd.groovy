@@ -59,8 +59,8 @@ class Analyzer {
     File repo
     File reportFile
     Calendar timestamp
-    Set<Pattern> ignores = new HashSet()
-    Set<Pattern> ignoreMissingSources = new HashSet()
+    Set<Glob> ignores = new HashSet()
+    Set<Glob> ignoreMissingSources = new HashSet()
     
     Analyzer( File repo, Calendar timestamp ) {
         this.repo = repo.canonicalFile
@@ -74,6 +74,8 @@ class Analyzer {
     }
     
     void loadIgnores( File file ) {
+        String manyRegexp = '[^ :]*'
+        
         file.eachLine {
             String line = it.substringBefore( '#' ).trim()
             
@@ -81,13 +83,13 @@ class Analyzer {
                 return
             }
             
-            line = line.replace( '.', '\\.' ).replace( '*', '[^ :]*' ).replaceAll( '\\s+', ' ' )
+            line = line.replaceAll( '\\s+', ' ' )
             
             if( line.startsWith( 'MissingSources ' ) ) {
                 line = line.substringAfter( ' ' )
-                ignoreMissingSources << Pattern.compile( line )
+                ignoreMissingSources << new Glob( line, manyRegexp )
             } else {
-                ignores << Pattern.compile( line )
+                ignores << new Glob( line, manyRegexp )
             }
         }
     }
@@ -104,8 +106,8 @@ class Analyzer {
             def l = missingSource.findResults {
                 def key = it.key()
                 
-                for( Pattern p : ignoreMissingSources ) {
-                    if( p.matcher( key ).matches() ) {
+                for( Glob g : ignoreMissingSources ) {
+                    if( g.matches( key ) ) {
                         return null
                     }
                 }
@@ -330,14 +332,14 @@ tr:hover { background-color: #D0E0FF; }
     }
     
     void applyIgnores() {
-        Set<Pattern> unused = new HashSet( ignores )
+        Set<Glob> unused = new HashSet( ignores )
         
         problems = problems.findResults {
             String key = it.key()
             
-            for( Pattern p : ignores ) {
-                if( p.matcher( key ).matches() ) {
-                    unused.remove( p )
+            for( Glob g : ignores ) {
+                if( g.matches( key ) ) {
+                    unused.remove( g )
                     return null
                 }
             }

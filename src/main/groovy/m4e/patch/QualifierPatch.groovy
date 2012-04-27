@@ -12,10 +12,11 @@
 package m4e.patch
 
 import java.util.regex.Pattern;
+import m4e.Glob;
 
 class QualifierPatch {
     /** Apply this patch to these POMs */
-    Pattern pattern
+    Glob pattern
     /** The new version string for matching POMs */
     String version
     
@@ -24,12 +25,12 @@ class QualifierPatch {
         this.version = version
     }
     
-    Pattern compile( String text ) {
-        return Pattern.compile( text.replace( '.', '\\.' ).replace( '*', '[^:]*' ) )
+    Glob compile( String text ) {
+        return new Glob( text, '[^:]*' )
     }
     
     boolean appliesTo( String key ) {
-        if( pattern.matcher( key ).matches() ) {
+        if( pattern.matches() ) {
             return true
         }
         

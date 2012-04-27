@@ -14,6 +14,7 @@ package m4e.patch
 import de.pdark.decentxml.Element
 import java.util.regex.Pattern
 import m4e.Dependency;
+import m4e.Glob
 import m4e.Pom
 
 class OrbitPatch extends Patch {
@@ -21,7 +22,7 @@ class OrbitPatch extends Patch {
     GlobalPatches globalPatches
     File target
     
-    private List<Pattern> exclusionPatterns = null
+    private List<Glob> exclusionPatterns = null
     
     private final static String ORBIT_GROUP_ID = 'org.eclipse.orbit'
     private final static String ORBIT_ARTIFACT_ID_PREFIX = 'orbit.'
@@ -60,9 +61,9 @@ class OrbitPatch extends Patch {
         }
     }
     
-    boolean excluded( String groupId ) {
-        for( Pattern p : exclusionPatterns ) {
-            if( p.matcher( groupId ).matches() ) {
+    boolean excluded( String text ) {
+        for( Glob g : exclusionPatterns ) {
+            if( g.matches( text ) ) {
                 return true
             }
         }
@@ -77,8 +78,7 @@ class OrbitPatch extends Patch {
         
         def l = []
         for( String text : globalPatches.orbitExclusions ) {
-            text = text.replace( '.', '\\.' ).replace( '*', '.*' )
-            l << Pattern.compile( text )
+            l << new Glob( text )
         }
         
         exclusionPatterns = l
