@@ -27,7 +27,8 @@ class DeleteClassesTest {
         def pom = Pom.load( new File( repo, 'org/apache/batik/org.apache.batik.pdf/1.6.0.v201105071520/org.apache.batik.pdf-1.6.0.v201105071520.pom' ) )
         
         def pattern = [ 'org/apache/commons/*' ]
-        def tool = new DeleteClasses( repo, 'org.apache.batik:org.apache.batik.pdf:1.6.0*', pattern )
+        def tool = new DeleteClasses( 'org.apache.batik:org.apache.batik.pdf:1.6.0*', pattern )
+        tool.repo = repo
         
         tool.apply( pom )
         

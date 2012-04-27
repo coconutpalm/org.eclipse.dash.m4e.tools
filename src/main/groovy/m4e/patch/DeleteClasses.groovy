@@ -34,7 +34,7 @@ class DeleteClasses extends Patch {
      * 
      *  <p>This patch is applied before Orbit bundles are renamed
      */
-    DeleteClasses( File repo, String key, List<String> patterns ) {
+    DeleteClasses( String key, List<String> patterns ) {
         
         this.repo = repo
         this.keyPattern = new Glob( key )
