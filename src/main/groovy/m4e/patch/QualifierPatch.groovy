@@ -30,7 +30,7 @@ class QualifierPatch {
     }
     
     boolean appliesTo( String key ) {
-        if( pattern.matches() ) {
+        if( pattern.matches( key ) ) {
             return true
         }
         
