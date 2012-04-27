@@ -54,7 +54,7 @@ repository [ ignore ]
 
 class Analyzer {
     
-    static final Logger log = LoggerFactory.getLogger( ConsoleUtils )
+    static final Logger log = LoggerFactory.getLogger( Analyzer )
     
     File repo
     File reportFile
