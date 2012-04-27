@@ -388,8 +388,8 @@ tr:hover { background-color: #D0E0FF; }
     }
     
     void checkMissingDependencies() {
-	List<String> keys = new ArrayList( dependencyUsage.keySet() )
-	keys.sort()
+        List<String> keys = new ArrayList( dependencyUsage.keySet() )
+        keys.sort()
 
         for( def key in keys ) {
             def pom = pomByShortKey[key]
@@ -471,6 +471,11 @@ tr:hover { background-color: #D0E0FF; }
         }
         
         for( def d in pom.dependencies ) {
+            
+            if( 'true' == d.value( Dependency.OPTIONAL ) ) {
+                continue
+            }
+            
             def depKey = d.shortKey()
             
             def list = dependencyUsage.get( depKey, [] )
@@ -893,7 +898,7 @@ class MissingDependency extends Problem {
                 }
             }
         }
-	}
+    }
 }
 
 enum ProblemType {
