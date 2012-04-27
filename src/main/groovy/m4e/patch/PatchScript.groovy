@@ -77,4 +77,9 @@ abstract class PatchScript extends Script {
     void orbitExclusion( String bundleName ) {
         globalPatches.orbitExclusions << bundleName
     }
+    
+    /** Delete classes from a bundle. This patch is applied before Orbit bundles are renamed */
+    void deleteClasses( String pattern, List paths ) {
+        globalPatches.deleteClasses << new DeleteClasses( pattern, paths )
+    }
 }

@@ -119,3 +119,6 @@ replace('org.w3c.sac:org.w3c.sac:1.3.0', 'org.w3c.css:sac:1.3')
 deleteDependency('system.bundle:system.bundle:[0,)')
 
 deleteArtifact('javax.xml.bind:javax.xml.bind:2.1.9')
+
+// org.apache.batik.pdf is tainted with code from commons-io and commons-logging
+deleteClasses( 'org.apache.batik:org.apache.batik.pdf:1.6.0*', [ 'org/apache/commons/*' ])

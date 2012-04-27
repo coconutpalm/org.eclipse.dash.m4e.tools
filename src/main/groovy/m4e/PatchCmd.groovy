@@ -13,6 +13,7 @@ package m4e
 import java.util.regex.Pattern;
 import groovy.transform.ToString;
 import m4e.patch.ArtifactRenamer
+import m4e.patch.DeleteClasses
 import m4e.patch.DeleteEmptyDirectories
 import m4e.patch.GlobalPatches
 import m4e.patch.OrbitPatch
@@ -58,6 +59,7 @@ target patches...
 		loadPatches( patches )
         
         deleteArtifacts()
+        deleteClasses()
 
         applyPatches()        
         
@@ -126,10 +128,13 @@ target patches...
         set = new PatchSet()
     }
     
+    PatchSet deleteClasses = new PatchSet()
+    
 	void loadPatches( String... patches ) {
         
 		set.patches << new RemoveNonOptional()
 		set.patches << new StripQualifiers( globalPatches: globalPatches, target: target )
+        set.patches << deleteClasses
         
         for( String patchName : patches ) {
             def loader = new PatchLoader( new File( patchName ).getAbsoluteFile(), globalPatches )
@@ -143,6 +148,14 @@ target patches...
         }
 	}
     
+    void deleteClasses() {
+        for( DeleteClasses p : globalPatches.deleteClasses ) {
+            p.repo = target
+            
+            deleteClasses.patches << p
+        }
+    }
+
     void deleteArtifacts() {
         for( String pattern in globalPatches.artifactsToDelete ) {
             deleteRecursively( pattern )

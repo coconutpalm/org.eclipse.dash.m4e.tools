@@ -17,12 +17,15 @@ class GlobalPatches {
     List<String> artifactsToDelete = []
     List<QualifierPatch> qualifierPatches = []
     List<String> orbitExclusions = []
+    List<DeleteClasses> deleteClasses = []
+    
     boolean renameOrbitBundles
     
     void merge( GlobalPatches other ) {
         artifactsToDelete.addAll( other.artifactsToDelete )
         qualifierPatches.addAll( other.qualifierPatches )
         orbitExclusions.addAll( other.orbitExclusions )
+        deleteClasses.addAll( other.deleteClasses )
         
         renameOrbitBundles |= other.renameOrbitBundles
     }
