@@ -242,9 +242,7 @@ tr:hover { background-color: #D0E0FF; }
         for( def key in keys ) {
             def list = map[key]
             
-            builder.h2 {
-                a( name: problemTitle2Anchor[key], key.title )
-            }
+            builder.h2( id: problemTitle2Anchor[key], key.title )
             
             if( key.description ) {
                 builder.p key.description
@@ -260,9 +258,7 @@ tr:hover { background-color: #D0E0FF; }
     }
     
     void renderRepoAsHtml( MarkupBuilder builder ) {
-        builder.h2 {
-            a( name: 'poms', "${poms.size()} POMs in the repository" )
-        }
+        builder.h2( id: 'poms', "${poms.size()} POMs in the repository" )
         
         def pomShortKeys = new ArrayList( pomByShortKey.keySet() )
         pomShortKeys.sort()
