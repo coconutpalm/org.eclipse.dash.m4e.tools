@@ -340,18 +340,15 @@ class BundleConverter {
             return
         }
         
-        def entry = archive.getEntry( nestedJarPath )
+        def entry = archive[ nestedJarPath ]
         if( null == entry ) {
             throw new RuntimeException( "Can't find [${nestedJarPath}] in ${bundle}" )
         }
         
         jarFile.parentFile?.makedirs()
         
-        def stream = archive.getInputStream( entry )
-        try {
-            jarFile << stream
-        } finally {
-            stream.close()
+        archive.withInputStream( entry ) {
+            jarFile << it
         }
     }
     
@@ -448,23 +445,17 @@ class BundleConverter {
         pluginProperties = new Properties()
         
         if( archive ) {
-            def entry = archive.getEntry( 'plugin.properties' )
+            def entry = archive[ 'plugin.properties' ]
             if( entry ) {
-                def stream = archive.getInputStream( entry )
-                try {
-                    pluginProperties.load( stream )
-                } finally {
-                    stream.close()
+                archive.withInputStream( entry ) {
+                    pluginProperties.load( it )
                 }
             }
             
-            entry = archive.getEntry( 'OSGI-INF/l10n/bundle.properties' )
+            entry = archive[ 'OSGI-INF/l10n/bundle.properties' ]
             if( entry ) {
-                def stream = archive.getInputStream( entry )
-                try {
-                    pluginProperties.load( stream )
-                } finally {
-                    stream.close()
+                archive.withInputStream( entry ) {
+                    pluginProperties.load( it )
                 }
             }
             
@@ -519,36 +510,33 @@ class BundleConverter {
             writeManifest( out )
             
             filterSourceBundle( out, roots )
+            
+            out.close()
         }
     }
     
     void filterSourceBundle( ZipOutputStream out, String roots ) {
         assert archive != null
         
-        for( ZipEntry entry: archive.entries() ) {
-            if( entry.getName().startsWith( 'META-INF/' ) ) {
-                continue
-            }
-            
-            String name = entry.getName()
+        archive.eachEntry { ZipEntry entry ->
+            String name = entry.name
             
             if( name.startsWith( roots ) ) {
                 name = name.substring( roots.size() )
             }
             
             ZipEntry clone = new ZipEntry( name )
-            clone.setTime( entry.getTime() )
-            clone.setComment( entry.getComment() )
-            clone.setExtra( entry.getExtra() )
+            clone.time = entry.time
+            clone.comment = entry.comment
+            clone.extra = entry.extra
             
             out.putNextEntry( clone )
             
-            def stream = archive.getInputStream( entry )
-            try {
-                out << stream
-            } finally {
-                stream.close()
+            archive.withInputStream( entry ) {
+                out << it
             }
+            
+            out.closeEntry()
         }
     }
     
@@ -556,6 +544,7 @@ class BundleConverter {
         def entry = new ZipEntry( 'META-INF/MANIFEST.MF' )
         out.putNextEntry( entry )
         manifest.write( out )
+        out.closeEntry()
     }
     
     void close() {
@@ -569,18 +558,17 @@ class BundleConverter {
     Manifest loadManifestFromJar( File file ) {
         archive = new ZipFile( file )
         
-        def entry = archive.getEntry( 'META-INF/MANIFEST.MF' )
+        def entry = archive[ 'META-INF/MANIFEST.MF' ]
         if( !entry ) {
             installCmd.error( Error.MISSING_MANIFEST, "Can't find manifest in ${file.absolutePath}" )
             return null
         }
         
-        def stream = archive.getInputStream( entry )
-        try {
-            return new Manifest( stream )
-        } finally {
-            stream.close()
+        def m
+        archive.withInputStream( entry ) {
+            m = new Manifest( it )
         }
+        return m
     }
 
     void importExplodedBundle( File bundleFolder ) {
@@ -637,7 +625,11 @@ class BundleConverter {
                 out.putNextEntry( entry )
                 
                 out << file
+                
+                out.closeEntry()
             }
+            
+            out.close()
         }
     }
     
