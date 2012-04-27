@@ -20,7 +20,7 @@ tr:hover { background-color: #D0E0FF; }
   <body>
     <h1>Analysis of ${repo} (1970.01.01 00:00:00)</h1>
     <p>Found 6 POM files</p>
-    <p>Found 21 problems</p>
+    <p>Found 20 problems</p>
     <h2>Table of Contents</h2>
     <ul class='toc'>
       <li>
@@ -33,7 +33,7 @@ tr:hover { background-color: #D0E0FF; }
         <a href='#toc3'>Dependencies With Different Versions (2)</a>
       </li>
       <li>
-        <a href='#toc4'>Missing Dependencies (13)</a>
+        <a href='#toc4'>Missing Dependencies (12)</a>
       </li>
       <li>
         <a href='#toc5'>Snapshot Versions (2)</a>
@@ -137,7 +137,7 @@ tr:hover { background-color: #D0E0FF; }
       <a name='toc4'>Missing Dependencies</a>
     </h2>
     <p>The following dependencies are used in POMs in the repository but they couldn't be found in it.</p>
-    <p>13 times</p>
+    <p>12 times</p>
     <div class='problem'>
       <div class='ignoreKey'>MissingDependency ch.qos.logback:logback-classic</div>The dependency 
       <span class='dependency'>ch.qos.logback:logback-classic</span> is used in 1 POMs:
@@ -186,18 +186,6 @@ tr:hover { background-color: #D0E0FF; }
     <div class='problem'>
       <div class='ignoreKey'>MissingDependency org.eclipse.core:org.eclipse.core.jobs</div>The dependency 
       <span class='dependency'>org.eclipse.core:org.eclipse.core.jobs</span> is used in 2 POMs:
-      <ul>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.5.0</span>
-        </li>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.6.0</span>
-        </li>
-      </ul>
-    </div>
-    <div class='problem'>
-      <div class='ignoreKey'>MissingDependency org.eclipse.core:org.eclipse.core.runtime.compatibility.auth</div>The dependency 
-      <span class='dependency'>org.eclipse.core:org.eclipse.core.runtime.compatibility.auth</span> is used in 2 POMs:
       <ul>
         <li>
           <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.5.0</span>
