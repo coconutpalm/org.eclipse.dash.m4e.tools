@@ -48,4 +48,16 @@ class GlobTest {
         assert g.matches( 'org/apache/commons/' )
         assert g.matches( 'org/apache/commons/logging/' )
     }
+    
+    @Test
+    public void testManyRegexp() throws Exception {
+        
+        def text = 'org.apache.commons:*:*'
+        def g = new Glob( text, '[^ :]*' )
+        
+        assert g.matches( 'org.apache.commons::' )
+        assert g.matches( 'org.apache.commons:a:' )
+        assert g.matches( 'org.apache.commons::a' )
+        assert ! g.matches( 'org.apache.commons::a:' )
+    }
 }
