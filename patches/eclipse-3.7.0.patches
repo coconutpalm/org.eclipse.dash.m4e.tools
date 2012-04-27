@@ -18,6 +18,7 @@ Created on Apr 7, 2011
 
 defaultProfile('m4e.orbit')
 profile('m4e.maven-central')
+orbitRename()
 
 replace('ch.qos.logback:ch.qos.logback.classic:0.9.27', 'ch.qos.logback:logback-classic:0.9.27')
 replace('ch.qos.logback:ch.qos.logback.core:0.9.27', 'ch.qos.logback:logback-core:0.9.27')
