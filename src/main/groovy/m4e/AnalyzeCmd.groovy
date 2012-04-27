@@ -115,13 +115,15 @@ class Analyzer {
                 return it
             }
             
-            problems << new MissingSources( l )
+            if( l ) {
+                problems << new MissingSources( l )
+            }
         }
         
         log.info( 'Found {} POM files. Looking for problems...', poms.size() )
         validate()
         
-        log.info( 'Found {} problems. Generating report...', problems.size() )
+        log.info( 'Found {} problems. Generating report...', problemCount )
         report()
     }
     
@@ -211,9 +213,11 @@ tr:hover { background-color: #D0E0FF; }
                 index ++
                 
                 problemTitle2Anchor[key] = anchor
+                int count = 0
+                map[key].each { count += it.problemCount() }
                 
                 li {
-                    a( href: "#${anchor}", "${key.title} (${map[key].size()})" )
+                    a( href: "#${anchor}", "${key.title} (${count})" )
                 }
             }
             
@@ -248,8 +252,11 @@ tr:hover { background-color: #D0E0FF; }
                 builder.p key.description
             }
             
-            String s = list.size() == 1 ? '' : 's'
-            builder.p "${list.size()} time${s}"
+            int count = 0
+            list.each { count += it.problemCount() }
+            
+            String s = count == 1 ? '' : 's'
+            builder.p "${count} time${s}"
             
             for( def p in list ) {
                 p.render( builder )
@@ -325,6 +332,14 @@ tr:hover { background-color: #D0E0FF; }
         postProcessProblemSameKeyDifferentVersion()
         
         applyIgnores()
+        
+        countProblems()
+    }
+    
+    int problemCount = 0
+    
+    void countProblems() {
+        problems.each { problemCount += it.problemCount() }
     }
     
     void applyIgnores() {
@@ -538,6 +553,10 @@ class Problem {
     String sortKey() {
         return pom.key()
     }
+    
+    int problemCount() {
+        return 1
+    }
 }
 
 class ProblemVersionRange extends Problem {
@@ -611,6 +630,10 @@ class MissingSources extends Problem {
                 }
             }
         }
+    }
+    
+    int problemCount() {
+        return poms.size()
     }
 }
 
