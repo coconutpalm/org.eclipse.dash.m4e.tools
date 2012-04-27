@@ -54,4 +54,17 @@ abstract class AbstractCommand {
             log.info( "There were no errors or warnings" )
         }
     }
+    
+    File repoOption( String[] args, int index ) {
+        if( args.size() < index ) {
+            throw new UserError( 'Missing path to repository to analyze' )
+        }
+        
+        File repo = new File( args[ index ] ).absoluteFile
+        if( !repo.exists() ) {
+            throw new UserError( "Directory ${repo} doesn't exist" )
+        }
+
+        return repo
+    }
 }

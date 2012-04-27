@@ -12,15 +12,7 @@ repository
     @Override
     public void run( String... args ) {
         
-        if( args.size() == 1 ) {
-            throw new UserError( 'Missing path to repository to analyze' )
-        }
-        
-        File repo = new File( args[1] ).absoluteFile
-        if( !repo.exists() ) {
-            throw new UserError( "Directory ${repo} doesn't exist" )
-        }
-
+        File repo = repoOption( args, 1 )
         def view = new M2RepoView( repo: repo )
         view.show()
     }
