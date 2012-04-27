@@ -507,8 +507,6 @@ class BundleConverter {
         mavenSourceJar.withOutputStream { it ->
             def out = new ZipOutputStream( it )
             
-            writeManifest( out )
-            
             filterSourceBundle( out, roots )
             
             out.close()
@@ -520,6 +518,11 @@ class BundleConverter {
         
         archive.eachEntry { ZipEntry entry ->
             String name = entry.name
+            
+            if( 'META-INF/MANIFEST.MF' == name ) {
+                writeManifest( out )
+                return
+            }
             
             if( name.startsWith( roots ) ) {
                 name = name.substring( roots.size() )
