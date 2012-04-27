@@ -133,8 +133,8 @@ target patches...
 	void loadPatches( String... patches ) {
         
 		set.patches << new RemoveNonOptional()
+		set.patches << deleteClasses
 		set.patches << new StripQualifiers( globalPatches: globalPatches, target: target )
-        set.patches << deleteClasses
         
         for( String patchName : patches ) {
             def loader = new PatchLoader( new File( patchName ).getAbsoluteFile(), globalPatches )
