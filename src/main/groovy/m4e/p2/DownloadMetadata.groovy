@@ -35,7 +35,7 @@ class DownloadMetadata {
     File metaFile
     long timeout = 24*60*60*1000
     boolean needsRefresh
-    FileNotFoundException fileNotFound
+    URL fileNotFound
     
     static final String LAST_UPDATE_KEY = 'lastUpdate'
     static final String FILE_NOT_FOUND_KEY = 'fileNotFound'
@@ -62,7 +62,7 @@ class DownloadMetadata {
         
         String value = config.getProperty( FILE_NOT_FOUND_KEY )
         if( value ) {
-            fileNotFound = new FileNotFoundException( value )
+            fileNotFound = new URL( value )
         }
         
         if( !file.exists() && !fileNotFound ) {
@@ -79,7 +79,7 @@ class DownloadMetadata {
         config.setProperty( LAST_UPDATE_KEY, "${System.currentTimeMillis()}" )
         
         if( fileNotFound ) {
-            config.setProperty( FILE_NOT_FOUND_KEY, fileNotFound.message )
+            config.setProperty( FILE_NOT_FOUND_KEY, fileNotFound.toExternalForm() )
         }
         
         metaFile.withOutputStream {
@@ -92,9 +92,8 @@ class DownloadMetadata {
         save()
     }
     
-    void failed( FileNotFoundException e ) {
-        
-        fileNotFound = e;
+    void failed( P2DownloadException e ) {
+        fileNotFound = e.url;
         save()
     }
 }

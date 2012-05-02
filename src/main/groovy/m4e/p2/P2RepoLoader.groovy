@@ -57,7 +57,7 @@ class P2RepoLoader {
             def p2index = new P2Index( p2indexFile )
             
             return loadP2Index( p2index )
-        } catch( FileNotFoundException e ) {
+        } catch( P2DownloadException e ) {
             return loadContent()
         }
     }
@@ -69,11 +69,11 @@ class P2RepoLoader {
             def contentJarFile = downloader.download( new URL( url, 'content.jar' ) )
             
             contentXmlFile = unpackContentJar( contentJarFile )
-        } catch( FileNotFoundException e ) {
+        } catch( P2DownloadException e ) {
             
             try {
                 contentXmlFile = downloader.download( new URL( url, 'content.xml' ) )
-            } catch( FileNotFoundException e2 ) {
+            } catch( P2DownloadException e2 ) {
                 // Last frantic attempt. Example: http://download.eclipse.org/modeling/emft/mwe/updates/releases/helios/compositeContent.xml
                 return loadCompositeContentXmlFile( 'compositeContent.jar', 'compositeContent.xml' )
             }

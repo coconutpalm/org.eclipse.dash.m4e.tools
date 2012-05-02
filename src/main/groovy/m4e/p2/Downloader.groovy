@@ -42,7 +42,7 @@ class Downloader {
         
         if( !meta.needsRefresh ) {
             if( meta.fileNotFound ) {
-                throw meta.fileNotFound;
+                throw new P2DownloadException( meta.fileNotFound )
             }
             
             log.info( "Using cached version of ${url}" )
@@ -76,8 +76,7 @@ class Downloader {
                 meta.success()
                 return file
             } catch( FileNotFoundException e ) {
-                meta.failed( e )
-                throw e
+                continue
             } catch( IOException e ) {
                 String message = e.message
                 if( message.startsWith ( 'Server returned HTTP response code: 503' ) ) {
@@ -89,7 +88,9 @@ class Downloader {
             }
         }
         
-        throw new P2Exception( "Unable to download ${url} from\n${urls.join( '\n' )}" )
+        def e = new P2DownloadException( url, urls )
+        meta.failed( e )
+        throw e
     }
     
     void doDownload( URL url, File file, Progress p ) {

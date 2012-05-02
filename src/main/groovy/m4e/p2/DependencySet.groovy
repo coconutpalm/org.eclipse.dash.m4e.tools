@@ -103,7 +103,7 @@ class DependencySet {
                 
                     assert tmp.renameTo( cached )
                 }
-            } catch( FileNotFoundException e ) {
+            } catch( P2DownloadException e ) {
                 cached = repo.downloader.download( url )
             }
             
