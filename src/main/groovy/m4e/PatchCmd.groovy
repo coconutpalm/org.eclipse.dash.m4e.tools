@@ -91,10 +91,11 @@ target patches...
     
     void patchPom( File file ) {
         def pom = Pom.load( file )
+        
         def orig = pom.toString()
         def oldKey = pom.key()
         
-        set.apply( pom )
+        patchPom( pom )
         
         def result = pom.toString()
         if( result != orig ) {
@@ -110,6 +111,10 @@ target patches...
             
             count ++
         }
+    }
+    
+    void patchPom( Pom pom ) {
+        set.apply( pom )
     }
     
     protected void save( Pom pom ) {
