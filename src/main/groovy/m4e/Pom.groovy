@@ -208,18 +208,29 @@ class Pom extends PomElement {
     }
     
     Profile profile( String name ) {
-        def profiles = PomUtils.getOrCreate( xml, 'profiles' )
+        def profiles = xml.getChild( 'profiles' )
+        if( ! profiles ) {
+            return null
+        }
+        
         def profile = profiles.getChildren( 'profile' ).find {
             def id = it.getChild( 'id' )
             return id.text == name
         }
 //        println "name=${name} profile=${profile}"
         
+        return profile == null ? null : new Profile( xml: profile, pom: this ) 
+    }
+    
+    Profile getOrCreateProfile( String name ) {
+        def profile = profile( name )
+       
         if( profile ) {
             return new Profile( xml: profile, pom: this )
         }
         
-        return createNewProfile( profiles, name )
+        def profiles = PomUtils.getOrCreate( xml, 'profiles' )
+        return profile == null ? createNewProfile( profiles, name ) : profile
     }
     
     private Profile createNewProfile( Element profiles, String name ) {

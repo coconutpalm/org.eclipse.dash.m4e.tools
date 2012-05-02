@@ -38,10 +38,10 @@ class ProfileTool {
     }
     
     void createProfiles() {
-        defaultProfile = pom.profile( defaultProfileName )
+        defaultProfile = pom.getOrCreateProfile( defaultProfileName )
         defaultProfile.activeByDefault( true )
         
-        profile = pom.profile( profileName )
+        profile = pom.getOrCreateProfile( profileName )
     }
     
     Dependency createDependency( PatchDependency replacement ) {
