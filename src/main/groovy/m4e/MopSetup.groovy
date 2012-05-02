@@ -193,6 +193,8 @@ class MopSetup {
                 delegate.withInputStream() { it ->
                     target << it
                 }
+                
+                target.setLastModified( delegate.lastModified() )
             }
         }
     }
