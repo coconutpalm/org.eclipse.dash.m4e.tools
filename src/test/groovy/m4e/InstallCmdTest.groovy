@@ -99,6 +99,10 @@ class InstallCmdTest {
   <artifactId>org.junit</artifactId>
   <version>3.8.2.v3_8_2_v20100427-1100</version>
   <name>JUnit Testing Framework</name>
+  <description>Converted with MT4E 0.13 (27.04.2012)</description>
+  <properties>
+    <mt4e.osgi.exportPackage>junit.awtui;version="3.8.2",junit.extensions;version="3.8.2",junit.framework;version="3.8.2",junit.runner;version="3.8.2",junit.swingui;version="3.8.2",junit.swingui.icons;version="3.8.2",junit.textui;version="3.8.2"</mt4e.osgi.exportPackage>
+  </properties>
 </project>
 '''
             , actual)
@@ -116,11 +120,15 @@ class InstallCmdTest {
   <artifactId>org.junit</artifactId>
   <version>4.8.2.v4_8_2_v20110321-1705</version>
   <name>JUnit Testing Framework</name>
+  <description>Converted with MT4E 0.13 (27.04.2012)</description>
+  <properties>
+    <mt4e.osgi.exportPackage>junit.extensions;version="4.8.2",junit.framework;version="4.8.2",junit.runner;version="4.8.2",junit.textui;version="4.8.2",org.junit;version="4.8.2",org.junit.experimental;version="4.8.2",org.junit.experimental.categories;version="4.8.2",org.junit.experimental.max;version="4.8.2",org.junit.experimental.results;version="4.8.2",org.junit.experimental.runners;version="4.8.2",org.junit.experimental.theories;version="4.8.2",org.junit.experimental.theories.internal;version="4.8.2";x-internal:="true",org.junit.experimental.theories.suppliers;version="4.8.2",org.junit.internal;version="4.8.2";x-internal:="true",org.junit.internal.builders;version="4.8.2";x-internal:="true",org.junit.internal.matchers;version="4.8.2";x-internal:="true",org.junit.internal.requests;version="4.8.2";x-internal:="true",org.junit.internal.runners;version="4.8.2";x-internal:="true",org.junit.internal.runners.model;version="4.8.2";x-internal:="true",org.junit.internal.runners.statements;version="4.8.2";x-internal:="true",org.junit.matchers;version="4.8.2",org.junit.rules;version="4.8.2",org.junit.runner;version="4.8.2",org.junit.runner.manipulation;version="4.8.2",org.junit.runner.notification;version="4.8.2",org.junit.runners;version="4.8.2",org.junit.runners.model;version="4.8.2"</mt4e.osgi.exportPackage>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.hamcrest.core</groupId>
       <artifactId>org.hamcrest.core</artifactId>
-      <version>1.1.0</version>
+      <version>[1.1.0,)</version>
     </dependency>
   </dependencies>
 </project>
@@ -139,16 +147,17 @@ class InstallCmdTest {
   <artifactId>org.junit4</artifactId>
   <version>4.8.1.v20100525</version>
   <name>JUnit Testing Framework Version 4</name>
+  <description>Converted with MT4E 0.13 (27.04.2012)</description>
   <dependencies>
     <dependency>
       <groupId>org.hamcrest.core</groupId>
       <artifactId>org.hamcrest.core</artifactId>
-      <version>1.1.0</version>
+      <version>[1.1.0,)</version>
     </dependency>
     <dependency>
       <groupId>org.junit</groupId>
       <artifactId>org.junit</artifactId>
-      <version>4.8.1</version>
+      <version>[4.8.1,)</version>
     </dependency>
   </dependencies>
 </project>
@@ -167,26 +176,31 @@ class InstallCmdTest {
   <artifactId>org.eclipse.m2e.logback.configuration</artifactId>
   <version>1.0.200.20111228-1245</version>
   <name>m2e logback configuration</name>
+  <description>Converted with MT4E 0.13 (27.04.2012)</description>
+  <properties>
+    <mt4e.osgi.exportPackage>org.eclipse.m2e.logback.configuration;x-internal:="true"</mt4e.osgi.exportPackage>
+    <mt4e.osgi.isSingleton>true</mt4e.osgi.isSingleton>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.eclipse.core</groupId>
       <artifactId>org.eclipse.core.runtime</artifactId>
-      <version>3.5.0</version>
+      <version>[3.5.0,)</version>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>ch.qos.logback.classic</artifactId>
-      <version>0.9.24</version>
+      <version>[0.9.24,)</version>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>ch.qos.logback.core</artifactId>
-      <version>0.9.24</version>
+      <version>[0.9.24,)</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j.api</groupId>
       <artifactId>org.slf4j.api</artifactId>
-      <version>1.6.1</version>
+      <version>[1.6.1,)</version>
     </dependency>
   </dependencies>
 </project>
