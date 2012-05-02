@@ -425,16 +425,16 @@ class BundleConverter {
         
         if( imports ) {
             String value = imports.join( ',' )
-            addProperty( writer, 'mt4e.osgi.importPackage', value )
+            addProperty( writer, Pom.IMPORT_PACKAGE_PROPERTY, value )
         }
         
         if( exports ) {
             String value = exports.join( ',' )
-            addProperty( writer, 'mt4e.osgi.exportPackage', value )
+            addProperty( writer, Pom.EXPORT_PACKAGE_PROPERTY, value )
         }
 
         if( isSingleton ) {
-            addProperty( writer, 'mt4e.osgi.isSingleton', 'true' )
+            addProperty( writer, Pom.IS_SINGLETON_PROPERTY, 'true' )
         }
         
         writer << '  </properties>\n'

@@ -81,7 +81,12 @@ class Pom extends PomElement {
     final static TextNode ARTIFACT_ID = new TextNode( name: 'artifactId' )
     final static TextNode VERSION = new TextNode( name: 'version' )
     final static TextNode PARENT = new TextNode( name: 'parent' )
+    final static TextNode PROPERTIES = new TextNode( name: 'properties' )
 
+    final static String IMPORT_PACKAGE_PROPERTY = 'mt4e.osgi.importPackage'
+    final static String EXPORT_PACKAGE_PROPERTY = 'mt4e.osgi.exportPackage'
+    final static String IS_SINGLETON_PROPERTY = 'mt4e.osgi.isSingleton'
+    
     String source
     
     String key() {
