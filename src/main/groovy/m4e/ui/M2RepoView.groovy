@@ -96,6 +96,11 @@ class M2RepoView {
         reload()
     }
     
+    void clearText() {
+        def doc = pomView.document
+        doc.remove( 0, doc.length )
+    }
+    
     void initFilter() {
         def l = new FilterChangeListener() {
             void filterChanged( String value ) {
@@ -127,6 +132,8 @@ class M2RepoView {
     }
     
     void reload() {
+        clearText()
+        
         new SwingBuilder().build {
             doOutside {
                 loadPoms()
@@ -161,6 +168,8 @@ class M2RepoView {
     void loadPoms() {
         
         println "Loading artifacts from ${repo}..."
+        
+        currentPom = null
         
         def list = []
         
