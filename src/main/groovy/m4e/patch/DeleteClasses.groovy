@@ -44,8 +44,8 @@ class DeleteClasses extends Patch {
             this.patterns << p
         }
         
-        patterns << new Glob( 'META-INF/ECLIPSEF.SF' )
-        patterns << new Glob( 'META-INF/ECLIPSEF.RSA' )
+        this.patterns << new Glob( 'META-INF/ECLIPSEF.SF' )
+        this.patterns << new Glob( 'META-INF/ECLIPSEF.RSA' )
     }
     
     @Override
@@ -92,6 +92,8 @@ class DeleteClasses extends Patch {
             clone.extra = entry.extra
             
             if( entry.name == 'META-INF/MANIFEST.MF' ) {
+                log.debug( 'Removing signatures from {}', entry.name )
+                
                 def m
                 archive.withInputStream( entry ) {
                     m = new Manifest( it )
