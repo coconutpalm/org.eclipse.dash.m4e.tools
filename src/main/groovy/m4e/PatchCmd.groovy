@@ -12,10 +12,12 @@ package m4e
 
 import java.util.regex.Pattern;
 import groovy.transform.ToString;
+import m4e.maven.ImportExportDB;
 import m4e.patch.ArtifactRenamer
 import m4e.patch.DeleteClasses
 import m4e.patch.DeleteEmptyDirectories
 import m4e.patch.GlobalPatches
+import m4e.patch.ImportDependenciesPatch;
 import m4e.patch.OrbitPatch
 import m4e.patch.PatchLoader
 import m4e.patch.PatchSet
@@ -60,15 +62,35 @@ target patches...
         
         deleteArtifacts()
         deleteClasses()
+        
+        collectImportExportInformation()
 
         applyPatches()        
         
         log.info( "Patched ${count} POMs")
     }
     
+    ImportExportDB importExportDB = new ImportExportDB()
+    
+    void collectImportExportInformation() {
+        MavenRepositoryTools.eachPom( target ) { file ->
+            try {
+                def pom = Pom.load( file )
+                importExportDB.updatePom( pom )
+            } catch( Exception e ) {
+                throw new RuntimeException( "Error processing ${file}", e )
+            }
+        }
+    }
+    
     void applyPatches() {
-        MavenRepositoryTools.eachPom( target ) {
-            patchPom( it )
+        MavenRepositoryTools.eachPom( target ) { file ->
+            
+            try {
+                patchPom( file )
+            } catch( Exception e ) {
+                throw new RuntimeException( "Error processing ${file}", e )
+            }
         }
         
         for( ArtifactRenamer tool : renamed ) {
@@ -140,6 +162,7 @@ target patches...
 		set.patches << new RemoveNonOptional()
 		set.patches << deleteClasses
 		set.patches << new StripQualifiers( globalPatches: globalPatches, target: target )
+        set.patches << new ImportDependenciesPatch( db: importExportDB )
         
         for( String patchName : patches ) {
             def loader = new PatchLoader( new File( patchName ).getAbsoluteFile(), globalPatches )
