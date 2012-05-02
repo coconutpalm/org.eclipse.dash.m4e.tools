@@ -147,4 +147,83 @@ actual )
 
     }
 
+    @Test
+    public void testProfilePatching() throws Exception {
+        
+        def tool = new PatchCmd()
+        tool.init()
+        
+        tool.globalPatches.defaultProfile = 'm4e.orbit'
+        tool.globalPatches.renameOrbitBundles = true
+        tool.globalPatches.orbitExclusions << "xxx:yyy:*"
+        tool.loadPatches()
+
+        def pom = Pom.load( POM_WITH_PROFILES )
+        tool.patchPom( pom )
+        
+        def actual = pom.toString()
+        def expected = POM_WITH_PROFILES
+            .replace( '<groupId>org.apache.commons</groupId>', '<groupId>org.eclipse.orbit</groupId>' )
+            .replace( '<artifactId>org.apache.commons.logging</artifactId>', '<artifactId>orbit.org.apache.commons.logging</artifactId>' )
+            .replace( '<groupId>org.apache.log4j</groupId>', '<groupId>org.eclipse.orbit</groupId>' )
+            .replace( '<artifactId>org.apache.log4j</artifactId>', '<artifactId>orbit.org.apache.log4j</artifactId>' )
+        
+        assertEquals( expected, actual )
+    }
+    
+    private final static String POM_WITH_PROFILES = '''\
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>xxx</groupId>
+  <artifactId>yyy</artifactId>
+  <version>2.0.5</version>
+  <name>Typesystem</name>
+  <dependencies>
+    <dependency>
+      <groupId>org.eclipse.ui</groupId>
+      <artifactId>org.eclipse.ui</artifactId>
+      <version>3.7.0</version>
+      <optional>true</optional>
+    </dependency>
+  </dependencies>
+  <profiles>
+    <profile>
+      <id>m4e.orbit</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>org.apache.commons.logging</artifactId>
+          <version>1.1.1</version>
+          <optional>true</optional>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.log4j</groupId>
+          <artifactId>org.apache.log4j</artifactId>
+          <version>1.2.15</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>m4e.maven-central</id>
+      <dependencies>
+        <dependency>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+          <version>1.1.1</version>
+        </dependency>
+        <dependency>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+          <version>1.2.15</version>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+</project>
+'''
 }

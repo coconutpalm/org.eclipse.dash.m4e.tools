@@ -35,15 +35,40 @@ class OrbitPatch extends Patch {
             patchPom( pom )
         }
         
-        pom.dependencies.each { dep ->
-            if( excluded( dep.key() ) ) {
-                return
-            }
-            
-            dep.value( Dependency.GROUP_ID, ORBIT_GROUP_ID )
-            String artifactId = ORBIT_ARTIFACT_ID_PREFIX + dep.value( Dependency.ARTIFACT_ID )
-            dep.value( Dependency.ARTIFACT_ID, artifactId )
+        patchDependencies( pom )
+        patchDefaultProfile( pom )
+    }
+    
+    void patchDefaultProfile( Pom pom ) {
+        if( !globalPatches.defaultProfile ) {
+            return
         }
+        
+        def profile = pom.profile( globalPatches.defaultProfile )
+        if( !profile ) {
+            return
+        }
+        
+        profile.dependencies.each { dep ->
+            patchDependency( dep )
+        }
+    }
+    
+    void patchDependencies( Pom pom ) {
+        pom.dependencies.each { dep ->
+            patchDependency( dep )
+        }
+    }
+    
+    void patchDependency( Dependency dep ) {
+        println dep
+        if( excluded( dep.key() ) ) {
+            return
+        }
+        
+        dep.value( Dependency.GROUP_ID, ORBIT_GROUP_ID )
+        String artifactId = ORBIT_ARTIFACT_ID_PREFIX + dep.value( Dependency.ARTIFACT_ID )
+        dep.value( Dependency.ARTIFACT_ID, artifactId )
     }
     
     void patchPom( Pom pom ) {
