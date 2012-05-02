@@ -462,6 +462,8 @@ class BundleConverter {
         String version = dep.getAttribute( Constants.BUNDLE_VERSION_ATTRIBUTE )
         if( !version ) {
             version = '[0,)'
+        } else if ( !version.startsWith( '[' ) && !version.startsWith( '(' ) ) {
+            version = "[${version},)"
         }
         
         String groupId = artifactIdToGroupId( artifactId )
