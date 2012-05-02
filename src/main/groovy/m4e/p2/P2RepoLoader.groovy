@@ -101,7 +101,7 @@ class P2RepoLoader {
             def contentJarFile = downloader.download( new URL( url, contentJarName ) )
             
             contentXmlFile = unpackContentJar( contentJarFile )
-        } catch( FileNotFoundException e2 ) {
+        } catch( P2DownloadException e2 ) {
             contentXmlFile = downloader.download( new URL( url, contentXmlName ) )
         }
         

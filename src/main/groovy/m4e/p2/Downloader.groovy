@@ -63,6 +63,8 @@ class Downloader {
             } catch( SocketException e ) {
                 log.warn( "Unable to connect to ${url2}: ${e.message}", e )
                 continue
+            } catch( FileNotFoundException e ) {
+                continue
             }
             
             def value = conn.getHeaderField("Content-Length")
