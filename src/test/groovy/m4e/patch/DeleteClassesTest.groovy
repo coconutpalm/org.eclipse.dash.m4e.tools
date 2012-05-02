@@ -12,6 +12,8 @@
 package m4e.patch;
 
 import static org.junit.Assert.*;
+import java.util.jar.Manifest
+import java.util.zip.ZipFile
 import m4e.CommonTestCode;
 import m4e.Pom;
 import org.junit.Test;
@@ -32,6 +34,28 @@ class DeleteClassesTest {
         
         tool.apply( pom )
         
-        assertEquals( 29, tool.count )
+        assertEquals( 31, tool.count )
+        
+        def bak = new File( repo, 'org/apache/batik/org.apache.batik.pdf/1.6.0.v201105071520/org.apache.batik.pdf-1.6.0.v201105071520.jar.bak' )
+        assert bak.exists()
+        
+        def jar = new File( repo, 'org/apache/batik/org.apache.batik.pdf/1.6.0.v201105071520/org.apache.batik.pdf-1.6.0.v201105071520.jar' )
+        def zipFile = new ZipFile( jar )
+        
+        def entry = zipFile[ 'META-INF/ECLIPSEF.SF' ]
+        assert entry == null
+        
+        entry = zipFile[ 'META-INF/ECLIPSEF.RSA' ]
+        assert entry == null
+        
+        entry = zipFile[ 'META-INF/MANIFEST.MF' ]
+        assert entry != null
+        
+        def manifest
+        zipFile.withInputStream( entry ) {
+            manifest = new Manifest( it )
+        }
+        
+        assert 0 == manifest.entries.size()
     }
 }
