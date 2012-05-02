@@ -316,6 +316,8 @@ class BundleConverter {
         return true
     }
     
+    boolean isSingleton
+    
     void examineManifest() {
 //        println manifest.entries
         
@@ -330,6 +332,8 @@ class BundleConverter {
         artifactId = attrs[0].value
         version = manifest.attr.getValue( Constants.BUNDLE_VERSION )
         groupId = artifactIdToGroupId( artifactId )
+        
+        isSingleton = ( 'true' == attrs[0].getDirective( Constants.SINGLETON_DIRECTIVE ) )
     }
     
     void unpackNestedJar( String nestedJarPath, File jarFile ) {
@@ -371,7 +375,7 @@ class BundleConverter {
         writer << '  <artifactId>' << artifactId << '</artifactId>\n'
         writer << '  <version>' << version << '</version>\n'
         
-        String name = manifest.attr.getValue( 'Bundle-Name' )
+        String name = manifest.attr.getValue( Constants.BUNDLE_NAME )
         if( name ) {
             if( name.contains( '%' ) ) {
                 name = expand( name )
@@ -380,12 +384,64 @@ class BundleConverter {
             writer << '  <name>' << escape( name ) << '</name>\n'
         }
         
+        String description = manifest.attr.getValue( Constants.BUNDLE_DESCRIPTION )
+        if( description ) {
+            if( description.contains( '%' ) ) {
+                description = expand( description )
+            }
+        } else {
+            description = ''
+        }
+        
+        writer << '  <description>' << escape( description ) << ( description ? "\n    " : "" ) << 'Converted with MT4E ' << Tool.VERSION << '</description>\n'
+        
+        String url = manifest.attr.getValue( Constants.BUNDLE_DOCURL )
+        if( url ) {
+            writer << '  <url>' << escape( url ) << '</url>\n'
+        }
+        
+        addProperties( writer )
+        
         def requiredBundles = parseAttribute( Constants.REQUIRE_BUNDLE )
+//        println "requiredBundles=${requiredBundles}"
         if( requiredBundles ) {
             addDependencies( writer, requiredBundles )
         }
         
         writer << '</project>\n'
+    }
+    
+    void addProperties( Writer writer, ManifestElement[] requiredBundles ) {
+
+        def imports = parseAttribute( Constants.IMPORT_PACKAGE )
+        def exports = parseAttribute( Constants.EXPORT_PACKAGE )
+//        println "imports=${imports}"
+//        println "exports=${exports}"
+        if( !imports && !exports && !isSingleton ) {
+            return
+        }
+
+        writer << '  <properties>\n'
+        
+        if( imports ) {
+            String value = imports.join( ',' )
+            addProperty( writer, 'mt4e.osgi.importPackage', value )
+        }
+        
+        if( exports ) {
+            String value = exports.join( ',' )
+            addProperty( writer, 'mt4e.osgi.exportPackage', value )
+        }
+
+        if( isSingleton ) {
+            addProperty( writer, 'mt4e.osgi.isSingleton', 'true' )
+        }
+        
+        writer << '  </properties>\n'
+    }
+    
+    void addProperty( Writer writer, String name, String value ) {
+        writer << '    <' << name << '>' << escape( value ) << '</' << name << '>\n'
     }
     
     void addDependencies( Writer writer, ManifestElement[] requiredBundles ) {
