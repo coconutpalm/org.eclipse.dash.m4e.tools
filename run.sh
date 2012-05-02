@@ -17,7 +17,7 @@ target=${target:-target}
 [[ -e "$PWD/${target}/classes" ]] || { echo "Missing classes; did you compile?" ; exit 1 ; }
 
 M2_REPO="$HOME/.m2/repository"
-DECENT_XML="${M2_REPO}/de/pdark/decentxml/1.4-SNAPSHOT/decentxml-1.4-SNAPSHOT.jar"
+DECENT_XML="${M2_REPO}/de/pdark/decentxml/1.4/decentxml-1.4.jar"
 
 [[ -e "$DECENT_XML" ]] || { echo "Missing JARs; did you compile?" ; exit 1 ; }
 
