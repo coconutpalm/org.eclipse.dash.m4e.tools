@@ -36,6 +36,7 @@ class Tool {
         new CmdInfo( names: ['p2list', 'p2ls'], impl: P2ListCmd ),
         new CmdInfo( names: ['show', 'view'], impl: ShowRepoCmd ),
         new CmdInfo( names: ['download', 'dl'], impl: DownloadCmd ),
+        new CmdInfo( names: ['updateImportExportDB', 'upiedb'], impl: UpdateImportExportDatabaseCmd ),
     ]
     
     void run( String... args ) {

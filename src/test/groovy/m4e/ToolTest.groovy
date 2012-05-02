@@ -54,7 +54,9 @@ clean
     - Show the content of an Maven 2 repository in a Swing UI
 [ download | dl ] url...
     - Download one or more URLs from eclipse.org and put them into
-    tmp/downloads/''' 
+    tmp/downloads/
+[ updateImportExportDB | upiedb ] repository
+    - Create or update an existing import/export database''' 
     
     @Test
     public void testNoArguments() throws Exception {
