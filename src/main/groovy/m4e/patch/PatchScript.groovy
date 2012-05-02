@@ -23,18 +23,17 @@ import groovy.lang.Script;
 abstract class PatchScript extends Script {
     ScriptedPatchSet patchSet = new ScriptedPatchSet()
 
-    ReplaceDependencies replacer = new ReplaceDependencies()
-    
     GlobalPatches globalPatches = new GlobalPatches()
+    ReplaceDependencies replacer = new ReplaceDependencies( globalPatches: globalPatches )
     
     /** The default profile to use */
     void defaultProfile( String name ) {
-        replacer.defaultProfile = name
+        globalPatches.defaultProfile = name
     }
     
     /** The other/non-default profile */
     void profile( String name ) {
-        replacer.profile = name
+        globalPatches.profile = name
     }
     
     /** Replace a certain dependency with another

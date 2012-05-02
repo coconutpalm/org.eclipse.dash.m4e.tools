@@ -57,6 +57,8 @@ class PatchLoader {
         replacer = inst.replacer
         
         if( replacer.replacements ) {
+            replacer.globalPatches = globalPatches
+            
             patchSet.patches << replacer
         }
         

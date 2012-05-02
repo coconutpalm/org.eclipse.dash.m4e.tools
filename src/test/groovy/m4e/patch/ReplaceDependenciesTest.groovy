@@ -57,7 +57,8 @@ class ReplaceDependenciesTest {
             replacement: PatchDependency.fromString( replacement )
         )
         
-        def tool = new ReplaceDependencies( defaultProfile: 'm4e.orbit', profile: 'm4e.maven-central' )
+        def globalPatches = new GlobalPatches( defaultProfile: 'm4e.orbit', profile: 'm4e.maven-central' )
+        def tool = new ReplaceDependencies( globalPatches: globalPatches )
         tool.replacements << op
         
         tool.apply( pom )

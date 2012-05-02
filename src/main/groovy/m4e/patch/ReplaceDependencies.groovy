@@ -21,9 +21,8 @@ import org.slf4j.LoggerFactory;
 class ReplaceDependencies extends Patch {
     
     final Logger log = LoggerFactory.getLogger( getClass() )
-    
-    String defaultProfile
-    String profile
+
+    GlobalPatches globalPatches
     List<ReplaceDependency> replacements = []
     Map<String, ReplaceDependency> replMap
     
@@ -39,7 +38,7 @@ class ReplaceDependencies extends Patch {
             init()
         }
         
-        def tool = new ProfileTool( pom: pom, defaultProfileName: defaultProfile, profileName: profile )
+        def tool = new ProfileTool( pom: pom, defaultProfileName: globalPatches.defaultProfile, profileName: globalPatches.profile )
 //        println tool.defaultProfileName
         
         pom.dependencies.each {
@@ -55,6 +54,6 @@ class ReplaceDependencies extends Patch {
     }
     
     String toString() {
-        return "ReplaceDependencies( defaultProfile=${defaultProfile}, profile=${profile}, replacements=${replacements.size()} )"
+        return "ReplaceDependencies( defaultProfile=${globalPatches.defaultProfile}, profile=${globalPatches.profile}, replacements=${replacements.size()} )"
     }
 }
