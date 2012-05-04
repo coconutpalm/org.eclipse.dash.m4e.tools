@@ -1,0 +1,13 @@
+/**
+Patches for test case PatchCmdTest.testGoogleInject
+
+Created on May 4, 2012
+
+@author: Aaron Digulla <digulla@hepe.com>
+*/
+
+defaultProfile('m4e.orbit')
+profile('m4e.maven-central')
+orbitRename()
+
+replace('javax.inject:javax.inject:[1.0.0,)', 'javax.inject:javax.inject:1')

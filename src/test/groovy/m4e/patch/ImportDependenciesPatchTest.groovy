@@ -30,7 +30,12 @@ class ImportDependenciesPatchTest {
         def formatter = new XmlFormatter( pom: pom )
         formatter.format()
 
-        assertEquals( '''\
+        assertEquals( EXPECTED_GOOGLE_INJECT_POM,
+            pom.toString() )
+        
+    }
+
+    public static final String EXPECTED_GOOGLE_INJECT_POM = '''\
 <?xml version="1.0" encoding="UTF-8"?>
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -54,10 +59,7 @@ class ImportDependenciesPatchTest {
     </dependency>
   </dependencies>
 </project>
-''',
-            pom.toString() )
-        
-    }
+'''
     
     public static final String GOOGLE_INJECT_POM = '''\
 <?xml version="1.0" encoding="UTF-8"?>
