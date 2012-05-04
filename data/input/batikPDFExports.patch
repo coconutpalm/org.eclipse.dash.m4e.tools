@@ -1,0 +1,14 @@
+/**
+Patches for test case PatchCmdTest.testBatikPDFExports
+
+Created on May 4, 2012
+
+@author: Aaron Digulla <digulla@hepe.com>
+*/
+
+defaultProfile('m4e.orbit')
+profile('m4e.maven-central')
+orbitRename()
+
+// org.apache.batik.pdf is tainted with code from commons-io and commons-logging
+deleteClasses( 'org.apache.batik:org.apache.batik.pdf:1.6.0*', [ 'org/apache/commons/*' ])

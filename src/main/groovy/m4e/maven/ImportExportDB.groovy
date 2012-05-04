@@ -13,9 +13,11 @@ package m4e.maven
 
 import java.awt.geom.Line2D;
 import org.eclipse.osgi.util.ManifestElement;
+import m4e.Glob
 import m4e.Pom
 import m4e.PomElement
 import m4e.TextNode
+import m4e.patch.DeleteClasses
 
 class ImportExportDB {
 
@@ -73,9 +75,12 @@ class ImportExportDB {
         tmp.parentFile?.makedirs()
         
         tmp.withWriter( "UTF-8" ) { writer ->
-            infos.each { key, info ->
+            def keys = infos.keySet() as ArrayList
+            keys.sort()
+            
+            keys.each { key ->
                 writer << 'P ' << key << '\n'
-                info.write( writer )
+                infos[ key ].write( writer )
             }
         }
         
@@ -89,10 +94,10 @@ class ImportExportDB {
         tmp.usefulRename( file )
     }
     
-    private def EXPORT_PACKAGE_PROPERTY = new TextNode( name: Pom.EXPORT_PACKAGE_PROPERTY )
-    private def IMPORT_PACKAGE_PROPERTY = new TextNode( name: Pom.IMPORT_PACKAGE_PROPERTY )
+    static TextNode EXPORT_PACKAGE_PROPERTY = new TextNode( name: Pom.EXPORT_PACKAGE_PROPERTY )
+    static TextNode IMPORT_PACKAGE_PROPERTY = new TextNode( name: Pom.IMPORT_PACKAGE_PROPERTY )
     
-    void updatePom( Pom pom ) {
+    void add( Pom pom ) {
         def info = toInfo( pom )
         addInfo( info )
     }
@@ -113,7 +118,16 @@ class ImportExportDB {
 
         return info
     }
+
+    ImportExportInfo getAt( Pom pom ) {
+        String key = pom.key()
+        return getAt( key )
+    }
     
+    ImportExportInfo getAt( String key ) {
+        return infos[ key ]
+    }
+
     void addInfo( ImportExportInfo info ) {
         infos[ info.key ] = info
         
@@ -126,15 +140,30 @@ class ImportExportDB {
         return exportedBy[ packageName ].collect { it.key }
     }
     
-    String[] split( TextNode node, PomElement properties, String expectedVersion ) {
+    ManifestElement[] parse( TextNode node, PomElement properties ) {
         String value = properties.value( node )
         if( !value ) {
-            return Collections.emptyList()
+            return null
         }
         
-        def attr = ManifestElement.parseHeader( node.name, value )
+        return ManifestElement.parseHeader( node.name, value )
+    }
+    
+    String[] split( TextNode node, PomElement properties, String expectedVersion ) {
+        def attr = parse( node, properties )
         
-        return attr.collect { it.value }.toArray()
+        return attr ? attr.collect { it.value }.toArray().sort() : Collections.emptyList()
+    }
+    
+    void updateExports( Glob keyPattern, List<Glob> exclusions ) {
+        infos.each { key, info ->
+            if( ! keyPattern.matches( key ) ) {
+                return
+            }
+            
+            println "updateExports key=${key}"
+            info.updateExports( exclusions )
+        }
     }
 }
 
@@ -142,6 +171,7 @@ class ImportExportInfo {
     String key
     String[] exports
     String[] imports
+    String[] deletions
     
     void write( Writer writer ) {
         exports.each {
@@ -150,5 +180,29 @@ class ImportExportInfo {
         imports.each {
             writer << 'I ' << it << '\n'
         }
+    }
+    
+    void updateExports( List<Glob> exclusions ) {
+        
+        def l = []
+        
+        exports = exports.findAll { e ->
+            for( Glob g : exclusions ) {
+                if( g.matches( e ) ) {
+                    l << e
+                    return false
+                }
+            }
+            
+            return true
+        }
+        
+        println "exports=${exports}"
+        
+        if( l ) {
+            deletions = l.toArray()
+        }
+        
+        println "deletions=${deletions}"
     }
 }

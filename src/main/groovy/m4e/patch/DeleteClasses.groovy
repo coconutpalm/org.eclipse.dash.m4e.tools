@@ -51,7 +51,7 @@ class DeleteClasses extends Patch {
     @Override
     public void apply( Pom pom ) {
         String key = pom.key()
-        if( !keyPattern.matches( key ) ) {
+        if( !matches( key ) ) {
             return
         }
         
@@ -78,6 +78,10 @@ class DeleteClasses extends Patch {
         }
         
         tmp.usefulRename( jarFile )
+    }
+    
+    boolean matches( String key ) {
+        return keyPattern.matches( key )
     }
 
     int count

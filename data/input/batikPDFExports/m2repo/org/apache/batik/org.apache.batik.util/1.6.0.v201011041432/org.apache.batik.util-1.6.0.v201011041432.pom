@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.apache.batik</groupId>
+  <artifactId>org.apache.batik.util</artifactId>
+  <version>1.6.0.v201011041432</version>
+  <name>Apache Batik Utilities</name>
+  <description>Converted with MT4E 0.13 (27.04.2012)</description>
+  <properties>
+    <mt4e.osgi.exportPackage>org.apache.batik;version="1.6.0",org.apache.batik.i18n;version="1.6.0",org.apache.batik.util;version="1.6.0",org.apache.batik.util.io;version="1.6.0",org.apache.batik.util.resources;version="1.6.0"</mt4e.osgi.exportPackage>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.batik</groupId>
+      <artifactId>org.apache.batik.util.gui</artifactId>
+      <version>[1.6.0,1.7.0)</version>
+    </dependency>
+  </dependencies>
+</project>

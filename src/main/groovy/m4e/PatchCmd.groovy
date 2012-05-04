@@ -76,11 +76,34 @@ target patches...
         MavenRepositoryTools.eachPom( target ) { file ->
             try {
                 def pom = Pom.load( file )
-                importExportDB.updatePom( pom )
+                collectImportExportInformation( pom )
             } catch( Exception e ) {
                 throw new RuntimeException( "Error processing ${file}", e )
             }
         }
+        
+        syncExportsWithDeletes()
+    }
+    
+    void syncExportsWithDeletes() {
+        for( DeleteClasses p : globalPatches.deleteClasses ) {
+            
+            def exclusions = []
+            p.patterns.each { g ->
+                String s = g.toString()
+                if( s.startsWith( 'META-INF/' ) ) {
+                    return
+                }
+                
+                exclusions << new Glob( g.toString().replace( '/', '.' ) )
+            }
+
+            importExportDB.updateExports( p.keyPattern, exclusions )
+        }
+    }
+    
+    void collectImportExportInformation( Pom pom ) {
+        importExportDB.add( pom )
     }
     
     void applyPatches() {
@@ -161,8 +184,8 @@ target patches...
         
 		set.patches << new RemoveNonOptional()
 		set.patches << deleteClasses
+		set.patches << new ImportDependenciesPatch( db: importExportDB )
 		set.patches << new StripQualifiers( globalPatches: globalPatches, target: target )
-        set.patches << new ImportDependenciesPatch( db: importExportDB )
         
         for( String patchName : patches ) {
             def loader = new PatchLoader( new File( patchName ).getAbsoluteFile(), globalPatches )

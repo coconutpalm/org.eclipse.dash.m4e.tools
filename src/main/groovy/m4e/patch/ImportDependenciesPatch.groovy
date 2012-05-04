@@ -18,6 +18,7 @@ import m4e.PomElement
 import m4e.PomUtils;
 import m4e.maven.ImportExportDB
 import m4e.maven.ImportExportInfo
+import org.eclipse.osgi.util.ManifestElement;
 import org.slf4j.Logger 
 import org.slf4j.LoggerFactory
 
@@ -34,7 +35,7 @@ class ImportDependenciesPatch extends Patch {
             return
         }
         
-        ImportExportInfo info = db.toInfo( pom )
+        ImportExportInfo info = db[ pom ]
         if( !info ) {
             return
         }
@@ -71,6 +72,30 @@ class ImportDependenciesPatch extends Patch {
         additionalDependencies.each {
             addDependency( pom, dependencies, it )
         }
+        
+        updateProperties( pom, info )
+    }
+    
+    void updateProperties( Pom pom, ImportExportInfo info ) {
+        println "updateProperties ${pom.key()}"
+        println info.deletions
+        
+        if( !info.deletions ) {
+            return
+        }
+        
+        def properties = pom.element( Pom.PROPERTIES )
+        def exportProperty = properties.value( ImportExportDB.EXPORT_PACKAGE_PROPERTY )
+        if( !exportProperty ) {
+            return
+        }
+        
+        def attr = ManifestElement.parseHeader( Pom.EXPORT_PACKAGE_PROPERTY, exportProperty ) as List
+        def filterSet = info.deletions as Set
+        
+        def newValue = attr.findAll { println it.value ; !filterSet.contains( it.value ) }.join( ',' )
+        
+        properties.value( ImportExportDB.EXPORT_PACKAGE_PROPERTY, newValue )
     }
 
     void addDependency( Pom pom, Element dependencies, String key ) {
