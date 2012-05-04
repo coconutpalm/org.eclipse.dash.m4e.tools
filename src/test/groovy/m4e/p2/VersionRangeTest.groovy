@@ -46,10 +46,32 @@ class VersionRangeTest {
     }
     
     @Test
+    public void testVersionRangeCompareBlank_2() throws Exception {
+        assertCompare( 1, new Version( '1' ), new Version( '' ) )
+    }
+    
+    @Test
+    public void testVersionRangeCompareBlank_3() throws Exception {
+        assertCompare( -1, new Version( '' ), new Version( '1' ) )
+    }
+    
+    @Test
     public void testVersionRangeCompareWithoutQualifier() throws Exception {
         assertCompare( 1, new Version( '1.0.0' ), new Version( '0.0.0' ) )
+    }
+    
+    @Test
+    public void testVersionRangeCompareWithoutQualifier_2() throws Exception {
         assertCompare( 1, new Version( '3.1.0' ), new Version( '0.0.0' ) )
+    }
+    
+    @Test
+    public void testVersionRangeCompareWithoutQualifier_3() throws Exception {
         assertCompare( 0, new Version( '3.1.0' ), new Version( '3.1.0' ) )
+    }
+    
+    @Test
+    public void testVersionRangeCompareWithoutQualifier_4() throws Exception {
         assertCompare( -1, new Version( '1.0.0' ), new Version( '1.0.1' ) )
     }
     
@@ -97,7 +119,17 @@ class VersionRangeTest {
         assertEquals( range.lower, range.upper )
         assertEquals( 0, range.upper.compareTo( range.lower ) )
     }
-    
+
+    @Test
+    public void testVersionRange_3() throws Exception {
+        def range = new VersionRange( '1' )
+        assertEquals( false, range.includeLower )
+        assertEquals( '1', range.lower.toString() )
+        assertEquals( null, range.upper )
+        assertEquals( false, range.includeUpper )
+        assertEquals( '1', range.toString() )
+    }
+
     @Test
     public void testVersionRange_Contains() throws Exception {
         def range = new VersionRange( '[0.0.0,3.0.1.v20110824)' )

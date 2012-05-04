@@ -13,29 +13,54 @@ package m4e.p2;
 
 class Version implements Comparable<Version> {
     
-    final static int BIT_WIDTH = 10
+    final static int BIT_WIDTH = 20
     final static int BIT_MASK = ( 1 << BIT_WIDTH ) - 1
     
     final boolean blank
     final long version
+    int len
     final String qualifier
     
     Version( String pattern ) {
         if( pattern ) {
-            String[] parts = pattern.split( '\\.', 4 )
+            def parts = pattern.split( '\\.', 4 )
             
-            int major = Integer.parseInt( parts[0] )
-            int minor = Integer.parseInt( parts[1] )
-            int service = Integer.parseInt( parts[2] )
+            long major = Long.parseLong( parts[0] )
+            long minor = 0
+            long service = 0
+            len = parts.length
+            
+            check( pattern, 'major', major )
+            if( len > 1 ) {
+                minor = Long.parseLong( parts[1] )
+                check( pattern, 'minor', minor )
+                
+                if( len > 2 ) {
+                    service = Long.parseLong( parts[2] )
+                    check( pattern, 'service', service )
+                    
+                    if( len > 3 ) {
+                        qualifier = parts[3]
+                    }
+                }
+            }
             
             version = ( ( ( major << BIT_WIDTH ) + minor ) << BIT_WIDTH ) + service 
             
-            qualifier = parts.size() == 4 ? parts[3] : null
             blank = false
             
             assert pattern == toString()
         } else {
             blank = true
+        }
+    }
+    
+    void check( String version, String field, long value ) {
+        if( value < 0 ) {
+            throw new VersionException( version, "${field} must be > 0: ${value}" )
+        }
+        if( value > BIT_MASK ) {
+            throw new VersionException( version, "${field} must be < ${BIT_MASK}: ${value}" )
         }
     }
     
@@ -88,12 +113,13 @@ class Version implements Comparable<Version> {
             return ''
         }
         
-        String s = ''
+        def buffer = prepareVersionBuffer()
+        
         if( qualifier ) {
-            s = ".${qualifier}"
+            buffer.append( '.' ).append( qualifier )
         }
         
-        return "${major}.${minor}.${service}${s}"
+        return buffer.toString()
     }
 
     String shortVersion() {
@@ -101,16 +127,33 @@ class Version implements Comparable<Version> {
             return ''
         }
 
-        return "${major}.${minor}.${service}"
+        return prepareVersionBuffer().toString()
+    }
+    
+    private StringBuilder prepareVersionBuffer() {
+        StringBuilder buffer = new StringBuilder()
+        
+        buffer.append( major )
+        
+        if( len > 1 ) {
+            buffer.append( '.' ).append( minor )
+        }
+        if( len > 2 ) {
+            buffer.append( '.' ).append( service )
+        }
+
+        return buffer
     }
     
     public int compareTo( Version o ) {
         
         if( blank ) {
             return o.blank ? 0 : -1
+        } else if( o.blank ) {
+            return 1
         }
         
-        int d = version - o.version
+        int d = Long.signum( version - o.version )
 
         if( d == 0 ) {
             if( qualifier ) {
@@ -133,5 +176,15 @@ class Version implements Comparable<Version> {
     
     Version stripQualifier() {
         return new Version( "${major}.${minor}.${service}" )
+    }
+}
+
+class VersionException extends RuntimeException {
+    String version
+    
+    VersionException( String version, String message ) {
+        super( "Error parsing version '${version}': ${message}" )
+        
+        this.version = version
     }
 }
