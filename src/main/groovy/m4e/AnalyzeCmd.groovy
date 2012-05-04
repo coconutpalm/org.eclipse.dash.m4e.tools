@@ -133,11 +133,11 @@ class Analyzer {
     }
     
     void textReport() {
-        println "Found ${poms.size()} POM files"
-        println "Found ${problems.size()} problems"
+        println "Found ${poms.size()} POM files" // text report
+        println "Found ${problems.size()} problems" // text report
         
         for( def p in problems ) {
-            println p
+            println p // text report
         }
     }
     

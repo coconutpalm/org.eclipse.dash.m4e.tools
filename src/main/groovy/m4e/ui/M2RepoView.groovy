@@ -155,7 +155,7 @@ class M2RepoView {
             return
         }
         
-        println "Loading ${key}"
+        println "Loading ${key}" // logging
         File file = MavenRepositoryTools.buildPath( repo, key, 'pom' )
         def pom = Pom.load( file )
         
@@ -167,7 +167,7 @@ class M2RepoView {
     
     void loadPoms() {
         
-        println "Loading artifacts from ${repo}..."
+        println "Loading artifacts from ${repo}..." // logging
         
         currentPom = null
         
@@ -190,7 +190,7 @@ class M2RepoView {
         
         list.sort { it.key() }
         
-        println "Loaded ${list.size()} artifacts"
+        println "Loaded ${list.size()} artifacts" // logging
         
         new SwingBuilder().build {
             doLater {

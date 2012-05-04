@@ -78,7 +78,7 @@ class Tool {
     }
     
     void print( String text ) {
-        println text
+        println text // Print help
     }
     
     String help() {

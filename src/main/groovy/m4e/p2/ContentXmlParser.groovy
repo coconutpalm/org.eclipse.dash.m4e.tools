@@ -163,7 +163,7 @@ class ContentXmlParser {
                 return
             }
             
-            println "${id} ${requires}"
+//            println "${id} ${requires}"
         }
         
         String xml = xmlToString( unit )

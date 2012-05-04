@@ -106,12 +106,12 @@ class P2RepoView {
 //        println node
         if( node instanceof LabelNode ) {
             def data = node.data
-            println data
+            println data // Print selection
             
             if( data instanceof P2Unit ) {
-                println data.xml
+                println data.xml // Print selection
             } else if( data instanceof P2Other ) {
-                println data.xml
+                println data.xml // Print selection
             }
         }
     }
@@ -426,7 +426,7 @@ class SavedExpandedState {
             }
             
             if( !next ) {
-                println "Unable to find ${Arrays.toList( segments )}"
+                println "Unable to find ${Arrays.toList( segments )}" // Warning
                 return null
             }
             
