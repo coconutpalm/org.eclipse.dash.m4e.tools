@@ -1,0 +1,7 @@
+- Help find files without copyright header:
+
+	git whatchanged | less -p "\.\.\. A"
+
+- Find debug println's:
+
+	egrep -nr '^\s*println' src | grep -v " // "
