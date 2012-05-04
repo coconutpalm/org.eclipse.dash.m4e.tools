@@ -33,7 +33,7 @@ repository
             def pom = Pom.load( it )
             
             count ++
-            db.updatePom( pom )
+            db.add( pom )
         }
         
         log.info( "Processed ${count} artifacts" )
