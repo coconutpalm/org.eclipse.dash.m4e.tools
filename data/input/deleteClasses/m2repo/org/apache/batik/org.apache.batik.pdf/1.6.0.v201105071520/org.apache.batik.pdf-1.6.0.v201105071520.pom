@@ -6,4 +6,9 @@
   <artifactId>org.apache.batik.pdf</artifactId>
   <version>1.6.0.v201105071520</version>
   <name>Apache Batik PDF</name>
+  <description>Converted with MT4E 0.13 (27.04.2012)</description>
+  <properties>
+    <mt4e.osgi.importPackage>org.apache.batik.bridge;version="[1.6.0,1.7.0)",org.apache.batik.dom.svg;version="[1.6.0,1.7.0)",org.apache.batik.dom.util;version="[1.6.0,1.7.0)",org.apache.batik.ext.awt;version="[1.6.0,1.7.0)",org.apache.batik.ext.awt.g2d;version="[1.6.0,1.7.0)",org.apache.batik.gvt;version="[1.6.0,1.7.0)",org.apache.batik.gvt.renderer;version="[1.6.0,1.7.0)",org.apache.batik.gvt.text;version="[1.6.0,1.7.0)",org.apache.batik.transcoder;version="[1.6.0,1.7.0)",org.apache.batik.transcoder.image;version="[1.6.0,1.7.0)",org.apache.batik.transcoder.keys;version="[1.6.0,1.7.0)",org.apache.batik.util;version="[1.6.0,1.7.0)",org.w3c.dom</mt4e.osgi.importPackage>
+    <mt4e.osgi.exportPackage>org.apache.avalon.framework,org.apache.avalon.framework.activity,org.apache.avalon.framework.configuration,org.apache.avalon.framework.container,org.apache.commons.io;batik="split";mandatory:="batik",org.apache.commons.io.output;batik="split";mandatory:="batik",org.apache.commons.logging;batik="split";mandatory:="batik",org.apache.commons.logging.impl;batik="split";mandatory:="batik",org.apache.fop.apps,org.apache.fop.fo,org.apache.fop.fonts,org.apache.fop.fonts.apps,org.apache.fop.fonts.base14,org.apache.fop.fonts.truetype,org.apache.fop.fonts.type1,org.apache.fop.image,org.apache.fop.image.analyser,org.apache.fop.pdf,org.apache.fop.render.pdf,org.apache.fop.render.ps,org.apache.fop.svg,org.apache.fop.util</mt4e.osgi.exportPackage>
+  </properties>
 </project>
