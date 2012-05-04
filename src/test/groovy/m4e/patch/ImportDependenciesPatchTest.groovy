@@ -30,10 +30,10 @@ class ImportDependenciesPatchTest {
         def db = new ImportExportDB()
         
         def pom = Pom.load( JAVAX_INJECT_POM )
-        db.updatePom( pom )
+        db.add( pom )
         
         pom = Pom.load( GOOGLE_INJECT_POM )
-        db.updatePom( pom )
+        db.add( pom )
         
         def patch = new ImportDependenciesPatch( db: db )
         patch.apply( pom )
