@@ -378,6 +378,10 @@ class XmlFormatter {
     Pom pom
     private String indentStep = '  '
     
+    static void format( Pom pom ) {
+        new XmlFormatter( pom: pom ).format()
+    }
+    
     void format() {
         pom.xml.getChild( 'profiles' )?.getChildren( 'profile' ).each {
             Profile p = new Profile( xml: it, pom: pom )
