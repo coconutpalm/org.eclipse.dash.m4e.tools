@@ -91,7 +91,13 @@ repository groupId:artifactId:version
     }
 
     void twoVersionsError( Pom pom, String oldVersion ) {
-        error( Error.TWO_VERSIONS, "The repository contains (at least) two versions of ${pom.shortKey()}: ${pom.version()} and ${oldVersion}. Omitting both." )
+        def xml = [
+            artifact: pom.key(),
+            shortKey: pom.shortKey(),
+            version1: pom.version(),
+            version2: oldVersion,
+        ]
+        error( Error.TWO_VERSIONS, "The repository contains (at least) two versions of ${pom.shortKey()}: ${pom.version()} and ${oldVersion}. Omitting both.", xml )
     }
 
     void createPom() {
