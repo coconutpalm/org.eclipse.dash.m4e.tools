@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import de.pdark.decentxml.XMLParser;
 import de.pdark.decentxml.XMLStringSource;
 
-class InstallCmdTest {
+class InstallCmdTest implements CommonConstants {
     
     static {
         MopSetup.setup()
@@ -207,6 +207,53 @@ class InstallCmdTest {
 '''
             , actual)
             
+    }
+    
+    @Test
+    public void testImportErrors() throws Exception {
+        def workDir = CommonTestCode.newFile( 'testImportErrors' )
+        assert workDir.deleteDir(), "Failed to delete ${workDir.absolutePath}"
+        workDir.makedirs()
+        
+        File data = new File( 'data/input/importErrors' )
+        File inputDir = new File( workDir, 'downloads/junit' )
+        data.copy( inputDir )
+        
+        InstallCmd cmd = new InstallCmd( workDir: workDir )
+        
+        cmd.run([ 'install', inputDir.path ])
+        
+        File repo = cmd.m2repos[ 0 ]
+        
+        File installLog = new File( repo, MT4E_FOLDER + '/logs/install.xml'  )
+        assert installLog.exists()
+        
+        def lines = installLog.getText( UTF_8 )
+        .replace( repo.absolutePath, '${m2repo}' )
+        .replace( inputDir.absolutePath, '${input}' )
+        .replace( '\\', '/' )
+        lines = lines.split( '\n' ) as List
+        
+        lines = [lines[0]] + lines[1..-2].sort() + [lines[-1]]
+        String actual =  lines.join( '\n' )
+
+//        lines = ['0','1','2','3','4','5']
+//        println lines[1..lines.size()-1]
+//        println lines[1..-1]
+//        println lines[1..<lines.size()-1]
+//        println lines[1..<-1]
+//        println lines[1..<-2]
+//        println lines[1..-2]
+
+                
+        assertEquals( '''\
+<mt4e-log command='install'>
+<error code='E0003' jar='${input}/plugins/nomanifest.jar'>Can't find manifest in ${input}/plugins/nomanifest.jar</error>
+<error code='E0003' jar='${input}/plugins/unpackedPlugin/META-INF/MANIFEST.MF'>Can't find manifest ${input}/plugins/unpackedPlugin/META-INF/MANIFEST.MF</error>
+<error code='E0004' file='${input}/plugins/file.txt' exception='error in opening zip file'>Error processing ${input}/plugins/file.txt: java.util.zip.ZipException: error in opening zip file</error>
+<error code='E0004' file='${input}/plugins/notajar.jar' exception='error in opening zip file'>Error processing ${input}/plugins/notajar.jar: java.util.zip.ZipException: error in opening zip file</error>
+<warning code='W0004' jar='${m2repo}/org/eclipse/birt/org.eclipse.birt.report.data.oda.jdbc.dbprofile/3.7.0.v20110603/org.eclipse.birt.report.data.oda.jdbc.dbprofile-3.7.0.v20110603.jar' nestedJarPath='.,src'>Multiple nested JARs are not supported; just copying the original bundle</warning>
+</mt4e-log>''', actual )
     }
 
     void downloadDeltaPack() {

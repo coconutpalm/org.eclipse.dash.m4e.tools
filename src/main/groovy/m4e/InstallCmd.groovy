@@ -231,7 +231,7 @@ class ImportTool {
                 
                 tool.close()
             } catch( Exception e ) {
-                throw new RuntimeException( "Error processing ${it.absolutePath}: ${e}", e )
+                installCmd.error( Error.IMPORT_ERROR, "Error processing ${it.absolutePath}: ${e}", e, [ file: it.absolutePath ] )
             }
         }
     }

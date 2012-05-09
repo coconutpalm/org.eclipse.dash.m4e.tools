@@ -62,28 +62,42 @@ abstract class AbstractCommand implements CommonConstants {
         warningCount ++
         log.warn( msg + '\nFor details, see ' + warning.url() )
         
-        if( errorLog && xml ) {
-            Map map = new LinkedHashMap()
-            
-            map['code'] = warning.code()
-            map.putAll( xml )
-            
-            errorLog.write().invokeMethod( 'warning', [ map, msg ] ) 
+        appendToErrorLog( 'warning', warning.code(), msg, xml )
+    }
+    
+    void appendToErrorLog( String nodeName, String code, String msg, Map xml ) {
+        if( ! errorLog ) {
+            return
         }
+        
+        Map map = new LinkedHashMap()
+            
+        map['code'] = code
+        if( xml ) {
+            map.putAll( xml )
+        }
+            
+        errorLog.write().invokeMethod( nodeName, [ map, msg ] )
     }
     
     void error( Error error, String msg, Map xml = null ) {
         errorCount ++
         log.error( msg + '\nFor details, see ' + error.url() )
         
-        if( errorLog && xml ) {
-            Map map = new LinkedHashMap()
-            
-            map['code'] = error.code()
-            map.putAll( xml )
-            
-            errorLog.write().invokeMethod( 'error', [ map, msg ] ) 
+        appendToErrorLog( 'error', error.code(), msg, xml )
+    }
+    
+    void error( Error error, String msg, Exception e, Map xml = null ) {
+        errorCount ++
+        log.error( msg + '\nFor details, see ' + error.url(), e )
+        
+        if( ! xml ) {
+            xml = [:]
         }
+        
+        xml[ 'exception' ] = e.message
+        
+        appendToErrorLog( 'error', error.code(), msg, xml )
     }
     
     void mergeCounters( AbstractCommand other ) {

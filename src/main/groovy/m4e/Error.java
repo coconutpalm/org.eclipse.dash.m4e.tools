@@ -14,7 +14,8 @@ package m4e;
 public enum Error {
     TWO_VERSIONS( 1 ),
     MAVEN_FAILED( 2 ),
-    MISSING_MANIFEST( 3 );
+    MISSING_MANIFEST( 3 ),
+    IMPORT_ERROR( 4 );
     
     private final int id;
     
