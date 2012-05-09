@@ -76,7 +76,7 @@ class InstallCmdTest {
         assert workDir.deleteDir(), "Failed to delete ${workDir.absolutePath}"
         workDir.makedirs()
         
-        File data = new File( 'data/input/import' )
+        File data = new File( 'data/input/importJUnit' )
         File inputDir = new File( workDir, 'downloads/junit' )
         data.copy( inputDir )
         
