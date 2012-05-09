@@ -237,15 +237,6 @@ class InstallCmdTest implements CommonConstants {
         lines = [lines[0]] + lines[1..-2].sort() + [lines[-1]]
         String actual =  lines.join( '\n' )
 
-//        lines = ['0','1','2','3','4','5']
-//        println lines[1..lines.size()-1]
-//        println lines[1..-1]
-//        println lines[1..<lines.size()-1]
-//        println lines[1..<-1]
-//        println lines[1..<-2]
-//        println lines[1..-2]
-
-                
         assertEquals( '''\
 <mt4e-log command='install'>
 <error code='E0003' jar='${input}/plugins/nomanifest.jar'>Can't find manifest in ${input}/plugins/nomanifest.jar</error>
