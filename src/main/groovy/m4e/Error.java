@@ -22,7 +22,11 @@ public enum Error {
         this.id = id;
     }
     
+    public String code() {
+        return String.format( "E%04d", id );
+    }
+    
     public String url() {
-        return Warning.BASE_URL + String.format( "E%04d", id );
+        return Warning.BASE_URL + code();
     }
 }

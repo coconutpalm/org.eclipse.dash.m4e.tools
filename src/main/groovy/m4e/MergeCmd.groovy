@@ -12,6 +12,7 @@
 package m4e
 
 import java.io.File;
+import de.pdark.decentxml.XMLUtils;
 
 class MergeCmd extends AbstractCommand {
     
@@ -32,14 +33,43 @@ class MergeCmd extends AbstractCommand {
             throw new UserError( "Target repository ${target} already exists. Cowardly refusing to continue." )
         }
         
+        prepareErrorLog( target, 'merge' )
+        
+        mt4eFolder = new File( target, '.mt4e' )
+        
         log.debug( "Sources: ${sources}" )
         log.debug( "Target: ${target}" )
         
         for( source in sources ) {
             log.info( 'Merging {}', source )
-            merge( new File( source ).absoluteFile, target )
+            File file = new File( source ).absoluteFile
+            
+            merge( file, target )
+        }
+        
+        closeXmlFiles()
+    }
+    
+    void closeXmlFiles() {
+        def exc = null
+        
+        xmlFiles.values().each {
+            try {
+                it << '</merged>\n'
+                it.close()
+            } catch( Exception e ) {
+                if( !exc ) {
+                    exc = e
+                }
+            }
+        }
+        
+        if( exc ) {
+            throw e
         }
     }
+    
+    File mt4eFolder
     
     void merge( File source, File target ) {
         
@@ -47,6 +77,11 @@ class MergeCmd extends AbstractCommand {
         
         source.eachFile { File srcPath ->
             File targetPath = new File( target, srcPath.name )
+            
+            if( targetPath.equals( mt4eFolder ) ) {
+                mergeMt4eFiles( srcPath, mt4eFolder )
+                return
+            }
             
             if( srcPath.isDirectory() ) {
                 if( targetPath.exists() && !targetPath.isDirectory() ) {
@@ -68,6 +103,54 @@ class MergeCmd extends AbstractCommand {
                 }
             }
         }
+    }
+    
+    void mergeMt4eFiles( File source, File target ) {
+        source.eachFile { File srcPath ->
+            String name = srcPath.name
+            if( IMPORT_EXPORT_DB_FILE == name ) {
+                return
+            }
+            
+            File targetPath = new File( target, name )
+            
+            if( srcPath.isDirectory() ) {
+                mergeMt4eFiles( srcPath, targetPath )
+                return
+            }
+
+            if( name.endsWith( '.xml' ) ) {
+                mergeXml( srcPath, targetPath )
+            } else {
+                warn( Warning.UNABLE_TO_MERGE_MT4E_FILE, "Unable to merge ${srcPath.absolutePath}", [ file: srcPath.absolutePath ] )
+            }
+        }
+    }
+    
+    Map<String, Writer> xmlFiles = [:]
+    
+    void mergeXml( File source, File target ) {
+        def writer = xmlFiles[ target.name ]
+        if( !writer ) {
+            if( target.exists() ) {
+                warn( Warning.UNABLE_TO_MERGE_MT4E_FILE, "Unable to merge ${source.absolutePath}", [ file: source.absolutePath ] )
+            }
+            
+            target.parentFile?.makedirs()
+            
+            writer = target.newWriter( UTF_8 )
+            xmlFiles[ target.name ] = writer
+            
+            writer << '<merged>\n'
+        }
+        
+        writer << '<source file="' << XMLUtils.escapeXMLText( source.absolutePath ).replace( '"', '&quot;' ) << '">\n'
+        
+        source.withReader( UTF_8 ) {
+            writer << it
+        }
+        
+        writer << '\n</source>\n'
     }
     
     boolean filesAreEqual( File source, File target ) {

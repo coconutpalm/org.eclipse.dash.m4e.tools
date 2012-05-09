@@ -12,14 +12,16 @@
 package m4e
 
 import java.io.File;
+import m4e.maven.ErrorLog
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-abstract class AbstractCommand {
+abstract class AbstractCommand implements CommonConstants {
 
     Logger log = LoggerFactory.getLogger( getClass() )
     
     File workDir
+    ErrorLog errorLog
     
     void run( List<String> args ) {
         run( args as String[] )
@@ -38,7 +40,17 @@ abstract class AbstractCommand {
     }
     
     void destroy() {
+        if( errorLog ) {
+            errorLog.close()
+        }
+    }
+    
+    void prepareErrorLog( File repo, String command ) {
+        if( errorLog ) {
+            errorLog.close()
+        }
         
+        errorLog = new ErrorLog( repo: repo, command: command )
     }
     
     abstract void doRun( String... args );
@@ -46,14 +58,32 @@ abstract class AbstractCommand {
     int errorCount = 0
     int warningCount = 0
     
-    void warn( Warning warning, String msg ) {
+    void warn( Warning warning, String msg, Map xml = null ) {
         warningCount ++
         log.warn( msg + '\nFor details, see ' + warning.url() )
+        
+        if( errorLog && xml ) {
+            Map map = new LinkedHashMap()
+            
+            map['code'] = warning.code()
+            map.putAll( xml )
+            
+            errorLog.write().invokeMethod( 'warning', [ map, msg ] ) 
+        }
     }
     
-    void error( Error error, String msg ) {
+    void error( Error error, String msg, Map xml = null ) {
         errorCount ++
         log.error( msg + '\nFor details, see ' + error.url() )
+        
+        if( errorLog && xml ) {
+            Map map = new LinkedHashMap()
+            
+            map['code'] = error.code()
+            map.putAll( xml )
+            
+            errorLog.write().invokeMethod( 'error', [ map, msg ] ) 
+        }
     }
     
     void mergeCounters( AbstractCommand other ) {

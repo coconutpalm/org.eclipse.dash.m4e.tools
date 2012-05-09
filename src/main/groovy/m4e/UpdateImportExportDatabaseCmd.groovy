@@ -24,7 +24,7 @@ repository
     public void doRun( String... args ) {
         File repo = repoOption( args, 1 )
         
-        File dbPath = new File( repo, '.mt4e/importExportDB' )
+        File dbPath = new File( repo, MT4E_FOLDER + '/' + IMPORT_EXPORT_DB_FILE )
         
         def db = new ImportExportDB( file: dbPath )
         

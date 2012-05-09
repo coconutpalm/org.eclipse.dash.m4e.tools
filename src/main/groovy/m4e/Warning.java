@@ -15,7 +15,8 @@ public enum Warning {
     MISSING_BINARY_BUNDLE_FOR_SOURCES( 1 ),
     UNEXPECTED_FILE_IN_SOURCE_BUNDLE( 2 ),
     BINARY_DIFFERENCE( 3 ),
-    MULTIPLE_NESTED_JARS( 4 );
+    MULTIPLE_NESTED_JARS( 4 ),
+    UNABLE_TO_MERGE_MT4E_FILE( 5 );
     
     public final static String BASE_URL = "http://wiki.eclipse.org/MT4E_";
     
@@ -25,7 +26,11 @@ public enum Warning {
         this.id = id;
     }
     
+    public String code() {
+        return String.format( "W%04d", id );
+    }
+    
     public String url() {
-        return BASE_URL + String.format( "W%04d", id );
+        return BASE_URL + code();
     }
 }

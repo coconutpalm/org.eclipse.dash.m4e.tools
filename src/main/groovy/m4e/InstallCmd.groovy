@@ -35,6 +35,15 @@ class InstallCmd extends AbstractCommand {
         }
         
         log.info( "Import complete. Imported ${statistics.bundleCount} Eclipse bundles into ${statistics.pomCount} POMs. There are ${statistics.jarCount} new JARs of which ${statistics.sourceCount} have sources" )
+        
+        if( m2repos.size() == 1 ) {
+            log.info( "The new Maven 2 repository is here: ${m2repos[0].absolutePath}" )
+        } else {
+            log.info( "${m2repos.size()} Maven 2 repositories were created:" )
+            m2repos.each {
+                log.info( "    ${it.absolutePath}" )
+            }
+        }
     }
     
     List<File> m2repos = []
@@ -188,6 +197,8 @@ class ImportTool {
         m2repo = new File( tmpHome, 'm2repo' )
         failure = new File( tmpHome, FAILURE_FILE_NAME )
         
+        installCmd.prepareErrorLog( m2repo, 'install' )
+        
         log.debug( "Importing plug-ins from ${eclipseFolder} into repo ${m2repo}" )
         clean()
 
@@ -339,7 +350,9 @@ class BundleConverter {
     void unpackNestedJar( String nestedJarPath, File jarFile ) {
         
         if( nestedJarPath.contains( ',' ) ) {
-            installCmd.warn( Warning.MULTIPLE_NESTED_JARS, "Multiple nested JARs are not supported; just copying the original bundle" )
+            String msg = "Multiple nested JARs are not supported; just copying the original bundle"
+            Map xml = [ jar: jarFile.absolutePath, nestedJarPath: nestedJarPath ]
+            installCmd.warn( Warning.MULTIPLE_NESTED_JARS, msg, xml )
             bundle.copy( jarFile )
             return
         }
@@ -621,7 +634,8 @@ class BundleConverter {
         
         def entry = archive[ 'META-INF/MANIFEST.MF' ]
         if( !entry ) {
-            installCmd.error( Error.MISSING_MANIFEST, "Can't find manifest in ${file.absolutePath}" )
+            String msg = "Can't find manifest in ${file.absolutePath}"
+            installCmd.error( Error.MISSING_MANIFEST, msg, [ jar: file.absolutePath ] )
             return null
         }
         
@@ -696,7 +710,8 @@ class BundleConverter {
     
     Manifest loadManifestFromFile( File file ) {
         if( !file.exists() ) {
-            installCmd.error( Error.MISSING_MANIFEST, "Can't find manifest ${file.absolutePath}" )
+            String msg = "Can't find manifest ${file.absolutePath}"
+            installCmd.error( Error.MISSING_MANIFEST, msg, [ jar: file.absolutePath ] )
             return null
         }
         
