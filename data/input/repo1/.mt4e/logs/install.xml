@@ -1,0 +1,12 @@
+<merged>
+<source file=".../m2repo/.mt4e/logs/install.xml">
+<mt4e-log command='install'>
+<mt4e-log command='install'>
+<error code='E0003' jar='${input}/plugins/nomanifest.jar'>Can't find manifest in ${input}/plugins/nomanifest.jar</error>
+<error code='E0003' jar='${input}/plugins/unpackedPlugin/META-INF/MANIFEST.MF'>Can't find manifest ${input}/plugins/unpackedPlugin/META-INF/MANIFEST.MF</error>
+<error code='E0004' file='${input}/plugins/file.txt' exception='error in opening zip file'>Error processing ${input}/plugins/file.txt: java.util.zip.ZipException: error in opening zip file</error>
+<error code='E0004' file='${input}/plugins/notajar.jar' exception='error in opening zip file'>Error processing ${input}/plugins/notajar.jar: java.util.zip.ZipException: error in opening zip file</error>
+<warning code='W0004' jar='.../m2repo/org/eclipse/birt/org.eclipse.birt.report.data.oda.jdbc.dbprofile/3.7.0.v20110603/org.eclipse.birt.report.data.oda.jdbc.dbprofile-3.7.0.v20110603.jar' nestedJarPath='.,src'>Multiple nested JARs are not supported; just copying the original bundle</warning>
+</mt4e-log></mt4e-log>
+</source>
+</merged>

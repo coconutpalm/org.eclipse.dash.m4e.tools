@@ -20,35 +20,62 @@ tr:hover { background-color: #D0E0FF; }
   <body>
     <h1>Analysis of ${repo} (1970.01.01 00:00:00)</h1>
     <p>Found 6 POM files</p>
-    <p>Found 20 problems</p>
+    <p>Found 25 problems</p>
     <h2>Table of Contents</h2>
     <ul class='toc'>
       <li>
-        <a href='#toc1'>POMs with same ID but different version (1)</a>
+        <a href='#toc1'>Plug-ins Which Couldn't be Imported (2)</a>
       </li>
       <li>
-        <a href='#toc2'>Problems With Dependencies (1)</a>
+        <a href='#toc2'>Plug-ins Without Manifest (2)</a>
       </li>
       <li>
-        <a href='#toc3'>Dependencies With Different Versions (2)</a>
+        <a href='#toc3'>POMs with same ID but different version (1)</a>
       </li>
       <li>
-        <a href='#toc4'>Missing Dependencies (12)</a>
+        <a href='#toc4'>Problems With Dependencies (1)</a>
       </li>
       <li>
-        <a href='#toc5'>Snapshot Versions (2)</a>
+        <a href='#toc5'>Dependencies With Different Versions (2)</a>
       </li>
       <li>
-        <a href='#toc6'>Path Problems (1)</a>
+        <a href='#toc6'>Missing Dependencies (12)</a>
       </li>
       <li>
-        <a href='#toc7'>Missing Sources (3)</a>
+        <a href='#toc7'>Snapshot Versions (2)</a>
+      </li>
+      <li>
+        <a href='#toc8'>Path Problems (1)</a>
+      </li>
+      <li>
+        <a href='#toc9'>Multiple Nested JARs (1)</a>
+      </li>
+      <li>
+        <a href='#toc10'>Missing Sources (3)</a>
       </li>
       <li>
         <a href='#poms'>6 POMs in the repository</a>
       </li>
     </ul>
-    <h2 id='toc1'>POMs with same ID but different version</h2>
+    <h2 id='toc1'>Plug-ins Which Couldn't be Imported</h2>
+    <p>2 times</p>
+    <div class='problem'>
+      <span class='message'>Error processing ${input}/plugins/file.txt: java.util.zip.ZipException: error in opening zip file</span>
+    </div>
+    <div class='problem'>
+      <span class='message'>Error processing ${input}/plugins/notajar.jar: java.util.zip.ZipException: error in opening zip file</span>
+    </div>
+    <h2 id='toc2'>Plug-ins Without Manifest</h2>
+    <p>2 times</p>
+    <div class='problem'>
+      <div class='ignoreKey'>MissingManifest E0003 nomanifest.jar</div>
+      <span class='message'>Couldn't find MANIFEST.MF in ${input}/plugins/nomanifest.jar</span>
+    </div>
+    <div class='problem'>
+      <div class='ignoreKey'>MissingManifest E0003 unpackedPlugin</div>
+      <span class='message'>Couldn't find MANIFEST.MF in ${input}/plugins/unpackedPlugin</span>
+    </div>
+    <h2 id='toc3'>POMs with same ID but different version</h2>
     <p>1 time</p>
     <div class='problem'>
       <div class='ignoreKey'>ProblemSameKeyDifferentVersion org.eclipse.core:org.eclipse.core.runtime:3.5.0 org.eclipse.core:org.eclipse.core.runtime:3.6.0</div>There are two POMs with the same ID but different version:
@@ -66,14 +93,14 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <h2 id='toc2'>Problems With Dependencies</h2>
+    <h2 id='toc4'>Problems With Dependencies</h2>
     <p>1 time</p>
     <div class='problem'>POM 
       <span class='pom'>junit.test:missing-version:1.0</span> 
       <span class='message'>Missing version in dependency</span> 
       <span class='dependency'>org.slf4j:slf4j-api:null</span>
     </div>
-    <h2 id='toc3'>Dependencies With Different Versions</h2>
+    <h2 id='toc5'>Dependencies With Different Versions</h2>
     <p>2 times</p>
     <div class='problem'>
       <div class='ignoreKey'>ProblemDifferentVersions null org.eclipse.equinox:org.eclipse.equinox.preferences</div>The dependency 
@@ -127,7 +154,7 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <h2 id='toc4'>Missing Dependencies</h2>
+    <h2 id='toc6'>Missing Dependencies</h2>
     <p>The following dependencies are used in POMs in the repository but they couldn't be found in it.</p>
     <p>12 times</p>
     <div class='problem'>
@@ -265,7 +292,7 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <h2 id='toc5'>Snapshot Versions</h2>
+    <h2 id='toc7'>Snapshot Versions</h2>
     <p>Release Repositories should not contain SNAPSHOTs</p>
     <p>2 times</p>
     <div class='problem'>The POM 
@@ -275,7 +302,7 @@ tr:hover { background-color: #D0E0FF; }
       <span class='dependency'>de.pdark:decentxml:1.4-SNAPSHOT</span> in POM 
       <span class='pom'>junit.test:snapshot-version:0.3.0-SNAPSHOT</span> uses a snapshot version
     </div>
-    <h2 id='toc6'>Path Problems</h2>
+    <h2 id='toc8'>Path Problems</h2>
     <p>These POMs are not where they should be</p>
     <p>1 time</p>
     <div class='problem'>The path for the POM 
@@ -283,7 +310,13 @@ tr:hover { background-color: #D0E0FF; }
       <span class='file'>${repo}/junit/test/different-version/1.0/different-version-1.0.pom</span> but was 
       <span class='file'>${repo}/junit/test/different-versions/1.0/different-versions-1.0.pom</span>
     </div>
-    <h2 id='toc7'>Missing Sources</h2>
+    <h2 id='toc9'>Multiple Nested JARs</h2>
+    <p>1 time</p>
+    <div class='problem'>
+      <div class='ignoreKey'>MultipleNestedJarsProblem W0004 org/eclipse/birt/org.eclipse.birt.report.data.oda.jdbc.dbprofile/3.7.0.v20110603/org.eclipse.birt.report.data.oda.jdbc.dbprofile-3.7.0.v20110603.jar .,src</div>
+      <span class='message'>Found multiple nested JARs in .../m2repo/org/eclipse/birt/org.eclipse.birt.report.data.oda.jdbc.dbprofile/3.7.0.v20110603/org.eclipse.birt.report.data.oda.jdbc.dbprofile-3.7.0.v20110603.jar</span>
+    </div>
+    <h2 id='toc10'>Missing Sources</h2>
     <p>3 times</p>
     <div class='problem'>
       <p>Missing sources for 3 artifacts</p>

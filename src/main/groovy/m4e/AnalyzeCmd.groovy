@@ -52,7 +52,7 @@ repository [ ignore ]
     }
 }
 
-class Analyzer {
+class Analyzer implements CommonConstants {
     
     static final Logger log = LoggerFactory.getLogger( Analyzer )
     
@@ -100,6 +100,8 @@ class Analyzer {
             analyzePom( it )
         }
         
+        loadXmlLogs()
+        
         sortEverything()
         
         if( missingSource ) {
@@ -125,6 +127,98 @@ class Analyzer {
         
         log.info( 'Found {} problems. Generating report...', problemCount )
         report()
+    }
+    
+    void loadXmlLogs() {
+        File folder = new File( repo, MT4E_FOLDER + '/logs' )
+        
+        loadXmlLog( folder )
+    }
+    
+    void loadXmlLog( File file ) {
+        if( file.isDirectory() ) {
+            file.eachFile {
+                loadXmlLog( it )
+            }
+            return
+        }
+
+        try {
+            log.debug( 'Loading {}', file.absolutePath )
+            
+            def root = new XmlSlurper().parse( file )
+            String path = null
+            String command = null
+            
+            for( def node : root.depthFirst() ) {
+                String name = node.name()
+                
+                switch( name ) {
+                case 'source':
+                    path = node.'@file'
+                    break
+                
+                case 'mt4e-log':
+                    command = node.'@command'
+                    break
+                
+                case 'warning':
+                case 'error':
+                    xmlToProblem( command, path, node )
+                    break
+                
+                case 'merged':
+                    break
+                
+                default: log.warn( "Unexpected node '${name}'" )
+                }
+            }
+        } catch( Exception e ) {
+            throw new RuntimeException( "Error loading XML from ${file.absolutePath}", e )
+        }
+    }
+    
+    void xmlToProblem( String command, String path, node ) {
+        String code = node.'@code'
+        
+        def e
+        if( 'W' == code[0] ) {
+            e = Warning.fromCode( code )
+        } else if( 'E' == code[0] ) {
+            e = Error.fromCode( code )
+        } else {
+            throw new RuntimeException( "Unsupported code ${code}" )
+        }
+        
+        def problem
+        
+        switch( e ) {
+        case Error.MISSING_MANIFEST:
+            problem = MissingManifest.create( node )
+            break
+            
+        case Error.IMPORT_ERROR:
+            problem = ImportError.create( node )
+            break
+            
+        case Warning.MULTIPLE_NESTED_JARS:
+            problem = MultipleNestedJarsProblem.create( node )
+            break
+        
+        default:
+            log.warn( "Unsupported code ${code} ${e}" )
+            return 
+        }
+        
+        problem.command = command
+        problem.logFile = path
+        problem.code = code
+        
+        if( ! problem.message ) {
+            problem.message = node.text()
+        }
+        
+        problems << problem
     }
     
     void report() {
@@ -534,7 +628,7 @@ class Problem {
     
     @Override
     public String toString() {
-        return "POM ${pom?.key()}: ${message}";
+        return "POM ${pom?.key()}: ${message}"
     }
     
     void render( MarkupBuilder builder ) {
@@ -556,6 +650,88 @@ class Problem {
     
     int problemCount() {
         return 1
+    }
+}
+
+class CommandProblem extends Problem {
+    
+    String logFile
+    String command
+    String code
+    String key
+    
+    CommandProblem() {
+        super( null, null )
+    }
+    
+    @Override
+    public String toString() {
+        return message
+    }
+    
+    void render( MarkupBuilder builder ) {
+        builder.div( 'class': 'problem' ) {
+            if( key ) {
+                div( 'class': 'ignoreKey', key() )
+            }
+            span( 'class': 'message',  message )
+        }
+    }
+    
+    String key() {
+        return "${getClass().simpleName} ${key}"
+    }
+    
+    String sortKey() {
+        return key
+    }
+}
+
+class MultipleNestedJarsProblem extends CommandProblem {
+    
+    String jar
+    String nestedJarPath
+    String relPath
+    
+    static MultipleNestedJarsProblem create( node ) {
+        
+        String jar = PathUtils.normalize( node.'@jar'.toString() )
+        String relPath = jar.substringAfterLast( '/m2repo/' )
+        String nestedJarPath = node.'@nestedJarPath'
+        String key = "${node.'@code'} ${relPath} ${nestedJarPath}"
+        
+        String message = "Found multiple nested JARs in ${jar}"
+        
+        def result = new MultipleNestedJarsProblem( jar: jar, nestedJarPath: nestedJarPath, key: key, relPath : relPath, message: message )
+        
+        return result
+    }
+}
+
+class MissingManifest extends CommandProblem {
+    
+    String jar
+    String nestedJarPath
+    String relPath
+    
+    static MissingManifest create( node ) {
+        
+        String jar = PathUtils.normalize( node.'@jar'.toString() )
+        jar = jar.removeEnd( '/META-INF/MANIFEST.MF' )
+        
+        String key = "${node.'@code'} ${jar.substringAfterLast( '/' )}"
+        String message = "Couldn't find MANIFEST.MF in ${jar}"
+
+        def result = new MissingManifest( jar: jar, key: key, message: message )
+        
+        return result
+    }
+}
+
+class ImportError extends CommandProblem {
+    
+    static ImportError create( node ) {
+        return new ImportError()
     }
 }
 
@@ -928,6 +1104,8 @@ class MissingDependency extends Problem {
 }
 
 enum ProblemType {
+    ImportError( 'Plug-ins Which Couldn\'t be Imported' ),
+    MissingManifest( 'Plug-ins Without Manifest' ),
     Problem( 'Generic Problems', null),
     ProblemSameKeyDifferentVersion( 'POMs with same ID but different version', null),
     DependencyWithoutVersion( 'Problems With Dependencies', null),
@@ -936,16 +1114,13 @@ enum ProblemType {
     ProblemVersionRange( 'Dependencies With Version Ranges', 'Dependencies should not use version ranges.' ),
     ProblemSnaphotVersion( 'Snapshot Versions', 'Release Repositories should not contain SNAPSHOTs' ),
     PathProblem( 'Path Problems', 'These POMs are not where they should be' ),
-    MissingSources( 'Missing Sources', null )
+    MultipleNestedJarsProblem( 'Multiple Nested JARs' ),
+    MissingSources( 'Missing Sources' )
     
     final String title
     final String description
     
-    private ProblemType( String title ) {
-        this( title, null )
-    }
-    
-    private ProblemType( String title, String description ) {
+    private ProblemType( String title, String description = null ) {
         this.title = title
         this.description = description
     }

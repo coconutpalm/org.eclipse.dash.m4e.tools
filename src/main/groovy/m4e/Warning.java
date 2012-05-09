@@ -11,6 +11,9 @@
 
 package m4e;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public enum Warning {
     MISSING_BINARY_BUNDLE_FOR_SOURCES( 1 ),
     UNEXPECTED_FILE_IN_SOURCE_BUNDLE( 2 ),
@@ -20,14 +23,32 @@ public enum Warning {
     
     public final static String BASE_URL = "http://wiki.eclipse.org/MT4E_";
     
-    private final int id;
+    private final static Map<String, Warning> map = new HashMap<String, Warning>();
+    static {
+        for( Warning e : Warning.values() ) {
+            Warning old = map.put( e.code(), e );
+            if( null != old ) {
+                throw new IllegalStateException( "Duplicate codes: " + e + " and " + old );
+            }
+        }
+    }
+    
+    private final String code;
     
     private Warning( int id ) {
-        this.id = id;
+        this.code = String.format( "W%04d", id );
     }
     
     public String code() {
-        return String.format( "W%04d", id );
+        return code;
+    }
+    
+    public static Warning fromCode( String code ) {
+        Warning result = map.get( code );
+        if( null == result ) {
+            throw new IllegalArgumentException( "Undefined warning " + code );
+        }
+        return result;
     }
     
     public String url() {

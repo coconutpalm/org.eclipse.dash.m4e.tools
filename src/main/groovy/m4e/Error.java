@@ -11,22 +11,43 @@
 
 package m4e;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public enum Error {
     TWO_VERSIONS( 1 ),
     MAVEN_FAILED( 2 ),
     MISSING_MANIFEST( 3 ),
     IMPORT_ERROR( 4 );
-    
-    private final int id;
+
+    private final static Map<String, Error> map = new HashMap<String, Error>();
+    static {
+        for( Error e : Error.values() ) {
+            Error old = map.put( e.code(), e );
+            if( null != old ) {
+                throw new IllegalStateException( "Duplicate codes: " + e + " and " + old );
+            }
+        }
+    }
+
+    private final String code;
     
     private Error( int id ) {
-        this.id = id;
+        this.code = String.format( "E%04d", id );
     }
     
     public String code() {
-        return String.format( "E%04d", id );
+        return code;
     }
     
+    public static Error fromCode( String code ) {
+        Error result = map.get( code );
+        if( null == result ) {
+            throw new IllegalArgumentException( "Undefined Error " + code );
+        }
+        return result;
+    }
+
     public String url() {
         return Warning.BASE_URL + code();
     }
