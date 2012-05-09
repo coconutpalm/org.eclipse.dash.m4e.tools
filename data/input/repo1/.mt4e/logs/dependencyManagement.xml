@@ -1,0 +1,3 @@
+<mt4e-log command='dependencyManagement'>
+<error code='E0001' artifact='org.eclipse.orbit:orbit.org.apache.lucene:1.9.1' shortKey='org.eclipse.orbit:orbit.org.apache.lucene' version1='1.9.1' version2='2.9.1'>The repository contains (at least) two versions of org.eclipse.orbit:orbit.org.apache.lucene: 1.9.1 and 2.9.1. Omitting both.</error>
+</mt4e-log>

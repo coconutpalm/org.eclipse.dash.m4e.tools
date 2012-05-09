@@ -20,7 +20,7 @@ tr:hover { background-color: #D0E0FF; }
   <body>
     <h1>Analysis of ${repo} (1970.01.01 00:00:00)</h1>
     <p>Found 6 POM files</p>
-    <p>Found 25 problems</p>
+    <p>Found 26 problems</p>
     <h2>Table of Contents</h2>
     <ul class='toc'>
       <li>
@@ -48,10 +48,13 @@ tr:hover { background-color: #D0E0FF; }
         <a href='#toc8'>Path Problems (1)</a>
       </li>
       <li>
-        <a href='#toc9'>Multiple Nested JARs (1)</a>
+        <a href='#toc9'>Artifacts With Several Versions (1)</a>
       </li>
       <li>
-        <a href='#toc10'>Missing Sources (3)</a>
+        <a href='#toc10'>Multiple Nested JARs (1)</a>
+      </li>
+      <li>
+        <a href='#toc11'>Missing Sources (3)</a>
       </li>
       <li>
         <a href='#poms'>6 POMs in the repository</a>
@@ -310,13 +313,19 @@ tr:hover { background-color: #D0E0FF; }
       <span class='file'>${repo}/junit/test/different-version/1.0/different-version-1.0.pom</span> but was 
       <span class='file'>${repo}/junit/test/different-versions/1.0/different-versions-1.0.pom</span>
     </div>
-    <h2 id='toc9'>Multiple Nested JARs</h2>
+    <h2 id='toc9'>Artifacts With Several Versions</h2>
+    <p>1 time</p>
+    <div class='problem'>
+      <div class='ignoreKey'>TwoVersionsProblem E0001 org.eclipse.orbit:orbit.org.apache.lucene 1.9.1 2.9.1</div>
+      <span class='message'>The artifact org.eclipse.orbit:orbit.org.apache.lucene exists with several versions: 1.9.1 2.9.1</span>
+    </div>
+    <h2 id='toc10'>Multiple Nested JARs</h2>
     <p>1 time</p>
     <div class='problem'>
       <div class='ignoreKey'>MultipleNestedJarsProblem W0004 org/eclipse/birt/org.eclipse.birt.report.data.oda.jdbc.dbprofile/3.7.0.v20110603/org.eclipse.birt.report.data.oda.jdbc.dbprofile-3.7.0.v20110603.jar .,src</div>
       <span class='message'>Found multiple nested JARs in .../m2repo/org/eclipse/birt/org.eclipse.birt.report.data.oda.jdbc.dbprofile/3.7.0.v20110603/org.eclipse.birt.report.data.oda.jdbc.dbprofile-3.7.0.v20110603.jar</span>
     </div>
-    <h2 id='toc10'>Missing Sources</h2>
+    <h2 id='toc11'>Missing Sources</h2>
     <p>3 times</p>
     <div class='problem'>
       <p>Missing sources for 3 artifacts</p>

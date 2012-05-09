@@ -13,6 +13,7 @@ package m4e
 import groovy.xml.MarkupBuilder;
 import java.io.File;
 import java.text.SimpleDateFormat;
+import m4e.maven.VersionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,8 @@ repository groupId:artifactId:version
         if( !repo.exists() ) {
             throw new UserError( "Directory ${repo} doesn't exist" )
         }
+        
+        prepareErrorLog( repo, 'dependencyManagement' )
 
         if( args.size() <= 2 ) {
             throw new UserError( 'Missing groupId:artifactId:version of the POM to create' )
@@ -91,13 +94,16 @@ repository groupId:artifactId:version
     }
 
     void twoVersionsError( Pom pom, String oldVersion ) {
+        
+        def versions = VersionUtils.sort( [ pom.version(), oldVersion ] )
+        
         def xml = [
             artifact: pom.key(),
             shortKey: pom.shortKey(),
-            version1: pom.version(),
-            version2: oldVersion,
+            version1: versions[0],
+            version2: versions[1],
         ]
-        error( Error.TWO_VERSIONS, "The repository contains (at least) two versions of ${pom.shortKey()}: ${pom.version()} and ${oldVersion}. Omitting both.", xml )
+        error( Error.TWO_VERSIONS, "The repository contains (at least) two versions of ${pom.shortKey()}: ${versions[0]} and ${versions[1]}. Omitting both.", xml )
     }
 
     void createPom() {

@@ -193,6 +193,10 @@ class Analyzer implements CommonConstants {
         def problem
         
         switch( e ) {
+        case Error.TWO_VERSIONS:
+            problem = TwoVersionsProblem.create( node )
+            break
+            
         case Error.MISSING_MANIFEST:
             problem = MissingManifest.create( node )
             break
@@ -708,6 +712,23 @@ class MultipleNestedJarsProblem extends CommandProblem {
     }
 }
 
+class TwoVersionsProblem extends CommandProblem {
+    
+    static TwoVersionsProblem create( node ) {
+        
+        String shortKey = node.'@shortKey'
+        String version1 = node.'@version1'
+        String version2 = node.'@version2'
+        String key = "${node.'@code'} ${shortKey} ${version1} ${version2}"
+        
+        String message = "The artifact ${shortKey} exists with several versions: ${version1} ${version2}"
+        
+        def result = new TwoVersionsProblem( key: key, message: message )
+        
+        return result
+    }
+}
+
 class MissingManifest extends CommandProblem {
     
     String jar
@@ -1114,6 +1135,7 @@ enum ProblemType {
     ProblemVersionRange( 'Dependencies With Version Ranges', 'Dependencies should not use version ranges.' ),
     ProblemSnaphotVersion( 'Snapshot Versions', 'Release Repositories should not contain SNAPSHOTs' ),
     PathProblem( 'Path Problems', 'These POMs are not where they should be' ),
+    TwoVersionsProblem( 'Artifacts With Several Versions' ),
     MultipleNestedJarsProblem( 'Multiple Nested JARs' ),
     MissingSources( 'Missing Sources' )
     
