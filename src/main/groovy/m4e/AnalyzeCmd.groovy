@@ -24,7 +24,7 @@ repository [ ignore ]
 - Check a converted Maven 2 repository for various problems
 '''
         
-    void run( String... args ) {
+    void doRun( String... args ) {
         if( args.size() <= 1 ) {
             throw new UserError( 'Missing path to repository to analyze' )
         }

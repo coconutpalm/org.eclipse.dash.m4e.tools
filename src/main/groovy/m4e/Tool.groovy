@@ -120,7 +120,7 @@ class CleanCmd extends AbstractCommand {
     
     final static String DESCRIPTION = '\n- Clean the work directory'
     
-    void run( String... args ) {
+    void doRun( String... args ) {
         assert workDir != null
         
         log.info( 'Deleting {} and everything below', workDir )

@@ -17,7 +17,7 @@ class AttachSourcesCmd extends AbstractCommand {
     
     int count
 
-    void run( String... args ) {
+    void doRun( String... args ) {
         log.warn( 'This command is obsolete' )
     }
 }

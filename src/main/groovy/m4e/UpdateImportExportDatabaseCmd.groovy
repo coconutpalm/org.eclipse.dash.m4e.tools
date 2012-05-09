@@ -21,7 +21,7 @@ repository
 '''
     
     @Override
-    public void run( String... args ) {
+    public void doRun( String... args ) {
         File repo = repoOption( args, 1 )
         
         File dbPath = new File( repo, '.mt4e/importExportDB' )

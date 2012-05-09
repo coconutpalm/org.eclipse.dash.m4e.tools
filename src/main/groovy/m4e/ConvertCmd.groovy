@@ -18,7 +18,7 @@ groupId:artifactId:version patches...
     
 The first argument is used to create a POM file with a dependencyManagement element.'''
     
-    void run( String... args ) {
+    void doRun( String... args ) {
         File downloads = new File( 'downloads' ).absoluteFile
         if( !downloads.exists() ) {
             throw new UserError( "Missing directory ${downloads}. Please create it and copy all files into it that you want to convert." )
@@ -39,8 +39,6 @@ The first argument is used to create a POM file with a dependencyManagement elem
         importArchives( downloads )
         
         mergeRepos()
-        
-        attachSources()
         
         applyPatches( patches )
         
@@ -95,12 +93,6 @@ The first argument is used to create a POM file with a dependencyManagement elem
         args << targetRepo.absolutePath
         
         cmd.run( args )
-        mergeCounters( cmd )
-    }
-    
-    void attachSources() {
-        def cmd = new AttachSourcesCmd( workDir: workDir )
-        cmd.run( 'as', targetRepo.absolutePath )
         mergeCounters( cmd )
     }
     

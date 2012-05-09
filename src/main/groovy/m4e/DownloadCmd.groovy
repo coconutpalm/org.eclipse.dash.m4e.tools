@@ -22,7 +22,7 @@ url...
 '''
     
     @Override
-    public void run( String... args ) {
+    public void doRun( String... args ) {
         
         if( args.size() == 1 ) {
             throw new UserError( 'Missing URLs to download' )

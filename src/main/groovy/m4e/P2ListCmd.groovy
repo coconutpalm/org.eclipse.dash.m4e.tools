@@ -25,7 +25,7 @@ class P2ListCmd extends AbstractCommand {
 URL
     - List the content of a P2 repository.'''
         
-    void run( String... args ) {
+    void doRun( String... args ) {
         
         def url = findURL( args )
         log.info( 'Listing {}...', url )

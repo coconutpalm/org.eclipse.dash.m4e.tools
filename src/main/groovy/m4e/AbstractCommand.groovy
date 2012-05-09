@@ -25,7 +25,23 @@ abstract class AbstractCommand {
         run( args as String[] )
     }
     
-    abstract void run( String... args );
+    void run( String... args ) {
+        prepare()
+        
+        doRun( args )
+        
+        destroy()
+    }
+    
+    void prepare() {
+        
+    }
+    
+    void destroy() {
+        
+    }
+    
+    abstract void doRun( String... args );
     
     int errorCount = 0
     int warningCount = 0

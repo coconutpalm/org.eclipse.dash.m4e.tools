@@ -26,7 +26,7 @@ class InstallCmd extends AbstractCommand {
 
     final static String DESCRIPTION = '''archives...\n- Extract the specified archives and convert the Eclipse plug-ins inside into Maven artifacts'''
     
-    void run( String... args ) {
+    void doRun( String... args ) {
         // args[1..-1] throws "IndexOutOfBoundsException: toIndex = 2" if array has only one element
         if( args.size() > 1 ) {
             for( String archive in args[1..-1] ) {

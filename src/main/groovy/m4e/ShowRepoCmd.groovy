@@ -21,7 +21,7 @@ repository
 '''
     
     @Override
-    public void run( String... args ) {
+    public void doRun( String... args ) {
         
         File repo = repoOption( args, 1 )
         def view = new M2RepoView( repo: repo )
