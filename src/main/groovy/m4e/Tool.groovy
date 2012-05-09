@@ -26,7 +26,7 @@ class Tool {
     
     List<CmdInfo> commands = [
         new CmdInfo( names: ['convert'], impl: ConvertCmd ),
-        new CmdInfo( names: ['install', 'in'], impl: InstallCmd ),
+        new CmdInfo( names: ['install', 'in', 'import', 'im', 'imp'], impl: InstallCmd ),
         new CmdInfo( names: ['merge', 'me'], impl: MergeCmd ),
         new CmdInfo( names: ['attach-sources', 'as', 'attach', 'sources'], impl: AttachSourcesCmd ),
         new CmdInfo( names: ['apply-patches', 'patch', 'ap'], impl: PatchCmd ),
