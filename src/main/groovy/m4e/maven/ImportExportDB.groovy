@@ -161,7 +161,7 @@ class ImportExportDB {
                 return
             }
             
-            println "updateExports key=${key}"
+//            println "updateExports key=${key}"
             info.updateExports( exclusions )
         }
     }
@@ -197,12 +197,12 @@ class ImportExportInfo {
             return true
         }
         
-        println "exports=${exports}"
+//        println "exports=${exports}"
         
         if( l ) {
             deletions = l.toArray()
         }
         
-        println "deletions=${deletions}"
+//        println "deletions=${deletions}"
     }
 }

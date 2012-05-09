@@ -77,8 +77,8 @@ class ImportDependenciesPatch extends Patch {
     }
     
     void updateProperties( Pom pom, ImportExportInfo info ) {
-        println "updateProperties ${pom.key()}"
-        println info.deletions
+//        println "updateProperties ${pom.key()}"
+//        println info.deletions
         
         if( !info.deletions ) {
             return
