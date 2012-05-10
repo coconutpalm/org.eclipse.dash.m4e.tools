@@ -45,7 +45,7 @@ class DependencyManagementCmdTest {
         actual = actual.replace( '3.5.0 and 3.6.0.', '3.6.0 and 3.5.0.' )
         
         assertEquals( '''\
-The repository contains (at least) two versions of org.eclipse.core:org.eclipse.core.runtime: 3.6.0 and 3.5.0. Omitting both.
+The repository contains (at least) two versions of org.eclipse.core:org.eclipse.core.runtime: 3.5.0 and 3.6.0. Omitting both.
 For details, see http://wiki.eclipse.org/MT4E_E0001'''
             , errors.join( '\n' ) )
         
