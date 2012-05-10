@@ -161,35 +161,27 @@ class MergeCmd extends AbstractCommand {
         byte[] buffer1 = new byte[10240]
         byte[] buffer2 = new byte[10240]
         
-        try {
-            source.withInputStream { InputStream input1 ->
-                target.withInputStream { InputStream input2 ->
+        int d = 0
+
+        source.withInputStream { InputStream input1 ->
+            target.withInputStream { InputStream input2 ->
+                while( true ) {
+                    int len1 = input1.read( buffer1 )
+                    int len2 = input2.read( buffer2 )
                     
-                    while( true ) {
-                        int len1 = input1.read( buffer1 )
-                        int len2 = input2.read( buffer2 )
-                        
-                        if( len1 > -1 ) {
-                            if( len1 != len2 ) {
-                                throw new FileComparisonException();
-                            }
-                            
-                            if( !Arrays.equals( buffer1, buffer2 ) ) {
-                                throw new FileComparisonException();
-                            }
-                        } else if( len2 < 0 ) {
-                            throw new FileComparisonException();
-                        }
+                    d = len1 - len2
+                    if( d || len1 == -1 ) {
+                        break
                     }
                     
+                    if( !Arrays.equals( buffer1, buffer2 ) ) {
+                        d = 1
+                        break
+                    }
                 }
             }
-        } catch( FileComparisonException e ) {
-            return false;
         }
+        
+        return d == 0
     }
-}
-
-class FileComparisonException extends RuntimeException {
-    
 }

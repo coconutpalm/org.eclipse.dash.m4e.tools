@@ -1,0 +1,3 @@
+<mt4e-log command='install'>
+<error code='E0003' jar='${input}/plugins/nomanifest.jar'>Can't find manifest in ${input}/plugins/nomanifest.jar</error>
+</mt4e-log>
