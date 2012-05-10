@@ -209,6 +209,10 @@ class Analyzer implements CommonConstants {
             problem = MultipleNestedJarsProblem.create( node )
             break
         
+        case Warning.BINARY_DIFFERENCE:
+            problem = BinaryDifference.create( node )
+            break
+            
         default:
             log.warn( "Unsupported code ${code} ${e}" )
             return 
@@ -348,6 +352,11 @@ tr:hover { background-color: #D0E0FF; }
             
             if( key.description ) {
                 builder.p key.description
+            }
+            if( key.url ) {
+                builder.p{
+                    a( href: key.url, 'More information' )
+                }
             }
             
             int count = 0
@@ -702,7 +711,7 @@ class MultipleNestedJarsProblem extends CommandProblem {
         String jar = PathUtils.normalize( node.'@jar'.toString() )
         String relPath = jar.substringAfterLast( '/m2repo/' )
         String nestedJarPath = node.'@nestedJarPath'
-        String key = "${node.'@code'} ${relPath} ${nestedJarPath}"
+        String key = "${relPath} ${nestedJarPath}"
         
         String message = "Found multiple nested JARs in ${jar}"
         
@@ -719,7 +728,7 @@ class TwoVersionsProblem extends CommandProblem {
         String shortKey = node.'@shortKey'
         String version1 = node.'@version1'
         String version2 = node.'@version2'
-        String key = "${node.'@code'} ${shortKey} ${version1} ${version2}"
+        String key = "${shortKey} ${version1} ${version2}"
         
         String message = "The artifact ${shortKey} exists with several versions: ${version1} ${version2}"
         
@@ -740,11 +749,25 @@ class MissingManifest extends CommandProblem {
         String jar = PathUtils.normalize( node.'@jar'.toString() )
         jar = jar.removeEnd( '/META-INF/MANIFEST.MF' )
         
-        String key = "${node.'@code'} ${jar.substringAfterLast( '/' )}"
+        String key = "${jar.substringAfterLast( '/' )}"
         String message = "Couldn't find MANIFEST.MF in ${jar}"
 
         def result = new MissingManifest( jar: jar, key: key, message: message )
         
+        return result
+    }
+}
+
+class BinaryDifference extends CommandProblem {
+    
+    static BinaryDifference create( node ) {
+        
+        String source = PathUtils.normalize( node.'@source'.toString() )
+        String target = PathUtils.normalize( node.'@target'.toString() )
+        
+        String key = "${source.substringAfterLast( '/' )}"
+        
+        def result = new BinaryDifference( key: key )
         return result
     }
 }
@@ -1125,26 +1148,29 @@ class MissingDependency extends Problem {
 }
 
 enum ProblemType {
-    ImportError( 'Plug-ins Which Couldn\'t be Imported' ),
-    MissingManifest( 'Plug-ins Without Manifest' ),
-    Problem( 'Generic Problems', null),
-    ProblemSameKeyDifferentVersion( 'POMs with same ID but different version', null),
-    DependencyWithoutVersion( 'Problems With Dependencies', null),
-    ProblemDifferentVersions( 'Dependencies With Different Versions', null),
+    ImportError( 'Plug-ins Which Couldn\'t be Imported', null, Error.IMPORT_ERROR.url() ),
+    MissingManifest( 'Plug-ins Without Manifest', 'Each plug-in must have a MANFEST.MF file', Error.MISSING_MANIFEST.url() ),
+    BinaryDifference( 'Plug-ins With Binary Differences', 'Each pair of plug-ins should be identical (same name and version) but the JAR files are different', Warning.BINARY_DIFFERENCE.url() ),
+    Problem( 'Generic Problems' ),
+    ProblemSameKeyDifferentVersion( 'POMs with same ID but different version' ),
+    DependencyWithoutVersion( 'Dependencies Without Version' ),
+    ProblemDifferentVersions( 'Dependencies With Different Versions' ),
     MissingDependency( 'Missing Dependencies', "The following dependencies are used in POMs in the repository but they couldn't be found in it." ),
     ProblemVersionRange( 'Dependencies With Version Ranges', 'Dependencies should not use version ranges.' ),
     ProblemSnaphotVersion( 'Snapshot Versions', 'Release Repositories should not contain SNAPSHOTs' ),
     PathProblem( 'Path Problems', 'These POMs are not where they should be' ),
-    TwoVersionsProblem( 'Artifacts With Several Versions' ),
-    MultipleNestedJarsProblem( 'Multiple Nested JARs' ),
+    TwoVersionsProblem( 'Artifacts With Several Versions', null, Error.TWO_VERSIONS.url() ),
+    MultipleNestedJarsProblem( 'Multiple Nested JARs', "At the moment, MT4E can only handle a single nested JAR", Warning.MULTIPLE_NESTED_JARS.url() ),
     MissingSources( 'Missing Sources' )
     
     final String title
     final String description
+    final String url
     
-    private ProblemType( String title, String description = null ) {
+    private ProblemType( String title, String description = null, String url = null ) {
         this.title = title
         this.description = description
+        this.url = url
     }
     
     public static ProblemType byClass( Class type ) {
