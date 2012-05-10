@@ -1,0 +1,11 @@
+MissingManifest nomanifest.jar
+
+ProblemDifferentVersions null org.eclipse.equinox:org.eclipse.equinox.preferences
+ProblemDifferentVersions null junit:junit
+
+MissingDependency de.pdark:decentxml
+MissingDependency junit:junit
+MissingDependency org.eclipse.*:*
+MissingDependency org.slf4j:slf4j-api
+
+MultipleNestedJarsProblem org/eclipse/birt/org.eclipse.birt.report.data.oda.jdbc.dbprofile/3.7.0.v20110603/org.eclipse.birt.report.data.oda.jdbc.dbprofile-3.7.0.v20110603.jar .,src

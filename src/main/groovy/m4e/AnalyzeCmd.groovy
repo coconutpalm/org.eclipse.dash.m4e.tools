@@ -89,6 +89,11 @@ class Analyzer implements CommonConstants {
                 line = line.substringAfter( ' ' )
                 ignoreMissingSources << new Glob( line, manyRegexp )
             } else {
+                if( line.startsWith( 'ProblemSameKeyDifferentVersion ' ) ) {
+                    String pattern = line.substringAfter( ' ' )
+                    ignores << new Glob( 'TwoVersionsProblem ' + pattern, manyRegexp )
+                }
+            
                 ignores << new Glob( line, manyRegexp )
             }
         }
@@ -935,7 +940,7 @@ class ProblemSameKeyDifferentVersion extends Problem {
     
     @Override
     String key() {
-        return "${super.key()} ${other.key()}"
+        return "${getClass().simpleName} ${pom.shortKey()} ${pom.version()} ${other.version()}"
     }
     
     @Override

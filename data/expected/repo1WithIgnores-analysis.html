@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Analysis of ${repo} (1970.01.01 00:00:00)</title>
+    <title>Analysis of ${repo} (2012.05.10 09:29:10)</title>
     <style type='text/css'>
 html, body { background: white; }
 .pom { font-weight: bold; color: #7F0055; font-family: monospace; }
@@ -18,16 +18,16 @@ tr:hover { background-color: #D0E0FF; }
 </style>
   </head>
   <body>
-    <h1>Analysis of ${repo} (1970.01.01 00:00:00)</h1>
+    <h1>Analysis of ${repo} (2012.05.10 09:29:10)</h1>
     <p>Found 6 POM files</p>
-    <p>Found 27 problems</p>
+    <p>Found 13 problems</p>
     <h2>Table of Contents</h2>
     <ul class='toc'>
       <li>
         <a href='#toc1'>Plug-ins Which Couldn't be Imported (2)</a>
       </li>
       <li>
-        <a href='#toc2'>Plug-ins Without Manifest (2)</a>
+        <a href='#toc2'>Plug-ins Without Manifest (1)</a>
       </li>
       <li>
         <a href='#toc3'>Plug-ins With Binary Differences (1)</a>
@@ -39,25 +39,19 @@ tr:hover { background-color: #D0E0FF; }
         <a href='#toc5'>Dependencies Without Version (1)</a>
       </li>
       <li>
-        <a href='#toc6'>Dependencies With Different Versions (2)</a>
+        <a href='#toc6'>Missing Dependencies (2)</a>
       </li>
       <li>
-        <a href='#toc7'>Missing Dependencies (12)</a>
+        <a href='#toc7'>Snapshot Versions (2)</a>
       </li>
       <li>
-        <a href='#toc8'>Snapshot Versions (2)</a>
+        <a href='#toc8'>Path Problems (1)</a>
       </li>
       <li>
-        <a href='#toc9'>Path Problems (1)</a>
+        <a href='#toc9'>Artifacts With Several Versions (1)</a>
       </li>
       <li>
-        <a href='#toc10'>Artifacts With Several Versions (1)</a>
-      </li>
-      <li>
-        <a href='#toc11'>Multiple Nested JARs (1)</a>
-      </li>
-      <li>
-        <a href='#toc12'>Missing Sources (3)</a>
+        <a href='#toc10'>Missing Sources (3)</a>
       </li>
       <li>
         <a href='#poms'>6 POMs in the repository</a>
@@ -79,11 +73,7 @@ tr:hover { background-color: #D0E0FF; }
     <p>
       <a href='http://wiki.eclipse.org/MT4E_E0003'>More information</a>
     </p>
-    <p>2 times</p>
-    <div class='problem'>
-      <div class='ignoreKey'>MissingManifest nomanifest.jar</div>
-      <span class='message'>Couldn't find MANIFEST.MF in ${input}/plugins/nomanifest.jar</span>
-    </div>
+    <p>1 time</p>
     <div class='problem'>
       <div class='ignoreKey'>MissingManifest unpackedPlugin</div>
       <span class='message'>Couldn't find MANIFEST.MF in ${input}/plugins/unpackedPlugin</span>
@@ -123,177 +113,15 @@ tr:hover { background-color: #D0E0FF; }
       <span class='message'>Missing version in dependency</span> 
       <span class='dependency'>org.slf4j:slf4j-api:null</span>
     </div>
-    <h2 id='toc6'>Dependencies With Different Versions</h2>
-    <p>2 times</p>
-    <div class='problem'>
-      <div class='ignoreKey'>ProblemDifferentVersions null org.eclipse.equinox:org.eclipse.equinox.preferences</div>The dependency 
-      <span class='dependency'>org.eclipse.equinox:org.eclipse.equinox.preferences</span> is referenced with 2 different versions:
-      <ul>
-        <li>Version "
-          <span class='version'>[3.2.0,4.0.0)</span>" is used in:
-          <ul>
-            <li>
-              <span class='pom'>org.eclipse.core:org.eclipse.core.runtime</span>:
-              <span class='version'>3.5.0</span>
-            </li>
-          </ul>
-        </li>
-        <li>Version "
-          <span class='version'>[3.3.0,4.0.0)</span>" is used in:
-          <ul>
-            <li>
-              <span class='pom'>org.eclipse.core:org.eclipse.core.runtime</span>:
-              <span class='version'>3.6.0</span>
-            </li>
-          </ul>
-        </li>
-      </ul>
-    </div>
-    <div class='problem'>
-      <div class='ignoreKey'>ProblemDifferentVersions null junit:junit</div>The dependency 
-      <span class='dependency'>junit:junit</span> is referenced with 2 different versions:
-      <ul>
-        <li>Version "
-          <span class='version'>4.8.1</span>" is used in:
-          <ul>
-            <li>
-              <span class='pom'>junit.test:different-version</span>:
-              <span class='version'>1.0</span>
-            </li>
-          </ul>
-        </li>
-        <li>Version "
-          <span class='version'>4.8.2</span>" is used in:
-          <ul>
-            <li>
-              <span class='pom'>junit.test:missing-version</span>:
-              <span class='version'>1.0</span>
-            </li>
-            <li>
-              <span class='pom'>junit.test:snapshot-version</span>:
-              <span class='version'>0.3.0-SNAPSHOT</span>
-            </li>
-          </ul>
-        </li>
-      </ul>
-    </div>
-    <h2 id='toc7'>Missing Dependencies</h2>
+    <h2 id='toc6'>Missing Dependencies</h2>
     <p>The following dependencies are used in POMs in the repository but they couldn't be found in it.</p>
-    <p>12 times</p>
+    <p>2 times</p>
     <div class='problem'>
       <div class='ignoreKey'>MissingDependency ch.qos.logback:logback-classic</div>The dependency 
       <span class='dependency'>ch.qos.logback:logback-classic</span> is used in 1 POMs:
       <ul>
         <li>
           <span class='pom'>junit.test:missing-version:1.0</span>
-        </li>
-      </ul>
-    </div>
-    <div class='problem'>
-      <div class='ignoreKey'>MissingDependency de.pdark:decentxml</div>The dependency 
-      <span class='dependency'>de.pdark:decentxml</span> is used in 1 POMs:
-      <ul>
-        <li>
-          <span class='pom'>junit.test:snapshot-version:0.3.0-SNAPSHOT</span>
-        </li>
-      </ul>
-    </div>
-    <div class='problem'>
-      <div class='ignoreKey'>MissingDependency junit:junit</div>The dependency 
-      <span class='dependency'>junit:junit</span> is used in 3 POMs:
-      <ul>
-        <li>
-          <span class='pom'>junit.test:different-version:1.0</span>
-        </li>
-        <li>
-          <span class='pom'>junit.test:missing-version:1.0</span>
-        </li>
-        <li>
-          <span class='pom'>junit.test:snapshot-version:0.3.0-SNAPSHOT</span>
-        </li>
-      </ul>
-    </div>
-    <div class='problem'>
-      <div class='ignoreKey'>MissingDependency org.eclipse.core:org.eclipse.core.contenttype</div>The dependency 
-      <span class='dependency'>org.eclipse.core:org.eclipse.core.contenttype</span> is used in 2 POMs:
-      <ul>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.5.0</span>
-        </li>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.6.0</span>
-        </li>
-      </ul>
-    </div>
-    <div class='problem'>
-      <div class='ignoreKey'>MissingDependency org.eclipse.core:org.eclipse.core.jobs</div>The dependency 
-      <span class='dependency'>org.eclipse.core:org.eclipse.core.jobs</span> is used in 2 POMs:
-      <ul>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.5.0</span>
-        </li>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.6.0</span>
-        </li>
-      </ul>
-    </div>
-    <div class='problem'>
-      <div class='ignoreKey'>MissingDependency org.eclipse.equinox:org.eclipse.equinox.app</div>The dependency 
-      <span class='dependency'>org.eclipse.equinox:org.eclipse.equinox.app</span> is used in 2 POMs:
-      <ul>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.5.0</span>
-        </li>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.6.0</span>
-        </li>
-      </ul>
-    </div>
-    <div class='problem'>
-      <div class='ignoreKey'>MissingDependency org.eclipse.equinox:org.eclipse.equinox.common</div>The dependency 
-      <span class='dependency'>org.eclipse.equinox:org.eclipse.equinox.common</span> is used in 2 POMs:
-      <ul>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.5.0</span>
-        </li>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.6.0</span>
-        </li>
-      </ul>
-    </div>
-    <div class='problem'>
-      <div class='ignoreKey'>MissingDependency org.eclipse.equinox:org.eclipse.equinox.preferences</div>The dependency 
-      <span class='dependency'>org.eclipse.equinox:org.eclipse.equinox.preferences</span> is used in 2 POMs:
-      <ul>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.5.0</span>
-        </li>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.6.0</span>
-        </li>
-      </ul>
-    </div>
-    <div class='problem'>
-      <div class='ignoreKey'>MissingDependency org.eclipse.equinox:org.eclipse.equinox.registry</div>The dependency 
-      <span class='dependency'>org.eclipse.equinox:org.eclipse.equinox.registry</span> is used in 2 POMs:
-      <ul>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.5.0</span>
-        </li>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.6.0</span>
-        </li>
-      </ul>
-    </div>
-    <div class='problem'>
-      <div class='ignoreKey'>MissingDependency org.eclipse.osgi:org.eclipse.osgi</div>The dependency 
-      <span class='dependency'>org.eclipse.osgi:org.eclipse.osgi</span> is used in 2 POMs:
-      <ul>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.5.0</span>
-        </li>
-        <li>
-          <span class='pom'>org.eclipse.core:org.eclipse.core.runtime:3.6.0</span>
         </li>
       </ul>
     </div>
@@ -306,16 +134,7 @@ tr:hover { background-color: #D0E0FF; }
         </li>
       </ul>
     </div>
-    <div class='problem'>
-      <div class='ignoreKey'>MissingDependency org.slf4j:slf4j-api</div>The dependency 
-      <span class='dependency'>org.slf4j:slf4j-api</span> is used in 1 POMs:
-      <ul>
-        <li>
-          <span class='pom'>junit.test:missing-version:1.0</span>
-        </li>
-      </ul>
-    </div>
-    <h2 id='toc8'>Snapshot Versions</h2>
+    <h2 id='toc7'>Snapshot Versions</h2>
     <p>Release Repositories should not contain SNAPSHOTs</p>
     <p>2 times</p>
     <div class='problem'>The POM 
@@ -325,7 +144,7 @@ tr:hover { background-color: #D0E0FF; }
       <span class='dependency'>de.pdark:decentxml:1.4-SNAPSHOT</span> in POM 
       <span class='pom'>junit.test:snapshot-version:0.3.0-SNAPSHOT</span> uses a snapshot version
     </div>
-    <h2 id='toc9'>Path Problems</h2>
+    <h2 id='toc8'>Path Problems</h2>
     <p>These POMs are not where they should be</p>
     <p>1 time</p>
     <div class='problem'>The path for the POM 
@@ -333,7 +152,7 @@ tr:hover { background-color: #D0E0FF; }
       <span class='file'>${repo}/junit/test/different-version/1.0/different-version-1.0.pom</span> but was 
       <span class='file'>${repo}/junit/test/different-versions/1.0/different-versions-1.0.pom</span>
     </div>
-    <h2 id='toc10'>Artifacts With Several Versions</h2>
+    <h2 id='toc9'>Artifacts With Several Versions</h2>
     <p>
       <a href='http://wiki.eclipse.org/MT4E_E0001'>More information</a>
     </p>
@@ -342,17 +161,7 @@ tr:hover { background-color: #D0E0FF; }
       <div class='ignoreKey'>TwoVersionsProblem org.eclipse.orbit:orbit.org.apache.lucene 1.9.1 2.9.1</div>
       <span class='message'>The artifact org.eclipse.orbit:orbit.org.apache.lucene exists with several versions: 1.9.1 2.9.1</span>
     </div>
-    <h2 id='toc11'>Multiple Nested JARs</h2>
-    <p>At the moment, MT4E can only handle a single nested JAR</p>
-    <p>
-      <a href='http://wiki.eclipse.org/MT4E_W0004'>More information</a>
-    </p>
-    <p>1 time</p>
-    <div class='problem'>
-      <div class='ignoreKey'>MultipleNestedJarsProblem org/eclipse/birt/org.eclipse.birt.report.data.oda.jdbc.dbprofile/3.7.0.v20110603/org.eclipse.birt.report.data.oda.jdbc.dbprofile-3.7.0.v20110603.jar .,src</div>
-      <span class='message'>Found multiple nested JARs in .../m2repo/org/eclipse/birt/org.eclipse.birt.report.data.oda.jdbc.dbprofile/3.7.0.v20110603/org.eclipse.birt.report.data.oda.jdbc.dbprofile-3.7.0.v20110603.jar</span>
-    </div>
-    <h2 id='toc12'>Missing Sources</h2>
+    <h2 id='toc10'>Missing Sources</h2>
     <p>3 times</p>
     <div class='problem'>
       <p>Missing sources for 3 artifacts</p>

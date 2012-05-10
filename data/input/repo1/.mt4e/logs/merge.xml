@@ -1,0 +1,3 @@
+<mt4e-log command='merge'>
+<warning code='W0003' source='/home/adigulla/workspace/org.eclipse.dash.m4e.tools/data/input/mergeTest/repo2/org/eclipse/core/org.eclipse.core.resources/3.7.101/org.eclipse.core.resources-3.7.101.jar' target='/home/adigulla/workspace/org.eclipse.dash.m4e.tools/tmp-test/testMerge/org/eclipse/core/org.eclipse.core.resources/3.7.101/org.eclipse.core.resources-3.7.101.jar'>File /home/adigulla/workspace/org.eclipse.dash.m4e.tools/data/input/mergeTest/repo2/org/eclipse/core/org.eclipse.core.resources/3.7.101/org.eclipse.core.resources-3.7.101.jar differs from /home/adigulla/workspace/org.eclipse.dash.m4e.tools/tmp-test/testMerge/org/eclipse/core/org.eclipse.core.resources/3.7.101/org.eclipse.core.resources-3.7.101.jar</warning>
+</mt4e-log>

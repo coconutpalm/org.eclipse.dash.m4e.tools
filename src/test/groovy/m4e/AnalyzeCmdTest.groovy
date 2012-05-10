@@ -14,7 +14,7 @@ import static org.junit.Assert.*;
 import groovy.xml.MarkupBuilder;
 import org.junit.Test;
 
-class AnalyzeCmdTest {
+class AnalyzeCmdTest implements CommonConstants {
 
     @Test
     public void testRenderProblem() throws Exception {
@@ -45,7 +45,28 @@ class AnalyzeCmdTest {
         Analyzer tool = new Analyzer( copy, cal )
         tool.run()
         
-        String expected = new File( 'data/expected/repo1-analysis-19700101-000000.html' ).getText( 'utf-8' ).normalize().trim()
+        String expected = new File( 'data/expected/repo1-analysis-19700101-000000.html' ).getText( UTF_8 ).normalize().trim()
+        String actual = tool.reportFile.getText( 'utf-8' ).normalize().trim().replace( tool.repo.path, '${repo}' )
+        
+        assertEquals( expected, actual )
+    }
+    
+    @Test
+    public void testAnalyzeRepo1WithIgnores() throws Exception {
+        
+        File source = new File( 'data/input/repo1' )
+        File copy = CommonTestCode.prepareRepo( source, 'repo1WithIgnores' )
+        
+        Calendar cal = Calendar.getInstance( TimeZone.getTimeZone( 'GMT' ) )
+        cal.setTimeInMillis( 1336642150000L )
+        
+        Analyzer tool = new Analyzer( copy, cal )
+        
+        tool.loadIgnores( new File( 'data/input/repo1.ignore') )
+        
+        tool.run()
+        
+        String expected = new File( 'data/expected/repo1WithIgnores-analysis.html' ).getText( UTF_8 ).normalize().trim()
         String actual = tool.reportFile.getText( 'utf-8' ).normalize().trim().replace( tool.repo.path, '${repo}' )
         
         assertEquals( expected, actual )
