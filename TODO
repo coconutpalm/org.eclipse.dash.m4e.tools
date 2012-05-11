@@ -1,0 +1,6 @@
+TODO
+
+- SNAPSHOT artifacts built with Tycho aren't handled correctly
+- Find lonely sources and mention them in the report
+- A command to deploy (part of) a repo to a server (incl. redeploy of releases -> delete those artifacts in the local m2 repo)
+- A command to refresh (part of) the local m2 repo (so Maven will download the artifacts again)
