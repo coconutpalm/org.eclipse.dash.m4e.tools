@@ -26,7 +26,8 @@ class DeleteClassesTest {
         File root = CommonTestCode.prepareRepo( new File( 'data/input/deleteClasses' ), 'testDeleteCommonsFromBatikPDF' )
         File repo = new File( root, 'm2repo' )
         
-        def pom = Pom.load( new File( repo, 'org/apache/batik/org.apache.batik.pdf/1.6.0.v201105071520/org.apache.batik.pdf-1.6.0.v201105071520.pom' ) )
+        String baseName = 'org/apache/batik/org.apache.batik.pdf/1.6.0.v201105071520/org.apache.batik.pdf-1.6.0.v201105071520'
+        def pom = Pom.load( new File( repo, "${baseName}.pom" ) )
         
         def pattern = [ 'org/apache/commons/*' ]
         def tool = new DeleteClasses( 'org.apache.batik:org.apache.batik.pdf:1.6.0*', pattern )
@@ -36,10 +37,13 @@ class DeleteClassesTest {
         
         assertEquals( 31, tool.count )
         
-        def bak = new File( repo, 'org/apache/batik/org.apache.batik.pdf/1.6.0.v201105071520/org.apache.batik.pdf-1.6.0.v201105071520.jar.bak' )
-        assert bak.exists()
+        String expected = """\
+${baseName}.jar
+${baseName}.jar.bak
+${baseName}.pom"""
+        assertEquals( expected, CommonTestCode.listFiles( repo ) )
         
-        def jar = new File( repo, 'org/apache/batik/org.apache.batik.pdf/1.6.0.v201105071520/org.apache.batik.pdf-1.6.0.v201105071520.jar' )
+        def jar = new File( repo, "${baseName}.jar" )
         def zipFile = new ZipFile( jar )
         
         def entry = zipFile[ 'META-INF/ECLIPSEF.SF' ]

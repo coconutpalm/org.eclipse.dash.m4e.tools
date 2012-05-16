@@ -93,6 +93,23 @@ class StripQualifiersTest {
         tool.loadPatches()
         tool.applyPatches()
         
+        assertEquals( '''\
+org/apache/batik/org.apache.batik.dom/1.6.0/org.apache.batik.dom-1.6.0.pom
+org/apache/batik/org.apache.batik.dom/1.6.0/org.apache.batik.dom-1.6.0.pom.bak
+org/apache/batik/org.apache.batik.util/1.6.0.1/org.apache.batik.util-1.6.0.1.pom
+org/apache/batik/org.apache.batik.util/1.6.0.1/org.apache.batik.util-1.6.0.1.pom.bak
+org/eclipse/m2e/org.eclipse.m2e.logback.configuration/1.0.200/org.eclipse.m2e.logback.configuration-1.0.200.pom
+org/eclipse/m2e/org.eclipse.m2e.logback.configuration/1.0.200/org.eclipse.m2e.logback.configuration-1.0.200.pom.bak
+org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x86-3.7.1-sources.jar
+org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x86-3.7.1-sources.jar.sha1
+org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x86-3.7.1.jar
+org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x86-3.7.1.jar.bak
+org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x86-3.7.1.pom
+org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x86-3.7.1.pom.bak
+org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x86-3.7.1.sha1
+org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x86-3.7.1xxx'''
+            , CommonTestCode.listFiles( target ) )
+        
         File dir = new File( target, 'org/eclipse/swt/org.eclipse.swt.gtk.linux.x86' )
         def pom = Pom.load( new File( dir, '3.7.1/org.eclipse.swt.gtk.linux.x86-3.7.1.pom' ) )
         
@@ -101,23 +118,7 @@ class StripQualifiersTest {
         File newDir = new File( dir, pom.version() )
         assert newDir.exists()
 
-        def l = []
-        newDir.eachFile { l << it.name }
-        l.sort()
-        
-        assertEquals( '''\
-org.eclipse.swt.gtk.linux.x86-3.7.1-sources.jar
-org.eclipse.swt.gtk.linux.x86-3.7.1-sources.jar.sha1
-org.eclipse.swt.gtk.linux.x86-3.7.1.jar
-org.eclipse.swt.gtk.linux.x86-3.7.1.jar.bak
-org.eclipse.swt.gtk.linux.x86-3.7.1.pom
-org.eclipse.swt.gtk.linux.x86-3.7.1.pom.bak
-org.eclipse.swt.gtk.linux.x86-3.7.1.sha1
-org.eclipse.swt.gtk.linux.x86-3.7.1xxx''', 
-            l.join( '\n' ) )
-        
-        String actual = new File( newDir, 'org.eclipse.swt.gtk.linux.x86-3.7.1.pom' ).getText( "UTF-8" )
-        assertEquals( '''\
+        CommonTestCode.fileEquals( '''\
 <?xml version="1.0" encoding="UTF-8"?>
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -140,9 +141,8 @@ org.eclipse.swt.gtk.linux.x86-3.7.1xxx''',
       <version>3.7.1</version>
     </dependency>
   </dependencies>
-</project>
-''',
-            actual )
+</project>''',
+            new File( newDir, 'org.eclipse.swt.gtk.linux.x86-3.7.1.pom' ) )
 
         dir = new File( target, 'org/apache/batik/org.apache.batik.util' )
         
@@ -152,8 +152,7 @@ org.eclipse.swt.gtk.linux.x86-3.7.1xxx''',
         newDir = new File( dir, pom.version() )
         assert newDir.exists()
         
-        actual = new File( newDir, 'org.apache.batik.util-1.6.0.1.pom' ).getText( "UTF-8" )
-        assertEquals( '''\
+        CommonTestCode.fileEquals( '''\
 <?xml version="1.0" encoding="UTF-8"?>
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -169,9 +168,8 @@ org.eclipse.swt.gtk.linux.x86-3.7.1xxx''',
       <version>[1.6.0,1.7.0)</version>
     </dependency>
   </dependencies>
-</project>
-''',
-            actual )
+</project>''',
+            new File( newDir, 'org.apache.batik.util-1.6.0.1.pom' ) )
 
         dir = new File( target, 'org/apache/batik/org.apache.batik.dom' )
         
@@ -182,8 +180,7 @@ org.eclipse.swt.gtk.linux.x86-3.7.1xxx''',
         newDir = new File( dir, pom.version() )
         assert newDir.exists()
         
-        actual = new File( newDir, 'org.apache.batik.dom-1.6.0.pom' ).getText( "UTF-8" )
-        assertEquals( '''\
+        CommonTestCode.fileEquals( '''\
 <?xml version="1.0" encoding="UTF-8"?>
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -214,8 +211,7 @@ org.eclipse.swt.gtk.linux.x86-3.7.1xxx''',
       <version>[1.3.0,1.4.0)</version>
     </dependency>
   </dependencies>
-</project>
-''',
-            actual )
+</project>''',
+            new File( newDir, 'org.apache.batik.dom-1.6.0.pom' ) )
     }
 }

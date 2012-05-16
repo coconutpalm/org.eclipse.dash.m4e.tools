@@ -86,11 +86,20 @@ class InstallCmdTest implements CommonConstants {
         
         File repo = new File( workDir, 'junit_home/m2repo' )
         
-        assert new File( repo, 'org/junit/org.junit/3.8.2.v3_8_2_v20100427-1100/org.junit-3.8.2.v3_8_2_v20100427-1100.jar' ).exists()
-        assert new File( repo, 'org/junit/org.junit/3.8.2.v3_8_2_v20100427-1100/org.junit-3.8.2.v3_8_2_v20100427-1100-sources.jar' ).exists()
-        
-        String actual = new File( repo, 'org/junit/org.junit/3.8.2.v3_8_2_v20100427-1100/org.junit-3.8.2.v3_8_2_v20100427-1100.pom' ).getText( 'UTF-8' )
         assertEquals( '''\
+org/eclipse/m2e/org.eclipse.m2e.logback.configuration/1.0.200.20111228-1245/org.eclipse.m2e.logback.configuration-1.0.200.20111228-1245.jar
+org/eclipse/m2e/org.eclipse.m2e.logback.configuration/1.0.200.20111228-1245/org.eclipse.m2e.logback.configuration-1.0.200.20111228-1245.pom
+org/junit/org.junit/3.8.2.v3_8_2_v20100427-1100/org.junit-3.8.2.v3_8_2_v20100427-1100-sources.jar
+org/junit/org.junit/3.8.2.v3_8_2_v20100427-1100/org.junit-3.8.2.v3_8_2_v20100427-1100.jar
+org/junit/org.junit/3.8.2.v3_8_2_v20100427-1100/org.junit-3.8.2.v3_8_2_v20100427-1100.pom
+org/junit/org.junit/4.8.2.v4_8_2_v20110321-1705/org.junit-4.8.2.v4_8_2_v20110321-1705-sources.jar
+org/junit/org.junit/4.8.2.v4_8_2_v20110321-1705/org.junit-4.8.2.v4_8_2_v20110321-1705.jar
+org/junit/org.junit/4.8.2.v4_8_2_v20110321-1705/org.junit-4.8.2.v4_8_2_v20110321-1705.pom
+org/junit4/org.junit4/4.8.1.v20100525/org.junit4-4.8.1.v20100525.jar
+org/junit4/org.junit4/4.8.1.v20100525/org.junit4-4.8.1.v20100525.pom'''
+            , CommonTestCode.listFiles( repo ) )
+        
+        CommonTestCode.fileEquals( '''\
 <?xml version="1.0" encoding="UTF-8"?>
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -103,15 +112,10 @@ class InstallCmdTest implements CommonConstants {
   <properties>
     <mt4e.osgi.exportPackage>junit.awtui;version="3.8.2",junit.extensions;version="3.8.2",junit.framework;version="3.8.2",junit.runner;version="3.8.2",junit.swingui;version="3.8.2",junit.swingui.icons;version="3.8.2",junit.textui;version="3.8.2"</mt4e.osgi.exportPackage>
   </properties>
-</project>
-'''
-            , actual)
+</project>'''
+            , new File( repo, 'org/junit/org.junit/3.8.2.v3_8_2_v20100427-1100/org.junit-3.8.2.v3_8_2_v20100427-1100.pom' ) )
             
-        assert new File( repo, 'org/junit/org.junit/4.8.2.v4_8_2_v20110321-1705/org.junit-4.8.2.v4_8_2_v20110321-1705.jar' ).exists()
-        assert new File( repo, 'org/junit/org.junit/4.8.2.v4_8_2_v20110321-1705/org.junit-4.8.2.v4_8_2_v20110321-1705-sources.jar' ).exists()
-        
-        actual = new File( repo, 'org/junit/org.junit/4.8.2.v4_8_2_v20110321-1705/org.junit-4.8.2.v4_8_2_v20110321-1705.pom' ).getText( 'UTF-8' )
-        assertEquals( '''\
+        CommonTestCode.fileEquals( '''\
 <?xml version="1.0" encoding="UTF-8"?>
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -131,14 +135,10 @@ class InstallCmdTest implements CommonConstants {
       <version>[1.1.0,)</version>
     </dependency>
   </dependencies>
-</project>
-'''
-            , actual)
+</project>'''
+            , new File( repo, 'org/junit/org.junit/4.8.2.v4_8_2_v20110321-1705/org.junit-4.8.2.v4_8_2_v20110321-1705.pom' ) )
         
-        assert new File( repo, 'org/junit4/org.junit4/4.8.1.v20100525/org.junit4-4.8.1.v20100525.jar' ).exists()
-        
-        actual = new File( repo, 'org/junit4/org.junit4/4.8.1.v20100525/org.junit4-4.8.1.v20100525.pom' ).getText( 'UTF-8' )
-        assertEquals( '''\
+        CommonTestCode.fileEquals( '''\
 <?xml version="1.0" encoding="UTF-8"?>
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -160,14 +160,10 @@ class InstallCmdTest implements CommonConstants {
       <version>[4.8.1,)</version>
     </dependency>
   </dependencies>
-</project>
-'''
-            , actual)
+</project>'''
+            , new File( repo, 'org/junit4/org.junit4/4.8.1.v20100525/org.junit4-4.8.1.v20100525.pom' ) )
 
-        assert new File( repo, 'org/eclipse/m2e/org.eclipse.m2e.logback.configuration/1.0.200.20111228-1245/org.eclipse.m2e.logback.configuration-1.0.200.20111228-1245.jar' ).exists()
-        
-        actual = new File( repo, 'org/eclipse/m2e/org.eclipse.m2e.logback.configuration/1.0.200.20111228-1245/org.eclipse.m2e.logback.configuration-1.0.200.20111228-1245.pom' ).getText( 'UTF-8' )
-        assertEquals( '''\
+        CommonTestCode.fileEquals( '''\
 <?xml version="1.0" encoding="UTF-8"?>
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -203,9 +199,8 @@ class InstallCmdTest implements CommonConstants {
       <version>[1.6.1,)</version>
     </dependency>
   </dependencies>
-</project>
-'''
-            , actual)
+</project>'''
+            , new File( repo, 'org/eclipse/m2e/org.eclipse.m2e.logback.configuration/1.0.200.20111228-1245/org.eclipse.m2e.logback.configuration-1.0.200.20111228-1245.pom' ) )
             
     }
     
