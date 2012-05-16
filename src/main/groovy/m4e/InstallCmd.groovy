@@ -328,6 +328,11 @@ class BundleConverter {
     }
     
     boolean isSingleton
+    String licenseURL
+    
+    Map licenseNameMap = [
+        'http://www.apache.org/licenses/LICENSE-2.0.txt': 'Apache 2'
+    ]
     
     void examineManifest() {
 //        println manifest.entries
@@ -345,6 +350,11 @@ class BundleConverter {
         groupId = artifactIdToGroupId( artifactId )
         
         isSingleton = ( 'true' == attrs[0].getDirective( Constants.SINGLETON_DIRECTIVE ) )
+        
+        attrs = parseAttribute( 'Bundle-License' )
+        if( attrs && attrs.size() == 1 ) {
+            licenseURL = attrs[0].value
+        }
     }
     
     void unpackNestedJar( String nestedJarPath, File jarFile ) {
@@ -375,18 +385,20 @@ class BundleConverter {
         return parts[0..n].join( '.' )
     }
     
+    String indent = '  '
+    
     void createPom( Writer writer ) {
         
         statistics.pomCount ++
         
         writer << '<?xml version="1.0" encoding="UTF-8"?>\n'
         writer << '<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"\n'
-        writer << '    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n'
-        writer << '  <modelVersion>4.0.0</modelVersion>\n'
+        writer << indent*2 << 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n'
+        writer << indent << '<modelVersion>4.0.0</modelVersion>\n'
 
-        writer << '  <groupId>' << groupId << '</groupId>\n'
-        writer << '  <artifactId>' << artifactId << '</artifactId>\n'
-        writer << '  <version>' << version << '</version>\n'
+        writer << indent << '<groupId>' << groupId << '</groupId>\n'
+        writer << indent << '<artifactId>' << artifactId << '</artifactId>\n'
+        writer << indent << '<version>' << version << '</version>\n'
         
         String name = manifest.attr.getValue( Constants.BUNDLE_NAME )
         if( name ) {
@@ -394,7 +406,7 @@ class BundleConverter {
                 name = expand( name )
             }
             
-            writer << '  <name>' << escape( name ) << '</name>\n'
+            writer << indent << '<name>' << escape( name ) << '</name>\n'
         }
         
         String description = manifest.attr.getValue( Constants.BUNDLE_DESCRIPTION )
@@ -406,11 +418,26 @@ class BundleConverter {
             description = ''
         }
         
-        writer << '  <description>' << escape( description ) << ( description ? "\n    " : "" ) << 'Converted with MT4E ' << Tool.VERSION << '</description>\n'
+        writer << indent << '<description>' << escape( description ) << ( description ? "\n    " : "" ) << 'Converted with MT4E ' << Tool.VERSION << '</description>\n'
         
         String url = manifest.attr.getValue( Constants.BUNDLE_DOCURL )
         if( url ) {
-            writer << '  <url>' << escape( url ) << '</url>\n'
+            writer << indent << '<url>' << escape( url ) << '</url>\n'
+        }
+        
+        if( licenseURL ) {
+            writer << indent << '<licenses>\n'
+            writer << indent*2 << '<license>\n'
+            
+            String licName = licenseNameMap[ licenseURL ]
+            if( licName ) {
+                writer << indent*3 << '<name>' << escape( licName ) << '</name>\n'
+            }
+            
+            writer << indent*3 << '<url>' << escape( licenseURL ) << '</url>\n'
+            
+            writer << indent*2 << '</license>\n'
+            writer << indent << '</licenses>\n'
         }
         
         addProperties( writer )
@@ -434,7 +461,7 @@ class BundleConverter {
             return
         }
 
-        writer << '  <properties>\n'
+        writer << indent << '<properties>\n'
         
         if( imports ) {
             String value = imports.join( ',' )
@@ -450,22 +477,22 @@ class BundleConverter {
             addProperty( writer, Pom.IS_SINGLETON_PROPERTY, 'true' )
         }
         
-        writer << '  </properties>\n'
+        writer << indent << '</properties>\n'
     }
     
     void addProperty( Writer writer, String name, String value ) {
-        writer << '    <' << name << '>' << escape( value ) << '</' << name << '>\n'
+        writer << indent*2 << '<' << name << '>' << escape( value ) << '</' << name << '>\n'
     }
     
     void addDependencies( Writer writer, ManifestElement[] requiredBundles ) {
         
-        writer << '  <dependencies>\n'
+        writer << indent << '<dependencies>\n'
         
         requiredBundles.each {
             addDependency( writer, it )
         }
         
-        writer << '  </dependencies>\n'
+        writer << indent << '</dependencies>\n'
     }
     
     void addDependency( Writer writer, ManifestElement dep ) {
@@ -481,17 +508,17 @@ class BundleConverter {
         
         String groupId = artifactIdToGroupId( artifactId )
         
-        writer << '    <dependency>\n'
-        writer << '      <groupId>' << groupId <<  '</groupId>\n'
-        writer << '      <artifactId>' << artifactId <<  '</artifactId>\n'
-        writer << '      <version>' << version <<  '</version>\n'
+        writer << indent*2 << '<dependency>\n'
+        writer << indent*3 << '<groupId>' << groupId <<  '</groupId>\n'
+        writer << indent*3 << '<artifactId>' << artifactId <<  '</artifactId>\n'
+        writer << indent*3 << '<version>' << version <<  '</version>\n'
         
         String resolution = dep.getDirective( Constants.RESOLUTION_DIRECTIVE )
         if( Constants.RESOLUTION_OPTIONAL == resolution ) {
-            writer << '      <optional>true</optional>\n'
+            writer << indent*3 << '<optional>true</optional>\n'
         }
         
-        writer << '    </dependency>\n'
+        writer << indent*2 << '</dependency>\n'
     }
     
     Properties pluginProperties
