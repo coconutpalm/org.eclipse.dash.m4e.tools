@@ -82,6 +82,8 @@ class DownloadMetadata {
             config.setProperty( FILE_NOT_FOUND_KEY, fileNotFound.toExternalForm() )
         }
         
+        metaFile?.parentFile.makedirs()
+        
         metaFile.withOutputStream {
             config.store( it, null )
         }
