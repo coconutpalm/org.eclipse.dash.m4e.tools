@@ -231,26 +231,27 @@ class ImportTool {
         // TODO convert features
         
         File pluginsFolder = new File( eclipseFolder, 'plugins' )
-        doImport( pluginsFolder )
-    }
-    
-    void doImport( File folder ) {
-        folder.eachFile { it ->
+
+        pluginsFolder.eachFile { it ->
             
             try {
-                def tool = new BundleConverter( installCmd: installCmd, m2repo: m2repo, statistics: installCmd.statistics, versionMap: versionMap )
-                
-                if( it.isDirectory() ) {
-                    tool.importExplodedBundle( it )
-                } else {
-                    tool.importBundle( it )
-                }
-                
-                tool.close()
+                doImport( it )
             } catch( Exception e ) {
                 installCmd.error( Error.IMPORT_ERROR, "Error processing ${it.absolutePath}: ${e}", e, [ file: it.absolutePath ] )
             }
         }
+    }
+    
+    void doImport( File bundle ) {
+        def tool = new BundleConverter( installCmd: installCmd, m2repo: m2repo, statistics: installCmd.statistics, versionMap: versionMap )
+        
+        if( bundle.isDirectory() ) {
+            tool.importExplodedBundle( bundle )
+        } else {
+            tool.importBundle( bundle )
+        }
+        
+        tool.close()
     }
     
     /** Make sure we don't have any leftovers from previous attempts. */

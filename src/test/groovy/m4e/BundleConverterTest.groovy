@@ -99,6 +99,160 @@ class BundleConverterTest {
             , convert( MANIFEST_COM_GOOGLE_INJECT ) )
     }
 
+    @Test
+    public void testConvertSourceBundles() throws Exception {
+        
+        File source = CommonTestCode.prepareRepo( new File( 'data/input/importSourceBundles' ), 'testConvertSourceBundles' )
+        File workDir = new File( source, 'tmp' )
+        File repo = new File( source, 'm2repo' )
+        File plugins = new File( source, 'plugins' )
+        
+        InstallCmd cmd = new InstallCmd( workDir: workDir )
+        
+        ImportTool tool = new ImportTool( m2repo: repo, installCmd: cmd )
+        tool.doImport( new File( plugins, 'de.itemis.xtext.typesystem.source_2.0.5.201205161310.jar' ) )
+        tool.doImport( new File( plugins, 'de.itemis.xtext.typesystem_2.0.5.201205161310.jar' ) )
+        tool.doImport( new File( plugins, 'org.apache.commons.lang3_3.1.0.jar' ) )
+        tool.doImport( new File( plugins, 'org.apache.commons.lang3.sources_3.1.0.jar' ) )
+        
+        // Sources not yet in the right place
+        assertEquals( '''\
+de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT.jar
+de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT.pom
+de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5.201205161310/de.itemis.xtext.typesystem-2.0.5.201205161310-sources.jar
+org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0-sources.jar
+org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0.jar
+org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0.pom''',
+            CommonTestCode.listFiles( repo ) )
+        
+        tool.moveSourceBundles()
+        
+        assertEquals( '''\
+de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT-sources.jar
+de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT.jar
+de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT.pom
+org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0-sources.jar
+org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0.jar
+org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0.pom''',
+            CommonTestCode.listFiles( repo ) )
+        
+        CommonTestCode.fileEquals( '''\
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>de.itemis.xtext</groupId>
+  <artifactId>de.itemis.xtext.typesystem</artifactId>
+  <version>2.0.5-SNAPSHOT</version>
+  <name>Typesystem</name>
+  <description>Converted with MT4E 0.14-SNAPSHOT (16.05.2012)</description>
+  <properties>
+    <mt4e.osgi.exportPackage>de.itemis.xtext.typesystem,de.itemis.xtext.typesystem.characteristics,de.itemis.xtext.typesystem.checks,de.itemis.xtext.typesystem.checks.custom,de.itemis.xtext.typesystem.exceptions,de.itemis.xtext.typesystem.rules,de.itemis.xtext.typesystem.trace,de.itemis.xtext.typesystem.util</mt4e.osgi.exportPackage>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>org.eclipse.ui</groupId>
+      <artifactId>org.eclipse.ui</artifactId>
+      <version>[3.7.0,)</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.core</groupId>
+      <artifactId>org.eclipse.core.runtime</artifactId>
+      <version>[3.7.0,)</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.xtext</groupId>
+      <artifactId>org.eclipse.xtext</artifactId>
+      <version>[2.2.1,)</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>org.apache.commons.logging</artifactId>
+      <version>[1.1.1,)</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.emf</groupId>
+      <artifactId>org.eclipse.emf.mwe.utils</artifactId>
+      <version>[1.2.1,)</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.ibm.icu</groupId>
+      <artifactId>com.ibm.icu</artifactId>
+      <version>[4.4.2,)</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.emf</groupId>
+      <artifactId>org.eclipse.emf.ecore</artifactId>
+      <version>[2.7.0,)</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.emf</groupId>
+      <artifactId>org.eclipse.emf.common</artifactId>
+      <version>[2.7.0,)</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.log4j</groupId>
+      <artifactId>org.apache.log4j</artifactId>
+      <version>[1.2.15,)</version>
+    </dependency>
+  </dependencies>
+</project>''', new File( repo, 'de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT.pom' ) )
+        
+        CommonTestCode.fileEquals( '''\
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.apache.commons</groupId>
+  <artifactId>org.apache.commons.lang3</artifactId>
+  <version>3.1.0</version>
+  <name>Commons Lang3</name>
+  <description>Converted with MT4E 0.14-SNAPSHOT (16.05.2012)</description>
+  <properties>
+    <mt4e.osgi.exportPackage>org.apache.commons.lang3;version="3.1.0",org.apache.commons.lang3.builder;version="3.1.0",org.apache.commons.lang3.concurrent;version="3.1.0",org.apache.commons.lang3.event;version="3.1.0",org.apache.commons.lang3.exception;version="3.1.0",org.apache.commons.lang3.math;version="3.1.0",org.apache.commons.lang3.mutable;version="3.1.0",org.apache.commons.lang3.reflect;version="3.1.0",org.apache.commons.lang3.text;version="3.1.0",org.apache.commons.lang3.text.translate;version="3.1.0",org.apache.commons.lang3.time;version="3.1.0",org.apache.commons.lang3.tuple;version="3.1.0"</mt4e.osgi.exportPackage>
+  </properties>
+</project>''', new File( repo, 'org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0.pom' ) )
+    }
+
+    /** Different import order */
+    @Test
+    public void testConvertSourceBundles_2() throws Exception {
+        
+        File source = CommonTestCode.prepareRepo( new File( 'data/input/importSourceBundles' ), 'testConvertSourceBundles' )
+        File workDir = new File( source, 'tmp' )
+        File repo = new File( source, 'm2repo' )
+        File plugins = new File( source, 'plugins' )
+        
+        InstallCmd cmd = new InstallCmd( workDir: workDir )
+        
+        ImportTool tool = new ImportTool( m2repo: repo, installCmd: cmd )
+        tool.doImport( new File( plugins, 'de.itemis.xtext.typesystem_2.0.5.201205161310.jar' ) )
+        tool.doImport( new File( plugins, 'de.itemis.xtext.typesystem.source_2.0.5.201205161310.jar' ) )
+        tool.doImport( new File( plugins, 'org.apache.commons.lang3.sources_3.1.0.jar' ) )
+        tool.doImport( new File( plugins, 'org.apache.commons.lang3_3.1.0.jar' ) )
+
+        String expected = '''\
+de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT-sources.jar
+de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT.jar
+de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT.pom
+org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0-sources.jar
+org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0.jar
+org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0.pom'''
+                
+        assertEquals( expected,
+            CommonTestCode.listFiles( repo ) )
+        
+        tool.moveSourceBundles()
+
+        // No change        
+        assertEquals( expected,
+            CommonTestCode.listFiles( repo ) )
+    }
+    
     private String convert( String manifest ) {
         def m = new Manifest( new ByteArrayInputStream( manifest.getBytes( 'UTF-8' ) ) )
         
