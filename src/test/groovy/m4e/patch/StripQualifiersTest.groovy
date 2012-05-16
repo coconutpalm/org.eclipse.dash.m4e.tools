@@ -46,6 +46,11 @@ class StripQualifiersTest {
     }
     
     @Test
+    public void testVersionSnapshot() throws Exception {
+        assertEquals( '3.7.1-SNAPSHOT', new StripQualifiers().stripQualifier( '3.7.1-SNAPSHOT' ) )
+    }
+    
+    @Test
     public void testEmptyVersion() throws Exception {
         assertEquals( '', new StripQualifiers().stripQualifier( '' ) )
     }

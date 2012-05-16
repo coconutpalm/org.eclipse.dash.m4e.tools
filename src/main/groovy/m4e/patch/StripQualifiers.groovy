@@ -120,7 +120,12 @@ class StripQualifiers extends Patch {
         def parts = version.split('\\.', -1)
         if( parts.size() == 3 ) {
             def m = parts[2] =~ '^\\d+'
-            parts[2] = m[0]
+            
+            String snapshot = "${m[0]}-SNAPSHOT"
+            
+            if( parts[2] != snapshot ) {
+                parts[2] = m[0]
+            }
         }
         int end = Math.min( parts.size()-1, 2 )
         return parts[0..end].join( '.' )
