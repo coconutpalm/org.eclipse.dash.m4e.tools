@@ -99,7 +99,7 @@ class InstallCmdTest implements CommonConstants {
   <artifactId>org.junit</artifactId>
   <version>3.8.2.v3_8_2_v20100427-1100</version>
   <name>JUnit Testing Framework</name>
-  <description>Converted with MT4E 0.13 (27.04.2012)</description>
+  <description>Converted with MT4E 0.14-SNAPSHOT (16.05.2012)</description>
   <properties>
     <mt4e.osgi.exportPackage>junit.awtui;version="3.8.2",junit.extensions;version="3.8.2",junit.framework;version="3.8.2",junit.runner;version="3.8.2",junit.swingui;version="3.8.2",junit.swingui.icons;version="3.8.2",junit.textui;version="3.8.2"</mt4e.osgi.exportPackage>
   </properties>
@@ -120,7 +120,7 @@ class InstallCmdTest implements CommonConstants {
   <artifactId>org.junit</artifactId>
   <version>4.8.2.v4_8_2_v20110321-1705</version>
   <name>JUnit Testing Framework</name>
-  <description>Converted with MT4E 0.13 (27.04.2012)</description>
+  <description>Converted with MT4E 0.14-SNAPSHOT (16.05.2012)</description>
   <properties>
     <mt4e.osgi.exportPackage>junit.extensions;version="4.8.2",junit.framework;version="4.8.2",junit.runner;version="4.8.2",junit.textui;version="4.8.2",org.junit;version="4.8.2",org.junit.experimental;version="4.8.2",org.junit.experimental.categories;version="4.8.2",org.junit.experimental.max;version="4.8.2",org.junit.experimental.results;version="4.8.2",org.junit.experimental.runners;version="4.8.2",org.junit.experimental.theories;version="4.8.2",org.junit.experimental.theories.internal;version="4.8.2";x-internal:="true",org.junit.experimental.theories.suppliers;version="4.8.2",org.junit.internal;version="4.8.2";x-internal:="true",org.junit.internal.builders;version="4.8.2";x-internal:="true",org.junit.internal.matchers;version="4.8.2";x-internal:="true",org.junit.internal.requests;version="4.8.2";x-internal:="true",org.junit.internal.runners;version="4.8.2";x-internal:="true",org.junit.internal.runners.model;version="4.8.2";x-internal:="true",org.junit.internal.runners.statements;version="4.8.2";x-internal:="true",org.junit.matchers;version="4.8.2",org.junit.rules;version="4.8.2",org.junit.runner;version="4.8.2",org.junit.runner.manipulation;version="4.8.2",org.junit.runner.notification;version="4.8.2",org.junit.runners;version="4.8.2",org.junit.runners.model;version="4.8.2"</mt4e.osgi.exportPackage>
   </properties>
@@ -147,7 +147,7 @@ class InstallCmdTest implements CommonConstants {
   <artifactId>org.junit4</artifactId>
   <version>4.8.1.v20100525</version>
   <name>JUnit Testing Framework Version 4</name>
-  <description>Converted with MT4E 0.13 (27.04.2012)</description>
+  <description>Converted with MT4E 0.14-SNAPSHOT (16.05.2012)</description>
   <dependencies>
     <dependency>
       <groupId>org.hamcrest.core</groupId>
@@ -176,7 +176,7 @@ class InstallCmdTest implements CommonConstants {
   <artifactId>org.eclipse.m2e.logback.configuration</artifactId>
   <version>1.0.200.20111228-1245</version>
   <name>m2e logback configuration</name>
-  <description>Converted with MT4E 0.13 (27.04.2012)</description>
+  <description>Converted with MT4E 0.14-SNAPSHOT (16.05.2012)</description>
   <properties>
     <mt4e.osgi.exportPackage>org.eclipse.m2e.logback.configuration;x-internal:="true"</mt4e.osgi.exportPackage>
     <mt4e.osgi.isSingleton>true</mt4e.osgi.isSingleton>

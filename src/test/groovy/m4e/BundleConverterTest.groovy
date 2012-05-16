@@ -29,7 +29,7 @@ class BundleConverterTest {
   <artifactId>com.pany.eclipse.bundle</artifactId>
   <version>2.2.0.v20120426_155010</version>
   <name>Bundle</name>
-  <description>Converted with MT4E 0.13 (27.04.2012)</description>
+  <description>Converted with MT4E 0.14-SNAPSHOT (16.05.2012)</description>
   <properties>
     <mt4e.osgi.importPackage>org.apache.commons.logging,org.apache.log4j,org.eclipse.xtend2.lib,org.eclipse.xtext.xtend2.lib</mt4e.osgi.importPackage>
     <mt4e.osgi.exportPackage>com.pany.eclipse.bundle,com.pany.eclipse.bundle.x,com.pany.eclipse.bundle.y</mt4e.osgi.exportPackage>
@@ -82,7 +82,7 @@ class BundleConverterTest {
   <version>3.0.0.no_aop</version>
   <name>guice</name>
   <description>Guice is a lightweight dependency injection framework for Java 5 and above
-    Converted with MT4E 0.13 (27.04.2012)</description>
+    Converted with MT4E 0.14-SNAPSHOT (16.05.2012)</description>
   <url>http://code.google.com/p/google-guice/</url>
   <licenses>
     <license>
