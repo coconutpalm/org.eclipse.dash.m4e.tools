@@ -165,6 +165,20 @@ class ImportStatistics {
     int sourceCount = 0
 }
 
+class SourceSnapshotVersionMap {
+    /** 
+     * Filled when a binary bundle is encountered.
+     * 
+     * <p>Eclipse key (value of Eclipse-SourceBundle) -> Maven path of source JAR */
+    Map<String, File> binaryMap = [:]
+    
+    /** 
+     * Filled when a source bundle is encountered and the key can't be found in knownMap.
+     * 
+     * <p>Eclipse key (value of Eclipse-SourceBundle) -> Maven path of source JAR */
+    Map<String, File> unknownMap = [:]
+}
+
 class ImportTool {
 
     static final Logger log = LoggerFactory.getLogger( ImportTool )
@@ -174,7 +188,8 @@ class ImportTool {
     static final String FAILURE_FILE_NAME = 'failure'
 
     InstallCmd installCmd
-
+    SourceSnapshotVersionMap versionMap = new SourceSnapshotVersionMap()
+    
     File eclipseFolder
     File tmpHome
     File m2repo
@@ -204,6 +219,8 @@ class ImportTool {
 
         doImport()
         
+        moveSourceBundles()
+        
         log.info( 'OK' )
         
         failure.delete()
@@ -221,7 +238,7 @@ class ImportTool {
         folder.eachFile { it ->
             
             try {
-                def tool = new BundleConverter( installCmd: installCmd, m2repo: m2repo, statistics: installCmd.statistics )
+                def tool = new BundleConverter( installCmd: installCmd, m2repo: m2repo, statistics: installCmd.statistics, versionMap: versionMap )
                 
                 if( it.isDirectory() ) {
                     tool.importExplodedBundle( it )
@@ -262,6 +279,24 @@ class ImportTool {
 
         return null
     }
+    
+    void moveSourceBundles() {
+        versionMap.unknownMap.each { eclipseKey, sourceJar ->
+            File target = versionMap.binaryMap[ eclipseKey ]
+            
+            if( target ) {
+                log.debug( "Moving ${sourceJar} to ${target}" )
+                sourceJar.usefulRename( target )
+                
+                File parent = sourceJar.parentFile
+                if( parent.list().size() == 0 ) {
+                    parent.usefulDelete()
+                }
+            } else {
+                installCmd.warn( Warning.MISSING_BINARY_BUNDLE_FOR_SOURCES, "No binary bundle for ${sourceJar.absolutePath}" )
+            }
+        }
+    }
 }
 
 class BundleConverter {
@@ -279,6 +314,7 @@ class BundleConverter {
     File bundle
     
     ImportStatistics statistics
+    SourceSnapshotVersionMap versionMap
     
     void importBundle( File bundleJar ) {
         this.bundle = bundleJar
@@ -294,6 +330,8 @@ class BundleConverter {
         
         examineManifest()
         
+        loadMavenProperties( bundleJar )
+        
         if( isSourceBundle() ) {
             return
         }
@@ -301,6 +339,7 @@ class BundleConverter {
         String key = "${groupId}:${artifactId}:${version}"
         log.info( "Importing ${key}" )
         File jarFile = MavenRepositoryTools.buildPath( m2repo, key, 'jar' )
+        versionMap.binaryMap[ eclipseKey ] = MavenRepositoryTools.buildPath( m2repo, key, "jar", "sources" )
         
         String classPath = manifest.attr.getValue( 'Bundle-ClassPath' )
         if( classPath && classPath != '.' ) {
@@ -317,6 +356,29 @@ class BundleConverter {
         }
     }
     
+    void loadMavenProperties( File bundleJar ) {
+        
+        ZipEntry pomProperties
+        
+        for( ZipEntry entry : archive.entries() ) {
+            if( entry.name.startsWith( 'META-INF/maven/' ) && entry.name.endsWith( '/pom.properties' ) ) {
+                Properties p = new Properties()
+                archive.withInputStream( entry ) {
+                    p.load( it )
+                }
+                
+                String pomVersion = p.getProperty( 'version' )
+                if( pomVersion ) {
+                    version = pomVersion
+                }
+                
+                // Should appear only once :-/ Check?
+                break
+            }
+        }
+        
+    }
+    
     boolean isSourceBundle() {
         ManifestElement[] sourceBundleFor = parseAttribute( 'Eclipse-SourceBundle' )
         if( !sourceBundleFor ) {
@@ -329,6 +391,7 @@ class BundleConverter {
     
     boolean isSingleton
     String licenseURL
+    String eclipseKey
     
     Map licenseNameMap = [
         'http://www.apache.org/licenses/LICENSE-2.0.txt': 'Apache 2'
@@ -348,6 +411,8 @@ class BundleConverter {
         artifactId = attrs[0].value
         version = manifest.attr.getValue( Constants.BUNDLE_VERSION )
         groupId = artifactIdToGroupId( artifactId )
+        
+        eclipseKey = "${artifactId}:${version}"
         
         isSingleton = ( 'true' == attrs[0].getDirective( Constants.SINGLETON_DIRECTIVE ) )
         
@@ -586,8 +651,18 @@ class BundleConverter {
         version = attr.getAttribute( Constants.VERSION_ATTRIBUTE )
         groupId = artifactIdToGroupId( artifactId )
         
-        String key = "${groupId}:${artifactId}:${version}"
-        File mavenSourceJar = MavenRepositoryTools.buildPath( m2repo, key, "jar", "sources" )
+        String eclipseKey = "${artifactId}:${version}"
+        File mavenSourceJar = versionMap.binaryMap[ eclipseKey ]
+        
+        if( mavenSourceJar ) {
+            log.debug( "Found ${eclipseKey}: ${mavenSourceJar}" )
+        } else {
+            String key = "${groupId}:${artifactId}:${version}"
+            mavenSourceJar = MavenRepositoryTools.buildPath( m2repo, key, "jar", "sources" )
+            
+            versionMap.unknownMap[ eclipseKey ] = mavenSourceJar
+            log.debug( "${eclipseKey} is unknown" )
+        }
         
         String roots = attr.getDirective( 'roots' )
         if( !roots ) {
