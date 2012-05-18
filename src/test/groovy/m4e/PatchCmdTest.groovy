@@ -21,6 +21,7 @@ class PatchCmdTest {
     public void testGoogleInject() throws Exception {
         
         def tool = new PatchCmd()
+        tool.target = CommonTestCode.newFile( 'testGoogleInject' )
         tool.init()
         
         tool.loadPatches( 'data/input/googleInject.patch' )

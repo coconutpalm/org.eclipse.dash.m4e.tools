@@ -12,13 +12,14 @@ package m4e.patch;
 
 import static org.junit.Assert.*;
 import java.io.File;
+import m4e.CommonConstants;
 import m4e.CommonTestCode;
 import m4e.MopSetup;
 import m4e.PatchCmd
 import m4e.Pom;
 import org.junit.Test;
 
-class StripQualifiersTest {
+class StripQualifiersTest extends CommonTestCode implements CommonConstants {
     
     @Test
     public void testNoVersion1() throws Exception {
@@ -88,7 +89,7 @@ class StripQualifiersTest {
     @Test
     public void testStripQualifierFromPomVersion() throws Exception {
         
-        File target = CommonTestCode.prepareRepo( new File( 'data/input/stripQualifier' ), 'testStripQualifierFromPomVersion/m2repo' )
+        File target = prepareRepo( new File( 'data/input/stripQualifier' ), 'testStripQualifierFromPomVersion/m2repo' )
         
         def tool = new PatchCmd( target: target )
         tool.init()
@@ -113,7 +114,7 @@ org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x8
 org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x86-3.7.1.pom.bak
 org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x86-3.7.1.sha1
 org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x86-3.7.1xxx'''
-            , CommonTestCode.listFiles( target ) )
+            , listFiles( target ) )
         
         File dir = new File( target, 'org/eclipse/swt/org.eclipse.swt.gtk.linux.x86' )
         def pom = Pom.load( new File( dir, '3.7.1/org.eclipse.swt.gtk.linux.x86-3.7.1.pom' ) )
@@ -123,7 +124,7 @@ org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x8
         File newDir = new File( dir, pom.version() )
         assert newDir.exists()
 
-        CommonTestCode.fileEquals( '''\
+        fileEquals( '''\
 <?xml version="1.0" encoding="UTF-8"?>
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -157,7 +158,7 @@ org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x8
         newDir = new File( dir, pom.version() )
         assert newDir.exists()
         
-        CommonTestCode.fileEquals( '''\
+        fileEquals( '''\
 <?xml version="1.0" encoding="UTF-8"?>
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -185,7 +186,7 @@ org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x8
         newDir = new File( dir, pom.version() )
         assert newDir.exists()
         
-        CommonTestCode.fileEquals( '''\
+        fileEquals( '''\
 <?xml version="1.0" encoding="UTF-8"?>
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -218,5 +219,43 @@ org/eclipse/swt/org.eclipse.swt.gtk.linux.x86/3.7.1/org.eclipse.swt.gtk.linux.x8
   </dependencies>
 </project>''',
             new File( newDir, 'org.apache.batik.dom-1.6.0.pom' ) )
+    }
+    
+    @Test
+    public void testSnapshotDependencies() throws Exception {
+        
+        File target = newFile( 'testSnapshotDependencies' )
+        
+        def file = new File( target, "${MT4E_FOLDER}/${SNAPSHOT_VERSION_MAPPING_FILE}" )
+        file.parentFile?.makedirs()
+        file << "de.itemis.xtext:de.itemis.xtext.typesystem 2.0.5.201205161310 2.0.5-SNAPSHOT\n"
+        
+        def tool = new PatchCmd( target: target )
+        tool.init()
+
+        tool.loadPatches()
+        
+        def input = '''\
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.avanon.eclipse</groupId>
+  <artifactId>com.avanon.eclipse.pm-dsl</artifactId>
+  <version>2.2.0-SNAPSHOT</version>
+  <name>DSL for Parameter Model</name>
+  <dependencies>
+    <dependency>
+      <groupId>de.itemis.xtext</groupId>
+      <artifactId>de.itemis.xtext.typesystem</artifactId>
+      <version>[2.0.5,)</version>
+    </dependency>
+  </dependencies>
+</project>'''
+
+        def pom = Pom.load( input )
+        tool.patchPom( pom )
+        
+        assertEquals( input.replace( '<version>[2.0.5,)</version>' ,'<version>2.0.5-SNAPSHOT</version>' ), pom.toString() )
     }
 }

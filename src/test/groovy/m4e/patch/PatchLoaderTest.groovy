@@ -72,17 +72,18 @@ replace( 'a:b:1', 'x:y:2' )
     
     void loadAndPatch( String fileName ) throws Exception {
         MopSetup.setup()
+
+        def dir = CommonTestCode.newFile( 'patchLoaderTest' )
+        dir.makedirs()
         
         PatchCmd cmd = new PatchCmd()
+        cmd.target = dir
         cmd.init()
         
         cmd.loadPatches( 'patches/eclipse-3.6.2.patches' )
         
         def file = new File( 'data/input', fileName )
         def expectedFile = new File( 'data/expected', fileName )
-        
-        def dir = CommonTestCode.newFile( 'patchLoaderTest' )
-        dir.makedirs()
         
         def copy = new File( dir, fileName )
         file.copy( copy )

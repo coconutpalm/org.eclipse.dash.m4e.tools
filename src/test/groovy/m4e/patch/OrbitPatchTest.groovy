@@ -151,6 +151,7 @@ actual )
     public void testProfilePatching() throws Exception {
         
         def tool = new PatchCmd()
+        tool.target = CommonTestCode.newFile( 'testProfilePatching' )
         tool.init()
         
         tool.globalPatches.defaultProfile = 'm4e.orbit'

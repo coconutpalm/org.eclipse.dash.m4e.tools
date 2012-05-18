@@ -13,6 +13,7 @@ package m4e
 import java.util.regex.Pattern;
 import groovy.transform.ToString;
 import m4e.maven.ImportExportDB;
+import m4e.p2.Version
 import m4e.patch.ArtifactRenamer
 import m4e.patch.DeleteClasses
 import m4e.patch.DeleteEmptyDirectories
@@ -21,6 +22,7 @@ import m4e.patch.ImportDependenciesPatch;
 import m4e.patch.OrbitPatch
 import m4e.patch.PatchLoader
 import m4e.patch.PatchSet
+import m4e.patch.QualifierPatch
 import m4e.patch.RemoveNonOptional
 import m4e.patch.StripQualifiers
 import org.codehaus.groovy.control.CompilerConfiguration;
@@ -173,9 +175,35 @@ target patches...
     GlobalPatches globalPatches = new GlobalPatches()
     
     void init() {
+        assert target != null
+        
         globalPatches.orbitExclusions << 'org.eclipse.*'
         
         set = new PatchSet()
+        
+        convertSnapshotVersionsToPatches()
+    }
+    
+    void convertSnapshotVersionsToPatches() {
+        File snapshotVersionMapping = new File( target, "${MT4E_FOLDER}/${SNAPSHOT_VERSION_MAPPING_FILE}" )
+        if( !snapshotVersionMapping.exists() ) {
+            return
+        }
+        
+        loadSnapshotVersionsFromFile( snapshotVersionMapping )
+    }
+    
+    void loadSnapshotVersionsFromFile( File snapshotVersionMapping ) {
+        snapshotVersionMapping.eachLine( UTF_8 ) {
+            def (shortKey, eclipseVersion, mavenVersion) = it.split( ' ' )
+            
+            String pattern = "${shortKey}:${eclipseVersion}"
+            globalPatches.qualifierPatches << new QualifierPatch( pattern, mavenVersion )
+            
+            def version = new Version( eclipseVersion )
+            pattern = "${shortKey}:[${version.shortVersion()},)"
+            globalPatches.qualifierPatches << new QualifierPatch( pattern, mavenVersion )
+        }
     }
     
     PatchSet deleteClasses = new PatchSet()
