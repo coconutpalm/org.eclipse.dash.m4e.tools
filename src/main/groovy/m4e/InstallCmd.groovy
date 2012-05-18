@@ -177,6 +177,42 @@ class SourceSnapshotVersionMap {
      * 
      * <p>Eclipse key (value of Eclipse-SourceBundle) -> Maven path of source JAR */
     Map<String, File> unknownMap = [:]
+    
+    void setM2repo( File m2repo ) {
+        snapshotVersionMappingFile = new File( m2repo, CommonConstants.MT4E_FOLDER + '/' + CommonConstants.SNAPSHOT_VERSION_MAPPING_FILE )
+    }
+    
+    File snapshotVersionMappingFile
+    Writer snapshotVersionWriter
+    Map<String, String> existingEclipseMappings = [:]
+    Map<String, String> existingMavenMappings = [:]
+    
+    void appendSnapshotVersion( String shortKey, String eclipseVersion, String mavenVersion ) {
+        if( !snapshotVersionWriter ) {
+            snapshotVersionMappingFile.parentFile?.makedirs()
+            
+            snapshotVersionWriter = snapshotVersionMappingFile.newWriter( CommonConstants.UTF_8 )
+        }
+        
+        String key = "${shortKey}:${mavenVersion}"
+        String old = existingEclipseMappings.put( key, eclipseVersion )
+        assert old == null, "There is an existing mapping ${key}:${old} -> ${eclipseVersion}"
+        
+        key = "${shortKey}:${eclipseVersion}"
+        old = existingMavenMappings.put( key, mavenVersion )
+        assert old == null, "There is an existing mapping ${key}:${old} -> ${mavenVersion}"
+        
+        String line = "${shortKey} ${eclipseVersion.replaceAll( '\\s+', '' )} ${mavenVersion.replaceAll( '\\s+', '' )}\n"
+        snapshotVersionWriter << line
+    }
+    
+    void close() {
+        println 'close'
+        if( snapshotVersionWriter ) {
+            snapshotVersionWriter.close()
+            snapshotVersionWriter = null
+        }
+    }
 }
 
 class ImportTool {
@@ -217,9 +253,15 @@ class ImportTool {
         log.debug( "Importing plug-ins from ${eclipseFolder} into repo ${m2repo}" )
         clean()
 
-        doImport()
+        versionMap.m2repo = m2repo
         
-        moveSourceBundles()
+        try {
+            doImport()
+        
+            moveSourceBundles()
+        } finally {
+            versionMap.close()
+        }
         
         log.info( 'OK' )
         
@@ -243,15 +285,8 @@ class ImportTool {
     }
     
     void doImport( File bundle ) {
-        def tool = new BundleConverter( installCmd: installCmd, m2repo: m2repo, statistics: installCmd.statistics, versionMap: versionMap )
-        
-        if( bundle.isDirectory() ) {
-            tool.importExplodedBundle( bundle )
-        } else {
-            tool.importBundle( bundle )
-        }
-        
-        tool.close()
+        def tool = new BundleConverter( installCmd: installCmd, m2repo: m2repo, versionMap: versionMap )
+        tool.importBundle( bundle )
     }
     
     /** Make sure we don't have any leftovers from previous attempts. */
@@ -314,10 +349,23 @@ class BundleConverter {
     
     File bundle
     
-    ImportStatistics statistics
     SourceSnapshotVersionMap versionMap
     
-    void importBundle( File bundleJar ) {
+    void importBundle( File bundle ) {
+        
+        try {
+            if( bundle.isDirectory() ) {
+                importExplodedBundle( bundle )
+            } else {
+                importJarBundle( bundle )
+            }
+        } finally {
+            close()
+        }
+    }
+    
+    void importJarBundle( File bundleJar ) {
+        
         this.bundle = bundleJar
         
         manifest = loadManifestFromJar( bundleJar )
@@ -325,7 +373,7 @@ class BundleConverter {
             return
         }
         
-        statistics.bundleCount ++
+        installCmd.statistics.bundleCount ++
         
         log.debug( 'Importing {}', bundleJar )
         
@@ -349,7 +397,7 @@ class BundleConverter {
             bundleJar.copy( jarFile )
         }
         
-        statistics.jarCount ++
+        installCmd.statistics.jarCount ++
         
         File pomFile = MavenRepositoryTools.buildPath( m2repo, key, 'pom' )
         pomFile.withWriter( 'UTF-8' ) {
@@ -370,6 +418,10 @@ class BundleConverter {
                 
                 String pomVersion = p.getProperty( 'version' )
                 if( pomVersion ) {
+                    if( pomVersion.endsWith( CommonConstants.MINUS_SNAPSHOT ) ) {
+                        versionMap.appendSnapshotVersion( "${groupId}:${artifactId}", version, pomVersion )
+                    }
+                    
                     version = pomVersion
                 }
                 
@@ -455,7 +507,7 @@ class BundleConverter {
     
     void createPom( Writer writer ) {
         
-        statistics.pomCount ++
+        installCmd.statistics.pomCount ++
         
         writer << '<?xml version="1.0" encoding="UTF-8"?>\n'
         writer << '<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"\n'
@@ -639,7 +691,7 @@ class BundleConverter {
     
     void importSourceBundle( Manifest manifest, ManifestElement[] sourceBundleFor ) {
         
-        statistics.sourceCount ++
+        installCmd.statistics.sourceCount ++
         
         if( sourceBundleFor.size() != 1 ) {
             throw new RuntimeException( "Expected exactly one element in ${sourceBundleFor}" )
@@ -755,7 +807,7 @@ class BundleConverter {
             return
         }
         
-        statistics.bundleCount ++
+        installCmd.statistics.bundleCount ++
         
         log.debug( 'Importing {}', bundleFolder )
         bundle = bundleFolder
@@ -779,7 +831,7 @@ class BundleConverter {
             packBundle( bundleFolder, jarFile )
         }
         
-        statistics.jarCount ++
+        installCmd.statistics.jarCount ++
         
         File pomFile = MavenRepositoryTools.buildPath( m2repo, key, 'pom' )
         pomFile.withWriter( 'UTF-8' ) {

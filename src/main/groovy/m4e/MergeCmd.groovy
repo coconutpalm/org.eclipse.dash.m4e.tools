@@ -12,6 +12,7 @@
 package m4e
 
 import java.io.File;
+import java.util.Map;
 import de.pdark.decentxml.XMLUtils;
 
 class MergeCmd extends AbstractCommand {
@@ -45,6 +46,16 @@ class MergeCmd extends AbstractCommand {
             File file = new File( source ).absoluteFile
             
             merge( file, target )
+        }
+        
+        close()
+    }
+    
+    void close() {
+        
+        if( snapshotVersionWriter ) {
+            snapshotVersionWriter.close()
+            snapshotVersionWriter = null
         }
         
         closeXmlFiles()
@@ -119,11 +130,56 @@ class MergeCmd extends AbstractCommand {
                 return
             }
 
+            if( name == SNAPSHOT_VERSION_MAPPING_FILE ) {
+                mergeSnapshotVersions( srcPath, targetPath )
+                return
+            }
+            
             if( name.endsWith( '.xml' ) ) {
                 mergeXml( srcPath, targetPath )
             } else {
                 warn( Warning.UNABLE_TO_MERGE_MT4E_FILE, "Unable to merge ${srcPath.absolutePath}", [ file: srcPath.absolutePath ] )
             }
+        }
+    }
+    
+    Writer snapshotVersionWriter
+    Map<String, String> existingEclipseMappings = [:]
+    Map<String, String> existingMavenMappings = [:]
+    
+    void mergeSnapshotVersions( File source, File target ) {
+        if( ! snapshotVersionWriter ) {
+            if( target.exists() ) {
+                warn( Warning.UNABLE_TO_MERGE_MT4E_FILE, "Target ${target.absolutePath} already exists and will be overwritten", [ file: source.absolutePath ] )
+            }
+            
+            target.parentFile?.makedirs()
+            
+            snapshotVersionWriter = target.newWriter( UTF_8 )
+        }
+        
+        source.eachLine( UTF_8 ) {
+            def (shortKey, eclipseVersion, mavenVersion) = it.split( ' ' )
+            
+            String key = "${shortKey}:${mavenVersion}"
+            String old = existingEclipseMappings.put( key, eclipseVersion )
+            if( old ) {
+                if( old != eclipseVersion ) {
+                    warn( Warning.DUPLICATE_VERSION_MAPPING, "There is an existing mapping ${key}:${old} -> ${eclipseVersion}")
+                }
+                
+                return
+            }
+            
+            key = "${shortKey}:${eclipseVersion}"
+            old = existingMavenMappings.put( key, mavenVersion )
+            if( old ) {
+                warn( Warning.DUPLICATE_VERSION_MAPPING, "There is an existing mapping ${key}:${old} -> ${mavenVersion}" )
+                return
+            }
+            
+            String line = "${shortKey} ${eclipseVersion} ${mavenVersion}\n"
+            snapshotVersionWriter << line
         }
     }
     
@@ -133,7 +189,7 @@ class MergeCmd extends AbstractCommand {
         def writer = xmlFiles[ target.name ]
         if( !writer ) {
             if( target.exists() ) {
-                warn( Warning.UNABLE_TO_MERGE_MT4E_FILE, "Unable to merge ${source.absolutePath}", [ file: source.absolutePath ] )
+                warn( Warning.UNABLE_TO_MERGE_MT4E_FILE, "Target ${target.absolutePath} already exists and will be overwritten", [ file: source.absolutePath ] )
             }
             
             target.parentFile?.makedirs()

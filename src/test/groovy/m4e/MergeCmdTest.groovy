@@ -3,12 +3,12 @@ package m4e;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
-class MergeCmdTest implements CommonConstants {
+class MergeCmdTest extends CommonTestCode implements CommonConstants {
 
     @Test
     public void testMerge() throws Exception {
         
-        File target = CommonTestCode.newFile( 'testMerge' )
+        File target = newFile( 'testMerge' )
         target.parentFile?.makedirs()
         
         def tool = new MergeCmd()
@@ -38,13 +38,27 @@ class MergeCmdTest implements CommonConstants {
         
         assert target.exists()
         
-        File logFolder = new File( target, MT4E_FOLDER + '/logs' )
+        File mt4eFolder = new File( target, MT4E_FOLDER )
+        
+        assertEquals( '''\
+logs/install.xml
+logs/merge.xml
+logs/only_repo1.xml
+logs/only_repo2.xml
+snapshotVersionMapping'''
+            , listFiles( mt4eFolder ) )
+        
+        File logFolder = new File( mt4eFolder, 'logs' )
+        
+        def lines = read( new File( logFolder, 'merge.xml' ) ).split( '\n' )
+        lines = [lines[0]] + lines[1..-2].sort() + [lines[-1]]
         
         assertEquals( '''\
 <mt4e-log command='merge'>
 <warning code='W0003' source='${input2}/org/eclipse/core/org.eclipse.core.resources/3.7.101/org.eclipse.core.resources-3.7.101.jar' target='${m2repo}/org/eclipse/core/org.eclipse.core.resources/3.7.101/org.eclipse.core.resources-3.7.101.jar'>File ${input2}/org/eclipse/core/org.eclipse.core.resources/3.7.101/org.eclipse.core.resources-3.7.101.jar differs from ${m2repo}/org/eclipse/core/org.eclipse.core.resources/3.7.101/org.eclipse.core.resources-3.7.101.jar</warning>
+<warning code='W0006'>There is an existing mapping d:x:1.1-SNAPSHOT:1.1 -&gt; 1.2</warning>
 </mt4e-log>'''
-            , read( new File( logFolder, 'merge.xml' ) ) )
+            , lines.join( '\n' ) )
         
         assertEquals( '''\
 <merged>
@@ -83,6 +97,13 @@ class MergeCmdTest implements CommonConstants {
 </merged>
 '''
             , read( new File( logFolder, 'only_repo2.xml' ) ) )
+        
+        fileEquals( '''\
+b:y 1.0 1.0-SNAPSHOT
+c:x 1.0 1.0-SNAPSHOT
+d:x 1.1 1.1-SNAPSHOT
+b:x 2.0 2.0-SNAPSHOT'''
+            , new File( mt4eFolder, SNAPSHOT_VERSION_MAPPING_FILE ) )
         
         assertEquals( 'xxx\n', read( new File( target, 'org/eclipse/core/org.eclipse.core.resources/3.7.101/org.eclipse.core.resources-3.7.101.jar' ) ) )
         assertEquals( 'xxx\n', read( new File( target, 'org/eclipse/core/org.eclipse.core.resources/3.7.101/org.eclipse.core.resources-3.7.101.pom' ) ) )

@@ -110,13 +110,18 @@ class BundleConverterTest {
         InstallCmd cmd = new InstallCmd( workDir: workDir )
         
         ImportTool tool = new ImportTool( m2repo: repo, installCmd: cmd )
+        tool.versionMap.m2repo = repo
+        
         tool.doImport( new File( plugins, 'de.itemis.xtext.typesystem.source_2.0.5.201205161310.jar' ) )
         tool.doImport( new File( plugins, 'de.itemis.xtext.typesystem_2.0.5.201205161310.jar' ) )
         tool.doImport( new File( plugins, 'org.apache.commons.lang3_3.1.0.jar' ) )
         tool.doImport( new File( plugins, 'org.apache.commons.lang3.sources_3.1.0.jar' ) )
         
+        tool.versionMap.close()
+        
         // Sources not yet in the right place
         assertEquals( '''\
+.mt4e/snapshotVersionMapping
 de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT.jar
 de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT.pom
 de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5.201205161310/de.itemis.xtext.typesystem-2.0.5.201205161310-sources.jar
@@ -128,6 +133,7 @@ org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0
         tool.moveSourceBundles()
         
         assertEquals( '''\
+.mt4e/snapshotVersionMapping
 de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT-sources.jar
 de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT.jar
 de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT.pom
@@ -135,6 +141,9 @@ org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0
 org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0.jar
 org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0.pom''',
             CommonTestCode.listFiles( repo ) )
+        
+        CommonTestCode.fileEquals( '''\
+de.itemis.xtext:de.itemis.xtext.typesystem 2.0.5.201205161310 2.0.5-SNAPSHOT''', new File( repo, '.mt4e/snapshotVersionMapping' ) )
         
         CommonTestCode.fileEquals( '''\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -230,12 +239,15 @@ org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0
         InstallCmd cmd = new InstallCmd( workDir: workDir )
         
         ImportTool tool = new ImportTool( m2repo: repo, installCmd: cmd )
+        tool.versionMap.m2repo = repo
+        
         tool.doImport( new File( plugins, 'de.itemis.xtext.typesystem_2.0.5.201205161310.jar' ) )
         tool.doImport( new File( plugins, 'de.itemis.xtext.typesystem.source_2.0.5.201205161310.jar' ) )
         tool.doImport( new File( plugins, 'org.apache.commons.lang3.sources_3.1.0.jar' ) )
         tool.doImport( new File( plugins, 'org.apache.commons.lang3_3.1.0.jar' ) )
 
         String expected = '''\
+.mt4e/snapshotVersionMapping
 de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT-sources.jar
 de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT.jar
 de/itemis/xtext/de.itemis.xtext.typesystem/2.0.5-SNAPSHOT/de.itemis.xtext.typesystem-2.0.5-SNAPSHOT.pom
@@ -256,9 +268,9 @@ org/apache/commons/org.apache.commons.lang3/3.1.0/org.apache.commons.lang3-3.1.0
     private String convert( String manifest ) {
         def m = new Manifest( new ByteArrayInputStream( manifest.getBytes( 'UTF-8' ) ) )
         
-        def statistics = new ImportStatistics()
+        def cmd = new InstallCmd()
         
-        def tool = new BundleConverter( manifest: m, statistics: statistics )
+        def tool = new BundleConverter( manifest: m, installCmd: cmd )
         tool.examineManifest()
         
         def buffer = new StringWriter()
