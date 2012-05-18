@@ -207,7 +207,6 @@ class SourceSnapshotVersionMap {
     }
     
     void close() {
-        println 'close'
         if( snapshotVersionWriter ) {
             snapshotVersionWriter.close()
             snapshotVersionWriter = null
