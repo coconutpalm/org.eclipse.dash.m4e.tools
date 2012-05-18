@@ -122,6 +122,7 @@ class Version implements Comparable<Version> {
         return buffer.toString()
     }
 
+    /** Like toString() but without qualifier */
     String shortVersion() {
         if( blank ) {
             return ''
@@ -175,7 +176,7 @@ class Version implements Comparable<Version> {
     }
     
     Version stripQualifier() {
-        return new Version( "${major}.${minor}.${service}" )
+        return new Version( shortVersion() )
     }
 }
 
