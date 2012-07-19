@@ -76,21 +76,21 @@ repository groupId:artifactId:version
     }
 
     void addPom( Pom pom ) {
-	String groupId = pom.groupId()
-	String artifactId = pom.value( Pom.ARTIFACT_ID )
-	String version = pom.version()
+        String groupId = pom.groupId()
+        String artifactId = pom.value( Pom.ARTIFACT_ID )
+        String version = pom.version()
 
-	String key = "${groupId}:${artifactId}"
-	if( key in duplicates ) {
-	    return
-	}
+        String key = "${groupId}:${artifactId}"
+        if( key in duplicates ) {
+            return
+        }
 
-	String old = versions.put( key, version )
-	if( null != old ) {
-	    duplicates << key
-	    versions.remove( key )
-	    twoVersionsError( pom, old )
-	}
+        String old = versions.put( key, version )
+        if( null != old ) {
+            duplicates << key
+            versions.remove( key )
+            twoVersionsError( pom, old )
+        }
     }
 
     void twoVersionsError( Pom pom, String oldVersion ) {
