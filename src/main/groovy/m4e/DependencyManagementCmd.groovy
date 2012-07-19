@@ -57,7 +57,7 @@ repository groupId:artifactId:version
         artifactId = parts[1]
         version = parts[2]
         
-	collectArtifacts()
+        collectArtifacts()
         createPom()
     }
     
@@ -69,7 +69,7 @@ repository groupId:artifactId:version
         MavenRepositoryTools.eachPom( repo ) {
             if( dmPom != it ) {
                 def pom = Pom.load( it )
-		addPom( pom )
+                addPom( pom )
 
             }
         }
@@ -142,19 +142,19 @@ repository groupId:artifactId:version
     }
     
     void writeDependencies( Writer writer ) {
-	List<String> keys = new ArrayList( versions.keySet() )
-	keys.sort()
+        List<String> keys = new ArrayList( versions.keySet() )
+        keys.sort()
 
-	for( String key : keys ) {
-	    String[] parts = key.split( ':', -1 )
+        for( String key : keys ) {
+            String[] parts = key.split( ':', -1 )
 
-	    writer << """\
+            writer << """\
             <dependency>
                 <groupId>${parts[0]}</groupId>
                 <artifactId>${parts[1]}</artifactId>
                 <version>${versions[key]}</version>
             </dependency>
 """
-	}
+        }
     }
 }
