@@ -25,7 +25,7 @@ class DependencyManagementCmdTest {
         DependencyManagementCmd tool = new DependencyManagementCmd()
         
         List<String> errors = []
-        def log = [ error: { errors << it }, info: {} ] as Logger
+        def log = [ error: { errors << it }, info: {}, warn: { errors << it } ] as Logger
         tool.log = log
         
         tool.run([ 'dm', copy.path, 'org.eclipse.dash:dependency-management:3.7.0' ])
@@ -45,11 +45,11 @@ class DependencyManagementCmdTest {
         actual = actual.replace( '3.5.0 and 3.6.0.', '3.6.0 and 3.5.0.' )
         
         assertEquals( '''\
-The repository contains (at least) two versions of org.eclipse.core:org.eclipse.core.runtime: 3.5.0 and 3.6.0. Omitting both.
-For details, see http://wiki.eclipse.org/MT4E_E0001'''
+The repository contains 2 versions of org.eclipse.core:org.eclipse.core.runtime: 3.5.0, 3.6.0. Using 3.6.0
+For details, see http://wiki.eclipse.org/MT4E_W0007'''
             , errors.join( '\n' ) )
         
-        assertEquals( 1, tool.errorCount )
-        assertEquals( 0, tool.warningCount )
+        assertEquals( 0, tool.errorCount )
+        assertEquals( 1, tool.warningCount )
     }
 }

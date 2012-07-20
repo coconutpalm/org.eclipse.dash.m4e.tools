@@ -62,8 +62,7 @@ repository groupId:artifactId:version
     }
     
     /** short key -> version */
-    Map<String, String> versions = [:]
-    Set<String> duplicates = []
+    Map<String, List<String>> versions = [:].withDefault {[]}
     
     void collectArtifacts() {
         MavenRepositoryTools.eachPom( repo ) {
@@ -81,29 +80,8 @@ repository groupId:artifactId:version
         String version = pom.version()
 
         String key = "${groupId}:${artifactId}"
-        if( key in duplicates ) {
-            return
-        }
 
-        String old = versions.put( key, version )
-        if( null != old ) {
-            duplicates << key
-            versions.remove( key )
-            twoVersionsError( pom, old )
-        }
-    }
-
-    void twoVersionsError( Pom pom, String oldVersion ) {
-        
-        def versions = VersionUtils.sort( [ pom.version(), oldVersion ] )
-        
-        def xml = [
-            artifact: pom.key(),
-            shortKey: pom.shortKey(),
-            version1: versions[0],
-            version2: versions[1],
-        ]
-        error( Error.TWO_VERSIONS, "The repository contains (at least) two versions of ${pom.shortKey()}: ${versions[0]} and ${versions[1]}. Omitting both.", xml )
+        versions.get( key ) << version
     }
 
     void createPom() {
@@ -147,14 +125,34 @@ repository groupId:artifactId:version
 
         for( String key : keys ) {
             String[] parts = key.split( ':', -1 )
+            List<String> versionList = versions[key]
+            versionList = VersionUtils.sort( versionList )
+            String version = versionList[-1]
+            
+            if( versionList.size() > 1 ) {
+                severalVersions( key, versionList, version )
+            }
 
             writer << """\
             <dependency>
                 <groupId>${parts[0]}</groupId>
                 <artifactId>${parts[1]}</artifactId>
-                <version>${versions[key]}</version>
+                <version>${version}</version>
             </dependency>
 """
         }
+    }
+
+    void severalVersions( String key, List<String> versionList, String used ) {
+        
+        String[] parts = key.split( ':', -1 )
+        
+        def xml = [
+            artifact: parts[0],
+            shortKey: parts[1],
+            usedVersion: used,
+            versions: versionList.join( ',' ),
+        ]
+        warn( Warning.SEVERAL_VERSIONS, "The repository contains ${versionList.size()} versions of ${key}: ${versionList.join( ', ' )}. Using ${used}", xml )
     }
 }

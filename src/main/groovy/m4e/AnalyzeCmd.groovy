@@ -61,6 +61,8 @@ class Analyzer implements CommonConstants {
     Calendar timestamp
     Set<Glob> ignores = new HashSet()
     Set<Glob> ignoreMissingSources = new HashSet()
+    Set<Glob> ignoreMissingBinaries = new HashSet()
+    List<String> missingBinaries = []
     
     Analyzer( File repo, Calendar timestamp ) {
         this.repo = repo.canonicalFile
@@ -88,12 +90,10 @@ class Analyzer implements CommonConstants {
             if( line.startsWith( 'MissingSources ' ) ) {
                 line = line.substringAfter( ' ' )
                 ignoreMissingSources << new Glob( line, manyRegexp )
+            } else if( line.startsWith( 'MissingBinary ' ) ) {
+                line = line.substringAfter( ' ' )
+                ignoreMissingBinaries << new Glob( '*/' + line )
             } else {
-                if( line.startsWith( 'ProblemSameKeyDifferentVersion ' ) ) {
-                    String pattern = line.substringAfter( ' ' )
-                    ignores << new Glob( 'TwoVersionsProblem ' + pattern, manyRegexp )
-                }
-            
                 ignores << new Glob( line, manyRegexp )
             }
         }
@@ -127,6 +127,24 @@ class Analyzer implements CommonConstants {
             }
         }
         
+        if( missingBinaries ) {
+            def l = missingBinaries.findResults {
+                def key = it
+                
+                for( Glob g : ignoreMissingBinaries ) {
+                    if( g.matches( key ) ) {
+                        return null
+                    }
+                }
+                
+                return it
+            }
+            
+            if( l ) {
+                problems << new MissingBinaries( l )
+            }
+        }
+        
         log.info( 'Found {} POM files. Looking for problems...', poms.size() )
         validate()
         
@@ -145,6 +163,10 @@ class Analyzer implements CommonConstants {
             file.eachFile {
                 loadXmlLog( it )
             }
+            return
+        }
+        
+        if( !file.exists() ) {
             return
         }
 
@@ -192,7 +214,7 @@ class Analyzer implements CommonConstants {
         } else if( 'E' == code[0] ) {
             e = Error.fromCode( code )
         } else {
-            throw new RuntimeException( "Unsupported code ${code}" )
+            throw new RuntimeException( "Unsupported enum ${code}" )
         }
         
         def problem
@@ -217,6 +239,14 @@ class Analyzer implements CommonConstants {
         case Warning.BINARY_DIFFERENCE:
             problem = BinaryDifference.create( node )
             break
+            
+        case Warning.SEVERAL_VERSIONS:
+            problem = SeveralVersionsProblem.create( node )
+            break
+            
+        case Warning.MISSING_BINARY_BUNDLE_FOR_SOURCES:
+            missingBinaries << node.'@path'.toString()
+            return
             
         default:
             log.warn( "Unsupported code ${code} ${e}" )
@@ -743,6 +773,23 @@ class TwoVersionsProblem extends CommandProblem {
     }
 }
 
+class SeveralVersionsProblem extends CommandProblem {
+    
+    static SeveralVersionsProblem create( node ) {
+        
+        String shortKey = node.'@shortKey'
+        String usedVersion = node.'@usedVersion'
+        String versions = node.'@versions'
+        String key = "${shortKey} ${usedVersion}"
+            
+        String message = "The artifact ${shortKey} exists with several versions: ${versions}. Used ${usedVersion}"
+            
+        def result = new SeveralVersionsProblem( key: key, message: message )
+        
+        return result
+    }
+}
+
 class MissingManifest extends CommandProblem {
     
     String jar
@@ -859,6 +906,56 @@ class MissingSources extends Problem {
     
     int problemCount() {
         return poms.size()
+    }
+}
+
+class MissingBinaries extends Problem {
+    
+    List<String> artifacts
+    
+    MissingBinaries( List<String> artifacts ) {
+        super( null, "${artifacts.size()} source artifact are without compiled code" )
+        
+        this.artifacts = artifacts
+    }
+    
+    @Override
+    public String sortKey() {
+        return "MissingBinaries";
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder buffer = new StringBuilder()
+        buffer << message
+        buffer << ':\n'
+        
+        artifacts.each() {
+            buffer << "    ${it}\n"
+        }
+        
+        return buffer;
+
+        return message
+    }
+    
+    void render( MarkupBuilder builder ) {
+        builder.div( 'class': 'problem' ) {
+            p "Missing code artifact for ${artifacts.size()} source artifact"
+            ul {
+                for( String path in artifacts ) {
+                    li {
+                        String name = path.substringAfterLast( '/' )
+                        span( 'class': 'ignoreKey', 'MissingBinary ' + name )
+                        div( 'class': 'path', path )
+                    }
+                }
+            }
+        }
+    }
+    
+    int problemCount() {
+        return artifacts.size()
     }
 }
 
@@ -1165,8 +1262,10 @@ enum ProblemType {
     ProblemSnaphotVersion( 'Snapshot Versions', 'Release Repositories should not contain SNAPSHOTs' ),
     PathProblem( 'Path Problems', 'These POMs are not where they should be' ),
     TwoVersionsProblem( 'Artifacts With Several Versions', null, Error.TWO_VERSIONS.url() ),
+    SeveralVersionsProblem( 'Artifacts With Several Versions', null, Warning.SEVERAL_VERSIONS.url() ),
     MultipleNestedJarsProblem( 'Multiple Nested JARs', "At the moment, MT4E can only handle a single nested JAR", Warning.MULTIPLE_NESTED_JARS.url() ),
-    MissingSources( 'Missing Sources' )
+    MissingSources( 'Missing Sources' ),
+    MissingBinaries( 'Missing Binary for Sources', null, Warning.MISSING_BINARY_BUNDLE_FOR_SOURCES.url() )
     
     final String title
     final String description

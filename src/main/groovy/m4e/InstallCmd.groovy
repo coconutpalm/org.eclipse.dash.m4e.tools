@@ -328,7 +328,8 @@ class ImportTool {
                     parent.usefulDelete()
                 }
             } else {
-                installCmd.warn( Warning.MISSING_BINARY_BUNDLE_FOR_SOURCES, "No binary bundle for ${sourceJar.absolutePath}" )
+                String path = sourceJar.absolutePath
+                installCmd.warn( Warning.MISSING_BINARY_BUNDLE_FOR_SOURCES, "No binary bundle for ${path}", [ path: path ] )
             }
         }
     }

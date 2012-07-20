@@ -20,7 +20,8 @@ public enum Warning {
     BINARY_DIFFERENCE( 3 ),
     MULTIPLE_NESTED_JARS( 4 ),
     UNABLE_TO_MERGE_MT4E_FILE( 5 ),
-    DUPLICATE_VERSION_MAPPING( 6 );
+    DUPLICATE_VERSION_MAPPING( 6 ),
+    SEVERAL_VERSIONS( 7 );
     
     public final static String BASE_URL = "http://wiki.eclipse.org/MT4E_";
     
