@@ -28,9 +28,10 @@ repository
         
         def db = new ImportExportDB( file: dbPath )
         
-        int count
+        int count = 0
         MavenRepositoryTools.eachPom( repo ) {
             def pom = Pom.load( it )
+            log.debug( 'Processing {}', pom.key() )
             
             count ++
             db.add( pom )
